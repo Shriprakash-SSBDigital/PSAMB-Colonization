@@ -23,7 +23,8 @@ export interface PropertyInfo {
   sizeOfPlot: string;
   plotType: string;
   allotmentDate: string;
-  allotmentAmount: number;
+  // allotmentAmount: number;
+  finalBidPrice: number;
   auctionDate: string;
 }
 

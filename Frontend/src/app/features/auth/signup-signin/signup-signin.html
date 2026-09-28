@@ -83,21 +83,7 @@
                 <div class="auth-card-header-screenshot mt-0 text-center" *ngIf="!forgotPasswordMode">
                     <h2>Login</h2>
                 </div>
-
-                <!-- Registration Successful Alert -->
-                <div class="registration-success-alert-material animated fade-in" *ngIf="showRegistrationSuccessAlert">
-                    <div class="alert-icon-wrapper-material-inner">
-                        <mat-icon>mark_email_read</mat-icon>
-                    </div>
-                    <div class="alert-content-wrapper">
-                        <h3>Registration Successful! / ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਸਫਲ ਰਹੀ!</h3>
-                        <p>Your user account has been registered. Your credentials have been sent to your email.</p>
-                    </div>
-                    <button mat-icon-button class="close-alert-btn" (click)="showRegistrationSuccessAlert = false"
-                        title="Dismiss">
-                        <mat-icon>close</mat-icon>
-                    </button>
-                </div>
+                <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
                 <!-- ERROR BANNER -->
                 <div class="login-error-banner-material" *ngIf="errorMessage">

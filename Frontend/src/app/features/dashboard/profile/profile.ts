@@ -66,6 +66,7 @@ export class Profile implements OnInit {
     this.initialFormState = this.profileForm.getRawValue();
     this.loadProfileFromApi();
     this.openChangePasswordMenu();
+    this.getProfileImage();
   }
 
   private buildProfileForm(): void {
@@ -336,5 +337,17 @@ export class Profile implements OnInit {
         }, { emitEvent: false });
       }
     });
+  }
+
+  //get profile image 
+
+  getProfileImage(): string {
+    this.commonService.GetProfileImageByUserId().subscribe({
+      next: (response: Blob) => {
+        const url = URL.createObjectURL(response);
+        this.avatarUrl = url;
+      }
+    });
+    return this.avatarUrl;
   }
 }
