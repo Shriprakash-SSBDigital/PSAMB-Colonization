@@ -115,6 +115,12 @@ import { Footer } from './footer/footer';
                 .then((m) => m.PropertyOwnershipVerification),
           },
           {
+            path : 'application-status',
+            loadComponent: () =>
+              import('../../features/user-registration-status/user-registration-status')
+                .then((m) => m.UserRegistrationStatus),
+          },
+          {
             path: 'coming-soon',
             loadComponent: () =>
               import('../../features/comming-soon-pages/comming-soon-pages')

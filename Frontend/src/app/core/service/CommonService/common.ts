@@ -82,7 +82,7 @@ export class Common {
     return this.http.get<any>(`${this.baseUrl}/Common/getProfileDetailsByUserId`);
   }
   
-    GetProfileImageByUserId(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/common/GetProfileImageByUserId`, { responseType: 'blob' });
+    GetProfileImageByUserId(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/common/GetProfileImageByUserId`);
   }
 }
