@@ -134,12 +134,8 @@ import { RoleGuard } from '../../core/guards/role-guard';
           },
           {
             path : 'application-status',
-            loadComponent: () =>
-              import('../../features/user-registration-status/user-registration-status')
-                .then((m) => m.UserRegistrationStatus),
-          },
-          {
-            path : 'application-status',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
             loadComponent: () =>
               import('../../features/user-registration-status/user-registration-status')
                 .then((m) => m.UserRegistrationStatus),
