@@ -33,5 +33,7 @@ export class Userservice {
     }
     return this.http.get<any>(url);
   }
-
+  VerifyByClerkForUser(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/UserPropertyRegistration/VerifyByClerkForUser`, payload);
+  }
 }

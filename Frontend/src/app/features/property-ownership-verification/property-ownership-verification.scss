@@ -99,6 +99,16 @@
         color: var(--gov-accent-emerald, #059669);
     }
 
+    &.status-verified-clerk {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    &.status-verified-sa {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
     &.status-pending {
         background: #fffbeb;
         color: #d97706;

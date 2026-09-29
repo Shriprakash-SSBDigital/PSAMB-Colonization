@@ -15,6 +15,8 @@ import { Common } from '../../../core/service/CommonService/common';
 import { MenuService } from '../../../core/service/MenuService/menu.service';
 import { IdleTimeoutService } from '../../../core/service/idle-timeout.service';
 import { FileService } from '../../../core/service/FileService/file-service';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 interface EntityType {
   id: string;
@@ -31,7 +33,8 @@ interface ResetPasswordModel {
 @Component({
   selector: 'app-signup-signin',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatCardModule, PersonalDetails, DocumentsAndAddress, BusinessDetails, Procurement],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatCardModule, PersonalDetails, DocumentsAndAddress, BusinessDetails, Procurement,ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './signup-signin.html',
   styleUrl: './signup-signin.css',
 })
@@ -202,7 +205,6 @@ export class SignupSignin implements OnInit {
   toastMessage = '';
   toastType: 'success' | 'error' | 'info' = 'info';
   showToast = false;
-  showRegistrationSuccessAlert = false;
   errorMessage = '';
   private toastHideTimer: any = null;
   requiredIdDocs = ['Aadhaar Card', 'Voter Card', 'Passport', 'Other Government issued Photo ID'];
@@ -239,7 +241,8 @@ export class SignupSignin implements OnInit {
     private common: Common,
     private menuService: MenuService,
     private idleTimeoutService: IdleTimeoutService,
-    private fileService: FileService
+    private fileService: FileService,
+    private confirmationService: ConfirmationService
   ) { }
 
   ngOnInit() {
@@ -279,14 +282,30 @@ export class SignupSignin implements OnInit {
         const successAlert = sessionStorage.getItem('registration_success');
         const registeredUserId = sessionStorage.getItem('registered_user_id');
         if (successAlert === 'true') {
-          this.showRegistrationSuccessAlert = true;
           this.loginData.userId = registeredUserId || '';
           sessionStorage.removeItem('registration_success');
           sessionStorage.removeItem('registered_user_id');
+          setTimeout(() => this.showRegistrationSuccessDialog(), 0);
         }
       }
     });
   }
+
+  private showRegistrationSuccessDialog(): void {
+    this.confirmationService.confirm({
+      header: 'Registration Successful',
+      message: 'Your credentials have been sent to your email / ਤੁਹਾਡੇ ਕ੍ਰੈਡਿਟਸ਼ੀਅਲ ਤੁਹਾਡੀ ਈਮੇਲ ਤੇ ਭੇਜ ਦਿੱਤੇ ਗਏ ਹਨ।',
+      icon: 'fa-solid fa-circle-check text-success fs-4 me-2',
+      acceptLabel: 'OK',
+      rejectVisible: false,
+      acceptButtonStyleClass: 'btn btn-success px-4',
+    });
+
+    setTimeout(() => {
+      this.confirmationService.close();
+    }, 5000);
+  }
+
   ngOnDestroy(): void {
     if (this.toastHideTimer) {
       clearTimeout(this.toastHideTimer);
@@ -352,7 +371,6 @@ export class SignupSignin implements OnInit {
     this.authMode = 'signup';
     this.selectedEntityType = ''; // Default to empty so the form is hidden initially
     this.resetSignUpForm();
-    this.showRegistrationSuccessAlert = false;
     this.errorMessage = '';
     this.proceedToForm = false;
   }
@@ -382,7 +400,6 @@ export class SignupSignin implements OnInit {
     this.loginMethod = 'password'; // Ensure we start with username/password login
     this.resetSignInForm();
     this.generateCaptcha();
-    this.showRegistrationSuccessAlert = false;
     this.errorMessage = '';
   }
 

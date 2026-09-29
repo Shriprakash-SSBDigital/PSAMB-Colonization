@@ -1,4 +1,4 @@
-﻿using Backend.Data;
+using Backend.Data;
 using Backend.Helpers;
 using Backend.Models.Dtos;
 using Backend.Models.DTOs;
@@ -6,6 +6,7 @@ using Backend.Services.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using System.Data.Common;
 
 namespace Backend.Services.Implementations
 {
@@ -84,10 +85,48 @@ namespace Backend.Services.Implementations
                     IsActive=true,
                     Status = 1,
                     CreatedDate= DateTime.UtcNow,
+                    UploadAllotmentLetter = !string.IsNullOrWhiteSpace(dto.UploadAllotmentLetter) ? dto.UploadAllotmentLetter : null,
+                    ReceiptDocument = !string.IsNullOrWhiteSpace(dto.ReceiptDocument) ? dto.ReceiptDocument : null,
+                    UploadNoDuesCertificate = !string.IsNullOrWhiteSpace(dto.UploadNoDuesCertificate) ? dto.UploadNoDuesCertificate : null,
+                    BForm = !string.IsNullOrWhiteSpace(dto.BForm) ? dto.BForm : null,
+                    ConveyanceDeed = !string.IsNullOrWhiteSpace(dto.ConveyanceDeed) ? dto.ConveyanceDeed : null,
+                    SaleDeed = !string.IsNullOrWhiteSpace(dto.SaleDeed) ? dto.SaleDeed : null,
+                    TransferOrder = !string.IsNullOrWhiteSpace(dto.TransferOrder) ? dto.TransferOrder : null,
+                    upload1 = !string.IsNullOrWhiteSpace(dto.Upload1) ? dto.Upload1 : null,
+                    upload2 = !string.IsNullOrWhiteSpace(dto.Upload2) ? dto.Upload2 : null,
                 };
 
                 _context.UserPropertyRegistration.Add(entity);
                 await _context.SaveChangesAsync();
+
+                // Link uploaded documents from TempSessionId to ApplicantId
+                if (dto.ApplicantId.HasValue && dto.ApplicantId.Value > 0)
+                {
+                    var applicantId = dto.ApplicantId.Value;
+                    IQueryable<UserDocument>? docsQuery = null;
+
+                    if (!string.IsNullOrWhiteSpace(dto.SessionId))
+                    {
+                        docsQuery = _context.UserDocuments.Where(d => d.TempSessionId == dto.SessionId && d.ApplicantId == null);
+                    }
+                    else if (dto.DocumentIds != null && dto.DocumentIds.Any())
+                    {
+                        docsQuery = _context.UserDocuments.Where(d => dto.DocumentIds.Contains(d.UserDocumentId) && d.ApplicantId == null);
+                    }
+
+                    if (docsQuery != null)
+                    {
+                        var docsToLink = await docsQuery.ToListAsync();
+                        foreach (var doc in docsToLink)
+                        {
+                            doc.ApplicantId = applicantId;
+                        }
+                        if (docsToLink.Any())
+                        {
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
 
                 return ApiResponse<UserPropertyRegistrationDto>.Ok(dto, "Property registered successfully");
             }
@@ -269,16 +308,168 @@ namespace Backend.Services.Implementations
                         CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : Convert.ToInt32(reader["CreatedBy"]),
 
                         CreatedDate = reader["CreatedDate"] == DBNull.Value  ? null : Convert.ToDateTime(reader["CreatedDate"]),
+                        OwnerStateName = reader["OwnerState"] == DBNull.Value
+                             ? null : reader["OwnerState"].ToString(),
+
+                        OwnerDistrtictName = reader["OwnerDistrict"] == DBNull.Value
+                             ? null : reader["OwnerDistrict"].ToString(),
+
+                        OwnerCityName = reader["OwnerCity"] == DBNull.Value
+                             ? null : reader["OwnerCity"].ToString(),
+
+                        Remarks = HasColumn(reader, "Remarks") && reader["Remarks"] != DBNull.Value
+                             ? reader["Remarks"].ToString() : null,
+
+                        LevelId = HasColumn(reader, "LevelId") && reader["LevelId"] != DBNull.Value
+                             ? reader["LevelId"].ToString() : null,
+
+                        UploadAllotmentLetter = HasColumn(reader, "UploadAllotmentLetter") && reader["UploadAllotmentLetter"] != DBNull.Value
+                             ? reader["UploadAllotmentLetter"].ToString() : null,
+
+                        ReceiptDocument = HasColumn(reader, "ReceiptDocument") && reader["ReceiptDocument"] != DBNull.Value
+                             ? reader["ReceiptDocument"].ToString() : null,
+
+                        UploadNoDuesCertificate = HasColumn(reader, "UploadNoDuesCertificate") && reader["UploadNoDuesCertificate"] != DBNull.Value
+                             ? reader["UploadNoDuesCertificate"].ToString() : null,
+
+                        BForm = HasColumn(reader, "BForm") && reader["BForm"] != DBNull.Value
+                             ? reader["BForm"].ToString() : null,
+
+                        ConveyanceDeed = HasColumn(reader, "ConveyanceDeed") && reader["ConveyanceDeed"] != DBNull.Value
+                             ? reader["ConveyanceDeed"].ToString() : null,
+
+                        SaleDeed = HasColumn(reader, "SaleDeed") && reader["SaleDeed"] != DBNull.Value
+                             ? reader["SaleDeed"].ToString() : null,
+
+                        TransferOrder = HasColumn(reader, "TransferOrder") && reader["TransferOrder"] != DBNull.Value
+                             ? reader["TransferOrder"].ToString() : null,
+
+                        Upload1 = HasColumn(reader, "upload1") && reader["upload1"] != DBNull.Value
+                             ? reader["upload1"].ToString() : null,
+
+                        Upload2 = HasColumn(reader, "upload2") && reader["upload2"] != DBNull.Value
+                             ? reader["upload2"].ToString() : null,
                     };
 
                     result.Add(dto);
                 }
-                    return ApiResponse<List<UserPropertyRegistrationDto>>.Ok(  result, "Property owner verification data fetched successfully.");
+
+                await reader.CloseAsync();
+
+                // If any records (e.g. status 2, 3, 8) were omitted by the SP for Clerk, include them:
+                try
+                {
+                    var existingIds = result.Select(x => x.Id).ToHashSet();
+
+                    var query = _context.UserPropertyRegistration.AsNoTracking()
+                        .Where(x => !existingIds.Contains(x.KnowyourPropertyAllotteeId) && !(x.IsDeleted ?? false));
+
+                    if (result.Any())
+                    {
+                        var allowedBranchIds = result.Select(x => x.BranchId).Where(x => x > 0).Distinct().ToList();
+                        var allowedDistrictIds = result.Select(x => x.DistrictId).Where(x => x > 0).Distinct().ToList();
+                        var allowedMandiIds = result.Select(x => x.MandiId).Where(x => x > 0).Distinct().ToList();
+
+                        if (allowedDistrictIds.Any())
+                            query = query.Where(x => x.DistrictId.HasValue && allowedDistrictIds.Contains(x.DistrictId.Value));
+                        if (allowedBranchIds.Any())
+                            query = query.Where(x => x.BranchId.HasValue && allowedBranchIds.Contains(x.BranchId.Value));
+                        if (allowedMandiIds.Any())
+                            query = query.Where(x => x.MandiId.HasValue && allowedMandiIds.Contains(x.MandiId.Value));
+                    }
+
+                    if (districtId > 0)
+                        query = query.Where(x => x.DistrictId == districtId);
+                    if (branchId > 0)
+                        query = query.Where(x => x.BranchId == branchId);
+                    if (mandiid > 0)
+                        query = query.Where(x => x.MandiId == mandiid);
+                    if (!string.IsNullOrWhiteSpace(searchCode))
+                        query = query.Where(x => x.AllotteeCode != null && x.AllotteeCode.Contains(searchCode));
+
+                    var missingEntities = await query.ToListAsync();
+
+                    if (missingEntities.Any())
+                    {
+                        var dIds = missingEntities.Select(x => x.DistrictId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+                        var bIds = missingEntities.Select(x => x.BranchId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+                        var mIds = missingEntities.Select(x => x.MandiId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+                        var ptIds = missingEntities.Select(x => x.PlotTypeId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+                        var stIds = missingEntities.Select(x => x.AllotteeStateId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+                        var cityIds = missingEntities.Select(x => x.AllotteeCityId).Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+
+                        var districts = await _context.DistrictMasters.Where(x => dIds.Contains(x.DistrictId)).ToDictionaryAsync(x => x.DistrictId, x => x.DistrictName);
+                        var branches = await _context.BranchMaster.Where(x => bIds.Contains(x.BranchId)).ToDictionaryAsync(x => x.BranchId, x => x.BranchName);
+                        var mandis = await _context.MandiMaster.Where(x => mIds.Contains(x.MandiId)).ToDictionaryAsync(x => x.MandiId, x => x.MandiName);
+                        var plotTypes = await _context.PlotTypeMaster.Where(x => ptIds.Contains(x.PlotTypeId)).ToDictionaryAsync(x => x.PlotTypeId, x => x.PlotType);
+                        var states = await _context.StateMasters.Where(x => stIds.Contains(x.StateId)).ToDictionaryAsync(x => x.StateId, x => x.StateName);
+                        var cities = await _context.CityMasters.Where(x => cityIds.Contains(x.CityId)).ToDictionaryAsync(x => x.CityId, x => x.CityName);
+
+                        foreach (var e in missingEntities)
+                        {
+                            result.Add(new UserPropertyRegistrationDto
+                            {
+                                Id = e.KnowyourPropertyAllotteeId,
+                                PropertyCode = e.AllotteeCode,
+                                MandiId = e.MandiId ?? 0,
+                                BranchId = e.BranchId ?? 0,
+                                DistrictId = e.DistrictId ?? 0,
+                                PlotTypeId = e.PlotTypeId,
+                                PlotSize = e.PlotSize,
+                                PlotNo = e.PlotNo,
+                                CurrentOwnerName = e.AllotteeName,
+                                FatherHusbandName = e.AllotteeFatherName,
+                                MobileNumber = e.AllotteeMobileNo,
+                                Email = e.AllotteeEmail,
+                                OwnerStateID = e.AllotteeStateId,
+                                OwnerDistrtictID = e.AllotteeDistrictId,
+                                OwnerCityID = e.AllotteeCityId,
+                                Address = e.AllotteeAddress,
+                                AadhaarNumber = e.AadharNumber,
+                                PanNumber = e.PanNumber,
+                                Status = e.Status,
+                                Remarks = e.Remarks,
+                                LevelId = e.LevelId,
+                                CreatedBy = e.CreatedBy.HasValue ? (int?)Convert.ToInt32(e.CreatedBy.Value) : null,
+                                CreatedDate = e.CreatedDate,
+                                DistrictName = (e.DistrictId.HasValue && districts.ContainsKey(e.DistrictId.Value)) ? districts[e.DistrictId.Value] : null,
+                                BranchName = (e.BranchId.HasValue && branches.ContainsKey(e.BranchId.Value)) ? branches[e.BranchId.Value] : null,
+                                MandiName = (e.MandiId.HasValue && mandis.ContainsKey(e.MandiId.Value)) ? mandis[e.MandiId.Value] : null,
+                                PlotType = (e.PlotTypeId.HasValue && plotTypes.ContainsKey(e.PlotTypeId.Value)) ? plotTypes[e.PlotTypeId.Value] : null,
+                                OwnerStateName = (e.AllotteeStateId.HasValue && states.ContainsKey(e.AllotteeStateId.Value)) ? states[e.AllotteeStateId.Value] : null,
+                                OwnerDistrtictName = (e.AllotteeDistrictId.HasValue && districts.ContainsKey(e.AllotteeDistrictId.Value)) ? districts[e.AllotteeDistrictId.Value] : null,
+                                OwnerCityName = (e.AllotteeCityId.HasValue && cities.ContainsKey(e.AllotteeCityId.Value)) ? cities[e.AllotteeCityId.Value] : null,
+                                UploadAllotmentLetter = e.UploadAllotmentLetter,
+                                ReceiptDocument = e.ReceiptDocument,
+                                UploadNoDuesCertificate = e.UploadNoDuesCertificate,
+                                BForm = e.BForm,
+                                ConveyanceDeed = e.ConveyanceDeed,
+                                SaleDeed = e.SaleDeed,
+                                TransferOrder = e.TransferOrder,
+                                Upload1 = e.upload1,
+                                Upload2 = e.upload2,
+                            });
+                        }
+                    }
+                }
+                catch { }
+
+                return ApiResponse<List<UserPropertyRegistrationDto>>.Ok(result, "Property owner verification data fetched successfully.");
             }
             catch (Exception ex)
             {
                 return ApiResponse<List<UserPropertyRegistrationDto>>.Fail( $"Error while fetching property owner verification data: {ex.Message}");
             }
+        }
+
+        private static bool HasColumn(DbDataReader reader, string columnName)
+        {
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         public async Task<ApiResponse<bool>> VerifyByClerkForUser(ClerkVerificationDto dto)
@@ -303,10 +494,12 @@ namespace Backend.Services.Implementations
                     if (dto.Decision == "approve")
                     {
                         record.Status = 2;
+                        record.LevelId = "Clerk";
                     }
                     else if (dto.Decision == "sendback")
                     {
                         record.Status = 7;
+                        record.LevelId = "Clerk";
                         record.Remarks = dto.Remarks;
                     }
                     else
@@ -322,10 +515,12 @@ namespace Backend.Services.Implementations
                     if (dto.Decision == "approve")
                     {
                         record.Status = 3;
+                        record.LevelId = "Senior Assistant";
                     }
                     else if (dto.Decision == "sendback")
                     {
                         record.Status = 7;
+                        record.LevelId = "Senior Assistant";
                         record.Remarks = dto.Remarks;
                     }
                     else

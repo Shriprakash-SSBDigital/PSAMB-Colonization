@@ -33,7 +33,9 @@
                     </label>
                     <select id="district" class="form-select custom-input-color rounded-3" formControlName="districtId"
                         [class.is-invalid]="isInvalid('districtId')" (change)="onDistrictChange()">
-                        <option [ngValue]="null" disabled>Select district</option>
+                        <option [ngValue]="null" disabled>
+                            {{ isLoadingDistricts ? 'Loading districts...' : 'Select district' }}
+                        </option>
                         <option *ngFor="let d of districts" [ngValue]="d.id">{{ d.name }}</option>
                     </select>
                     <div class="invalid-feedback">Select a district to continue.</div>
@@ -41,31 +43,29 @@
 
                 <div class="col-12 col-md-6 col-xl-3">
                     <label for="marketCommittee" class="form-label small fw-semibold text-dark">
-                        Market Committee <span class="text-danger">*</span>
+                        Market Committee
                     </label>
                     <select id="marketCommittee" class="form-select custom-input-color rounded-3"
-                        formControlName="branchId" [class.is-invalid]="isInvalid('branchId')"
+                        formControlName="branchId"
                         (change)="onCommitteeChange()">
-                        <option [ngValue]="null" disabled>
-                            {{ form.get('branchId')?.disabled ? 'Select a district first' : 'Select committee' }}
+                        <option [ngValue]="null">
+                            {{ form.get('branchId')?.disabled ? 'Select a district first' : (isLoadingCommittees ? 'Loading committees...' : 'Select committee') }}
                         </option>
                         <option *ngFor="let c of committees" [ngValue]="c.id">{{ c.name }}</option>
                     </select>
-                    <div class="invalid-feedback">Select a market committee.</div>
                 </div>
 
                 <div class="col-12 col-md-6 col-xl-3">
                     <label for="mandi" class="form-label small fw-semibold text-dark">
-                        Mandi <span class="text-danger">*</span>
+                        Mandi
                     </label>
                     <select id="mandi" class="form-select custom-input-color rounded-3" formControlName="mandiId"
-                        [class.is-invalid]="isInvalid('mandiId')">
-                        <option [ngValue]="null" disabled>
-                            {{ form.get('mandiId')?.disabled ? 'Select a committee first' : 'Select mandi' }}
+                        (change)="onMandiChange()">
+                        <option [ngValue]="null">
+                            {{ form.get('mandiId')?.disabled ? 'Select a committee first' : (isLoadingMandis ? 'Loading mandis...' : 'Select mandi') }}
                         </option>
                         <option *ngFor="let m of mandis" [ngValue]="m.id">{{ m.name }}</option>
                     </select>
-                    <div class="invalid-feedback">Select a mandi.</div>
                 </div>
 
                 <div class="col-12 col-md-6 col-xl-3 d-flex align-items-end">
@@ -153,13 +153,11 @@
                             <td colspan="12" class="empty-cell text-center">
                                 <ng-container *ngIf="!searched">
                                     <p class="fw-semibold mb-1 text-dark">No Data Available</p>
-                                    <p class="small text-muted mb-0">Pick a district, committee and mandi, then select
-                                        Show summary.</p>
+                                    <p class="small text-muted mb-0">Select a district to view the allotment summary.</p>
                                 </ng-container>
                                 <ng-container *ngIf="searched">
                                     <p class="fw-semibold mb-1 text-dark">No allotments found</p>
-                                    <p class="small text-muted mb-0">Nothing is recorded for this mandi. Try another
-                                        mandi or committee.</p>
+                                    <p class="small text-muted mb-0">No records found for the selected filter.</p>
                                 </ng-container>
                             </td>
                         </tr>

@@ -1,4 +1,4 @@
-﻿using Backend.Models.Entities;
+using Backend.Models.Entities;
 
 namespace Backend.Models.DTOs
 {
@@ -36,7 +36,8 @@ namespace Backend.Models.DTOs
     {
         Photograph = 1,
         IdentityProof = 2,
-        AddressProof = 3
+        AddressProof = 3,
+        PropertyDocument = 4
     }
     public class UserDocument
     {

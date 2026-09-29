@@ -533,7 +533,10 @@
                     <div class="d-flex align-items-center gap-2">
                       <input [id]="document.key + 'File'" type="file"
                         class="form-control bg-white rounded-3 custom-input-color" [accept]="allowedFileTypes"
-                        (change)="onFileChange($event, document.key + 'File')" />
+                        (change)="onFileChange($event, document.key + 'File', document.key)" />
+                      @if (uploadingStates[document.key]) {
+                      <span class="spinner-border spinner-border-sm text-success flex-shrink-0" role="status" title="Uploading..."></span>
+                      }
                       @if (propertyForm.get(document.key + 'File')?.value) {
                       <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
                         (click)="viewDocument(null, document.key + 'File')" title="View Selected File">

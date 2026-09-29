@@ -23,6 +23,7 @@ export class FileService {
     //   1 = Upload Your Photo
     //   2 = Identification Document
     //   3 = Address Document
+    //   4 = Property Document
    
     // DocumentTypeId (Category 2 – Identification):
     //   1 = Aadhaar Card, 2 = Voter Card, 3 = Passport, 4 = Other Gov. Photo ID
@@ -30,6 +31,10 @@ export class FileService {
     // DocumentTypeId (Category 3 – Address):
     //   1 = Aadhaar Card, 2 = Passport, 3 = Electricity Bill, 4 = Water Bill, 5 = Rent Agreement, 6 = Registry Deed
     // DocumentTypeId (Category 1 – Photo): pass 0
+
+    // DocumentTypeId (Category 4 – Property Document):
+    //   1 = Allotment Letter, 2 = Last Payment Receipt, 3 = No Due Certificate, 4 = B.Form,
+    //   5 = Conveyance Deed, 6 = Sale Deed, 7 = Transfer Order, 8 = Legal Heir Certificate
    
   UploadFile(payload: FileUploadPayload): Observable<any> {
     const formData = new FormData();

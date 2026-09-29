@@ -133,6 +133,18 @@ import { RoleGuard } from '../../core/guards/role-guard';
                 .then((m) => m.OnlinePaymentDetail),
           },
           {
+            path : 'application-status',
+            loadComponent: () =>
+              import('../../features/user-registration-status/user-registration-status')
+                .then((m) => m.UserRegistrationStatus),
+          },
+          {
+            path : 'application-status',
+            loadComponent: () =>
+              import('../../features/user-registration-status/user-registration-status')
+                .then((m) => m.UserRegistrationStatus),
+          },
+          {
             path: 'role-management',
             canActivate: [RoleGuard],
             data: { roles: ['Clerk'] },
