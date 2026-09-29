@@ -104,62 +104,91 @@ export class PropertyOwnershipVerification implements OnInit {
     this.GetPropertyOwnerVerification();
   }
 
-  mapStatus(statusId: number | null | undefined, roleName: string | null | undefined
+  mapStatus(
+    statusId: number | null | undefined,
+    roleName: string | null | undefined,
+    levelId?: string | null | undefined
   ): string {
-    // debugger
-    const role = (roleName || '').trim().toLowerCase();
+    const role = (roleName || '').trim().toLowerCase().replace('_', ' ');
+    const sid = statusId != null ? Number(statusId) : null;
+    const lvl = (levelId || '').trim().toLowerCase().replace('_', ' ');
 
-    // Objection
-    if (statusId === 7) {
-      return 'Objection';
-    }
-    if (role === 'senior assistant') {
-      if (statusId === 2) {
-        return 'Pending';
-      }
-      if (statusId === 3 || statusId === 4) {
-        return 'Verified';
-      }
-      return 'Pending';
-    }
-    if (role === 'clerk') {
-      if (statusId === 1) {
-        return 'Pending';
-      }
-
-      if (statusId === 2 || statusId === 3 || statusId === 4) {
-        return 'Verified';
-      }
+    if (role.includes('senior assistant')) {
+      // SA:
+      // status=2 → Pending (clerk approved, SA action pending)
+      // status=3/4 → Verified (SA approved)
+      // status=7 → Objection (objected by Senior Assistant)
+      if (sid === 2) return 'Pending';
+      if (sid === 3 || sid === 4) return 'Verified';
+      if (sid === 7) return 'Objection';
       return 'Pending';
     }
 
-    if (statusId === 2 || statusId === 3 || statusId === 4) {
-      return 'Verified';
+    if (role.includes('clerk')) {
+      // Clerk:
+      // status=1 → Pending
+      // status=2/3/4 → Verified (already verified by clerk)
+      // status=7:
+      //   agar Senior Assistant ne object kiya ho → Objected by Senior Assistant
+      //   agar Clerk ne object kiya ho → Objection
+      if (sid === 1) return 'Pending';
+      if (sid === 2 || sid === 3 || sid === 4) return 'Verified';
+      if (sid === 7) {
+        return lvl.includes('senior assistant') ? 'Objected by Senior Assistant' : 'Objection';
+      }
+      return 'Pending';
     }
+
+    // Default fallback
+    if (sid === 7) return 'Objection';
+    if (sid === 2 || sid === 3 || sid === 4) return 'Verified';
     return 'Pending';
   }
-  GetPropertyOwnerVerification(searchCode?: string) {
 
+  GetPropertyOwnerVerification(searchCode?: string) {
     const roleName = this.getUserRole();
+    const isSA = (roleName || '').trim().toLowerCase().replace('_', ' ').includes('senior assistant');
+
     this.userService.GetPropertyOwnerVerification(searchCode).subscribe({
       next: (res: any) => {
         const rawData = res.data || res || [];
-        this.propertyList = rawData.map((d: any) => ({
-          id: d.id,
-          propertyNo: d.propertyCode || `PROP-${d.id}`,
-          ownerName: d.currentOwnerName || 'N/A',
-          branch: d.branchName || 'N/A',
-          district: d.districtName || 'N/A',
-          mandiName: d.mandiName || 'N/A',
-          status: this.mapStatus(d.applicationStatusId, roleName),
-          registrationDate: d.createdDate ? d.createdDate : new Date().toISOString(),
-          label: d.label || 'User',
-          plotNumber: d.plotNo,
-          plotType: d.plotType,
-          applicationStatusId: d.applicationStatusId,
-          roleName: roleName,
-          registrationData: d,
-        }));
+
+        // Senior Assistant ko sirf wo data dikhe jo clerk se approve ho chuka hai (status 2, 3, 4) ya SA ne khud send back kiya ho (status 7 with levelId='Senior Assistant')
+        // Clerk ka objection (status 7 with levelId='Clerk') aur naya pending data (status 1) Senior Assistant ko NAHI dikhega
+        const visibleData = isSA
+          ? rawData.filter((d: any) => {
+            const s = Number(d.status != null ? d.status : d.applicationStatusId);
+            const lvl = (d.levelId || '').trim().toLowerCase().replace('_', ' ');
+            if (s === 2 || s === 3 || s === 4) return true;
+            if (s === 7 && lvl.includes('senior assistant')) return true;
+            return false;
+          })
+          : rawData;
+
+        this.propertyList = visibleData.map((d: any) => {
+          const statusVal = d.status != null ? d.status : d.applicationStatusId;
+          return {
+            id: d.id,
+            propertyNo: d.propertyCode,
+            ownerName: d.currentOwnerName || 'N/A',
+            branch: d.branchName || 'N/A',
+            district: d.districtName || 'N/A',
+            mandiName: d.mandiName || 'N/A',
+            status: this.mapStatus(statusVal, roleName, d.levelId),
+            registrationDate: d.createdDate ? d.createdDate : new Date().toISOString(),
+            label: d.label || 'User',
+            plotNumber: d.plotNo,
+            plotType: d.plotType,
+            applicationStatusId: statusVal,
+            roleName: roleName,
+            levelId: d.levelId,
+            registrationData: {
+              ...d,
+              status: statusVal,
+              applicationStatusId: statusVal,
+            },
+          };
+        });
         this.buildFilterOptions();
         this.applyFilter();
         this.cdr.detectChanges();
@@ -169,22 +198,34 @@ export class PropertyOwnershipVerification implements OnInit {
       }
     });
   }
+
   getUserRole(): string {
     try {
-      // debugger
       const cpMenus = sessionStorage.getItem('cp_menus');
-
-      if (!cpMenus) {
-        return '';
+      if (cpMenus) {
+        const user = JSON.parse(cpMenus);
+        const role = user?.profile?.roles?.[0] || user?.roles?.[0] || user?.role;
+        if (role) return String(role);
       }
-
-      const user = JSON.parse(cpMenus);
-      return user?.profile?.roles?.[0] || '';
-
     } catch (error) {
-      console.error('Error getting user role:', error);
-      return '';
+      console.error('Error getting user role from cp_menus:', error);
     }
+
+    try {
+      const storedRole = sessionStorage.getItem('role');
+      if (storedRole) return storedRole;
+    } catch (e) { }
+
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const session = JSON.parse(cpSession);
+        const role = session?.role || session?.userRole;
+        if (role) return String(role);
+      }
+    } catch (e) { }
+
+    return '';
   }
   buildFilterOptions(): void {
     this.marketCommitteeList = Array.from(
@@ -247,7 +288,8 @@ export class PropertyOwnershipVerification implements OnInit {
 
       const matchesStatus =
         this.selectedStatus === 'All' ||
-        property.status === this.selectedStatus;
+        property.status === this.selectedStatus ||
+        (this.selectedStatus === 'Objection' && property.status === 'Objected by Senior Assistant');
 
       const matchesBranch =
         this.selectedBranch === 'All' ||
@@ -274,6 +316,8 @@ export class PropertyOwnershipVerification implements OnInit {
   updatePagedList(): void {
     const startIndex = this.pageIndex * this.pageSize;
     this.pagedPropertyList = this.filteredPropertyList.slice(startIndex, startIndex + this.pageSize);
+    // console.log('dta', this.pagedPropertyList);
+
   }
 
   onPageChange(event: PageEvent): void {
@@ -283,11 +327,14 @@ export class PropertyOwnershipVerification implements OnInit {
   }
 
   viewDetails(property: OwnershipPropertyModel): void {
-    // const encryptedId = btoa(property.id.toString());
+    debugger
     this.router.navigate(['/user-verification'], {
-      // queryParams: { id: encryptedId },
-      // state: { registrationData: property.registrationData },
+      queryParams: { id: property.id },
+      state: { registrationData: property.registrationData },
+
     });
+    // console.log('data', property);
+
   }
 
   OpenTotalRegistration(): void {
@@ -319,6 +366,6 @@ export class PropertyOwnershipVerification implements OnInit {
   }
 
   get objectionCount(): number {
-    return this.propertyList.filter(p => p.status === 'Objection').length;
+    return this.propertyList.filter(p => p.status === 'Objection' || p.status === 'Objected by Senior Assistant').length;
   }
 }

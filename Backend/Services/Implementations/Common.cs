@@ -2,11 +2,14 @@ using Backend.Data;
 using Backend.Helpers;
 using Backend.Models.Dtos;
 using Backend.Models.DTOs;
+using Backend.Models.Settings;
 using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
+using System.Runtime;
 using System.Windows.Input;
 using static Azure.Core.HttpHeader;
 using static Backend.Models.Dtos.DistrictMasterDto;
@@ -17,10 +20,14 @@ namespace Backend.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
-        public Common(ApplicationDbContext context, IConfiguration config)
+        private readonly FileUploadSettings _settings;
+
+        public Common(ApplicationDbContext context, IConfiguration config, IOptions<FileUploadSettings> settings)
         {
             _context = context;
             _config = config;
+            _settings = settings.Value;
+
         }
 
         public async Task<ApiResponse<List<StateDto>>> GetAllStates()
@@ -575,7 +582,7 @@ namespace Backend.Services.Implementations
                     return ApiResponse<UserProfileImageDto>.Fail("Profile photograph path not found.");
                 }
 
-                var rootPath = @"D:\ColonizationDocuments";
+                var rootPath = _settings.RootPath;
 
                 relativePath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);
 
@@ -584,7 +591,7 @@ namespace Backend.Services.Implementations
                 if (!File.Exists(filePath))
                 {
                     return ApiResponse<UserProfileImageDto>.Fail(
-                        $"Profile photograph file not found. Path: {filePath}");
+                        $"Profile photograph file not found.");
                 }
 
                 var fileData = await File.ReadAllBytesAsync(filePath);
