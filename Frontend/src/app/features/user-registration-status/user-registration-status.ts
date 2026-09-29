@@ -47,32 +47,6 @@ export class UserRegistrationStatus implements OnInit {
   }
 
   getRegistrationList(): void {
-    this._service.GetAllRegisterPropertyById().subscribe({
-      next: (res: any) => {
-        if (res?.data && Array.isArray(res.data)) {
-          this.registrationList = res.data.map((item: any) => ({
-            allotteeCode: item.allotteeCode,
-            allotteeName: item.allotteeName,
-            approvalStatus: item.applicationStatusName,
-            remarks: item.remarks
-          }));
-        } else {
-          this.registrationList = [];
-        }
-
-        this.applyFilters();
-        this.updatePagedList();
-        this.cdr.detectChanges();
-      },
-
-      error: (err) => {
-        console.error('Error loading registration list:', err);
-        this.registrationList = [];
-        this.filteredList = [];
-        this.pagedPropertyList = [];
-        this.cdr.detectChanges();
-      }
-    });
   }
 
   onFilterChange(): void {
