@@ -502,9 +502,10 @@ namespace Backend.Services.Implementations
                     LastName = applicationUser.LastName,
                     Email = applicationUser.Email,
                     MobileNo = applicationUser.MobileNo,
-                    FatherHusbandFirstName = applicationUser.FirstName,
-                    MotherFirstName = applicationUser.FirstName,
-
+                    FatherHusbandFirstName = applicationUser.FatherHusbandFirstName,
+                    FatherHusbandLastName = applicationUser.FatherHusbandLastName,
+                    MotherFirstName = applicationUser.MotherFirstName,
+                    MotherLastName = applicationUser.MotherLastName,
                     IndividualStateId = applicationUser.IndividualStateId,
                     IndividualDistrictId = applicationUser.IndividualDistrictId,
                     IndividualCityId = applicationUser.IndividualCityId,
