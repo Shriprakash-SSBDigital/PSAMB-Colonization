@@ -42,6 +42,7 @@ export class Profile implements OnInit {
   isUploading = false;
   uploadedPhotoFileName = '';
   uploadedDocumentId: number = 0;
+  profileSessionId: string = '';
   email: string = '';
   userName = '';
   isLoadingProfile = false;
@@ -66,6 +67,7 @@ export class Profile implements OnInit {
     this.initialFormState = this.profileForm.getRawValue();
     this.loadProfileFromApi();
     this.openChangePasswordMenu();
+    this.getProfileImage();
   }
 
   private buildProfileForm(): void {
@@ -83,6 +85,8 @@ export class Profile implements OnInit {
         '',
         [Validators.pattern(/^[0-9]{10}$/)]
       ],
+      fatherName: ['', [Validators.required]],
+      motherName: ['', [Validators.required]],
       address: ['', [Validators.required]],
       city: ['', [Validators.required]],
       district: ['', [Validators.required]],
@@ -136,10 +140,20 @@ export class Profile implements OnInit {
 
         this.email = d.email ?? '';
 
+        const fatherName = [d.fatherHusbandFirstName, d.fatherHusbandLastName]
+          .filter((n: string) => n && n.trim())
+          .join(' ');
+
+        const motherName = [d.motherFirstName, d.motherLastName]
+          .filter((n: string) => n && n.trim())
+          .join(' ');
+
         this.profileForm.patchValue({
           name: fullName,
           email: d.email ?? '',
           mobile: d.mobileNo ?? '',
+          fatherName: fatherName,
+          motherName: motherName,
           address: d.individualPlotStreetLandmark ?? '',
           state: d.stateName ?? '',
           district: d.districtName ?? '',
@@ -182,7 +196,7 @@ export class Profile implements OnInit {
         documentCategoryId: 1,
         documentTypeId: 0,
         documentNumber: '',
-        sessionId: 'a7e6d175-7bbd-4a7f-9d65-7a3e37415be2'
+        sessionId: this.profileSessionId
       };
 
       this.isUploading = true;
@@ -334,6 +348,21 @@ export class Profile implements OnInit {
           email: this.email,
           mobile: profile.phoneNumber ?? profile.mobileNo ?? ''
         }, { emitEvent: false });
+      }
+    });
+  }
+
+  //get profile image 
+
+  getProfileImage(): void {
+    this.commonService.GetProfileImageByUserId().subscribe({
+      next: (response: any) => {
+        this.avatarUrl = response?.url ?? response?.data?.url ?? '';
+        this.profileSessionId = response?.sessionId ?? response?.data?.sessionId ?? '';
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching profile image:', err);
       }
     });
   }

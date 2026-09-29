@@ -634,7 +634,8 @@ export class PropertyBalanceCalculate implements OnInit {
           sizeOfPlot: '',
           plotType: '',
           allotmentDate: '',
-          allotmentAmount: 0,
+          // allotmentAmount: 0,
+          finalBidPrice: 0,
           auctionDate: ''
         },
         initialDeposits: [],
@@ -736,7 +737,8 @@ export class PropertyBalanceCalculate implements OnInit {
         sizeOfPlot: d.plotSize ?? '',
         plotType: plotTypeName,
         allotmentDate: this.formatDate(d.allotmentDate),
-        allotmentAmount: Number(d.allotmentAmount) || 0,
+        // allotmentAmount: Number(d.allotmentAmount) || 0,
+        finalBidPrice: Number(d.finalBidPrice) || 0,
         auctionDate: this.formatDate(d.auctionDate)
       },
       initialDeposits: initialDeposit ? [initialDeposit] : [],

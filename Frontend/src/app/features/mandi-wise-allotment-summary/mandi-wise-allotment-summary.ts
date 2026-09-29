@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
+import { ChangeDetectorRef } from '@angular/core';
 
 export interface LookupItem {
   id: number;
@@ -38,6 +40,10 @@ export class MandiWiseAllotmentSummary implements OnInit {
   committees: LookupItem[] = [];
   mandis: LookupItem[] = [];
 
+  isLoadingDistricts = false;
+  isLoadingCommittees = false;
+  isLoadingMandis = false;
+
   rows: AllotmentRow[] = [];
   searched = false;
   loading = false;
@@ -48,27 +54,105 @@ export class MandiWiseAllotmentSummary implements OnInit {
   sortKey: SortKey | null = null;
   sortAsc = true;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private propertyService: Propertybidderregn
+  ) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
       districtId: [null, Validators.required],
-      branchId: [{ value: null, disabled: true }, Validators.required],
-      mandiId: [{ value: null, disabled: true }, Validators.required],
+      branchId: [{ value: null, disabled: true }],
+      mandiId: [{ value: null, disabled: true }],
     });
 
-    this.districts = [
-      { id: 1, name: 'Ludhiana' },
-      { id: 2, name: 'Amritsar' },
-      { id: 3, name: 'Patiala' },
-      { id: 4, name: 'Jalandhar' },
-      { id: 5, name: 'Bathinda' },
-      { id: 6, name: 'Sangrur' },
-    ];
+    this.loadDistricts();
+  }
+
+  loadDistricts(): void {
+    this.isLoadingDistricts = true;
+    this.cdr.detectChanges();
+    this.propertyService.getPropertyDistricts().subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.districts = Array.isArray(list)
+          ? list.map((d: any) => ({
+              id: Number(d.districtId ?? d.DistrictId ?? d.id),
+              name: d.districtName ?? d.DistrictName ?? d.name ?? '',
+            }))
+          : [];
+        this.isLoadingDistricts = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching property districts:', err);
+        this.districts = [];
+        this.isLoadingDistricts = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadMarketCommittees(districtId: number): void {
+    this.isLoadingCommittees = true;
+    const branchCtrl = this.form.get('branchId');
+    branchCtrl?.disable({ emitEvent: false });
+    this.cdr.detectChanges();
+    this.propertyService.getPropertyBranches(districtId).subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.committees = Array.isArray(list)
+          ? list.map((c: any) => ({
+              id: Number(c.branchId ?? c.BranchId ?? c.marketCommitteeId ?? c.MarketCommitteeId ?? c.id),
+              name: c.branchName ?? c.BranchName ?? c.marketCommitteeName ?? c.MarketCommitteeName ?? c.name ?? '',
+            }))
+          : [];
+        this.isLoadingCommittees = false;
+        branchCtrl?.enable({ emitEvent: false });
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching market committees:', err);
+        this.committees = [];
+        this.isLoadingCommittees = false;
+        branchCtrl?.enable({ emitEvent: false });
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadMandis(branchId: number): void {
+    this.isLoadingMandis = true;
+    const mandiCtrl = this.form.get('mandiId');
+    mandiCtrl?.disable({ emitEvent: false });
+    this.cdr.detectChanges();
+    this.propertyService.getPropertyMandis(branchId).subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.mandis = Array.isArray(list)
+          ? list.map((m: any) => ({
+              id: Number(m.mandiId ?? m.MandiId ?? m.id),
+              name: m.mandiName ?? m.MandiName ?? m.name ?? '',
+            }))
+          : [];
+        this.isLoadingMandis = false;
+        mandiCtrl?.enable({ emitEvent: false });
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching mandis:', err);
+        this.mandis = [];
+        this.isLoadingMandis = false;
+        mandiCtrl?.enable({ emitEvent: false });
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   onDistrictChange(): void {
-    const districtId = Number(this.form.get('districtId')!.value);
+    const districtVal = this.form.get('districtId')?.value;
+    const districtId = districtVal ? Number(districtVal) : null;
     const branch = this.form.get('branchId')!;
     const mandi = this.form.get('mandiId')!;
 
@@ -80,20 +164,20 @@ export class MandiWiseAllotmentSummary implements OnInit {
 
     if (!districtId) {
       branch.disable();
+      this.rows = [];
+      this.searched = false;
+      this.cdr.detectChanges();
       return;
     }
 
-    const district = this.districts.find((d) => d.id === districtId)!;
-    this.committees = [
-      { id: 11, name: `${district.name} Market Committee` },
-      { id: 12, name: `${district.name} Rural Committee` },
-      { id: 13, name: `${district.name} City Committee` },
-    ];
-    branch.enable();
+    this.loadMarketCommittees(districtId);
+    this.updateData();
+    this.cdr.detectChanges();
   }
 
   onCommitteeChange(): void {
-    const branchId = Number(this.form.get('branchId')!.value);
+    const branchVal = this.form.get('branchId')?.value;
+    const branchId = branchVal ? Number(branchVal) : null;
     const mandi = this.form.get('mandiId')!;
 
     this.mandis = [];
@@ -101,52 +185,77 @@ export class MandiWiseAllotmentSummary implements OnInit {
 
     if (!branchId) {
       mandi.disable();
+      this.updateData();
+      this.cdr.detectChanges();
       return;
     }
 
-    this.mandis = [
-      { id: 101, name: 'Grain Market Mandi' },
-      { id: 102, name: 'New Sabzi Mandi' },
-      { id: 103, name: 'Focal Point Mandi' },
-    ];
-    mandi.enable();
+    this.loadMandis(branchId);
+    this.updateData();
+    this.cdr.detectChanges();
+  }
+
+  onMandiChange(): void {
+    this.updateData();
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.updateData();
+    this.cdr.detectChanges();
+  }
+
+  updateData(): void {
+    const filters = this.form.getRawValue();
+    const districtId = filters.districtId ? Number(filters.districtId) : null;
+    const branchId = filters.branchId ? Number(filters.branchId) : null;
+    const mandiId = filters.mandiId ? Number(filters.mandiId) : null;
+
+    if (!districtId) {
+      this.rows = [];
+      this.searched = false;
+      this.loading = false;
+      this.cdr.detectChanges();
       return;
     }
 
     this.loading = true;
-    const filters = this.form.getRawValue();
+    this.cdr.detectChanges();
 
     setTimeout(() => {
-      this.rows = this.mockRows(Number(filters.districtId), Number(filters.mandiId));
+      this.rows = this.mockRows(districtId, branchId, mandiId);
       this.searched = true;
       this.pageIndex = 0;
       this.sortKey = null;
       this.loading = false;
-    }, 400);
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   onReset(): void {
     this.form.reset({ districtId: null, branchId: null, mandiId: null });
-    this.form.get('branchId')!.disable();
-    this.form.get('mandiId')!.disable();
+    this.form.get('branchId')?.disable();
+    this.form.get('mandiId')?.disable();
     this.committees = [];
     this.mandis = [];
     this.rows = [];
     this.searched = false;
     this.pageIndex = 0;
     this.sortKey = null;
+    this.cdr.detectChanges();
   }
-
 
   sortBy(key: SortKey): void {
     this.sortAsc = this.sortKey === key ? !this.sortAsc : true;
     this.sortKey = key;
     this.pageIndex = 0;
+    this.cdr.detectChanges();
   }
 
   private get sortedRows(): AllotmentRow[] {
@@ -169,6 +278,7 @@ export class MandiWiseAllotmentSummary implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
+    this.cdr.detectChanges();
   }
 
 
@@ -182,7 +292,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
   }
 
   get selectedMandiName(): string {
-    const id = Number(this.form.get('mandiId')!.value);
+    const val = this.form.get('mandiId')?.value;
+    if (!val) return '';
+    const id = Number(val);
     return this.mandis.find((m) => m.id === id)?.name ?? '';
   }
 
@@ -190,21 +302,25 @@ export class MandiWiseAllotmentSummary implements OnInit {
 
   skeletonRows = Array.from({ length: 6 });
 
-  private mockRows(districtId: number, mandiId: number): AllotmentRow[] {
-    const district = this.districts.find((d) => d.id === districtId)?.name ?? '';
-    const mandi = this.mandis.find((m) => m.id === mandiId)?.name ?? '';
-    return Array.from({ length: 13 }, (_, i) => ({
-      alloteeCode: `ALT-${1000 + i}`,
-      name: ['Gurpreet Singh', 'Manjit Kaur', 'Harnek Singh', 'Simran Kaur'][i % 4],
+  private mockRows(districtId: number, branchId?: number | null, mandiId?: number | null): AllotmentRow[] {
+    const district = this.districts.find((d) => d.id === districtId)?.name ?? 'District';
+    const committee = this.committees.find((c) => c.id === branchId)?.name;
+    const mandi = this.mandis.find((m) => m.id === mandiId)?.name;
+
+    const baseMandi = mandi || (committee ? `${committee} Mandi` : `${district} Mandi`);
+
+    return Array.from({ length: 12 }, (_, i) => ({
+      alloteeCode: `ALT-${districtId}${branchId ? `-${branchId}` : ''}-${1000 + i}`,
+      name: ['Gurpreet Singh', 'Manjit Kaur', 'Harnek Singh', 'Simran Kaur', 'Rajwinder Singh', 'Jaspreet Kaur'][i % 6],
       district,
-      mandi,
+      mandi: mandi || `${baseMandi} - ${(i % 3) + 1}`,
       plotType: i % 2 ? 'Commercial' : 'Residential',
       plotNo: `P-${i + 1}`,
-      plotSize: `${100 + i * 5} sq yd`,
+      plotSize: `${100 + i * 10} sq yd`,
       auctionDate: '12-03-2025',
       allotmentDate: '28-03-2025',
-      allotmentNo: `ALM/2025/${i + 1}`,
-      allotmentPrice: 850000 + i * 25000,
+      allotmentNo: `ALM/2025/${100 + i}`,
+      allotmentPrice: 850000 + i * 35000,
     }));
   }
 }

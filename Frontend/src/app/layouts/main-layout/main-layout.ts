@@ -82,6 +82,7 @@ export class MainLayout {
       '/mandi-wise-allotment-summary',
       '/plot-wise-consolidate-details',
       '/property-ownership-verification',
+      '/application-status',
     ];
     return dashboardRoutes.some(
       (route) =>
