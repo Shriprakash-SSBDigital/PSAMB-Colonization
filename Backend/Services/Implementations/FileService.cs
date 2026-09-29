@@ -1,4 +1,4 @@
-﻿using Backend.Data;
+using Backend.Data;
 using Backend.Helpers;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
@@ -68,6 +68,7 @@ namespace Backend.Services.Implementations
                 DocumentCategory.Photograph => "Photograph",
                 DocumentCategory.IdentityProof => "IdentityProof",
                 DocumentCategory.AddressProof => "AddressProof",
+                DocumentCategory.PropertyDocument => "PropertyDocument",
                 _ => throw new ArgumentException("Invalid document category.")
             };
 
@@ -178,6 +179,22 @@ namespace Backend.Services.Implementations
                     4 => "RentAgreement",
                     5 => "RegistyDeed",   // aapke folder screenshot mein isi spelling se hai
                     _ => throw new ArgumentException("Invalid address document type.")
+                };
+            }
+
+            if (categoryId == (int)DocumentCategory.PropertyDocument)
+            {
+                return documentTypeId switch
+                {
+                    1 => "AllotmentLetter",
+                    2 => "LastPaymentReceipt",
+                    3 => "NoDueCertificate",
+                    4 => "BForm",
+                    5 => "ConveyanceDeed",
+                    6 => "SaleDeed",
+                    7 => "TransferOrder",
+                    8 => "LegalHeirCertificate",
+                    _ => throw new ArgumentException("Invalid property document type.")
                 };
             }
 

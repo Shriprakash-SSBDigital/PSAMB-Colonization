@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Backend.Models.DTOs
 {
@@ -34,6 +34,25 @@ namespace Backend.Models.DTOs
         public string? MandiName { get; set; }
         public string? PlotType { get; set; }
 
+        public string? OwnerStateName { get; set; }
+        public string? OwnerDistrtictName { get; set; }
+        public string? OwnerCityName { get; set; }
+        public string? Remarks { get; set; }
+        public string? LevelId { get; set; }
+
+        // Uploaded Documents
+        public string? UploadAllotmentLetter { get; set; }
+        public string? ReceiptDocument { get; set; }
+        public string? UploadNoDuesCertificate { get; set; }
+        public string? BForm { get; set; }
+        public string? ConveyanceDeed { get; set; }
+        public string? SaleDeed { get; set; }
+        public string? TransferOrder { get; set; }
+        public string? Upload1 { get; set; }
+        public string? Upload2 { get; set; }
+
+        public string? SessionId { get; set; }
+        public List<int>? DocumentIds { get; set; }
     }
 
     public class PlotSizesDto

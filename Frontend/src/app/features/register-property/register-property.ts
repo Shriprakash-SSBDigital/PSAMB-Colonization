@@ -6,6 +6,7 @@ import { forkJoin, finalize } from 'rxjs';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { Userservice } from '../../core/service/UserService/userservice';
 import { Common } from '../../core/service/CommonService/common';
+import { FileService, FileUploadPayload } from '../../core/service/FileService/file-service';
 
 @Component({
   selector: 'app-register-property',
@@ -68,11 +69,28 @@ export class RegisterProperty implements OnInit {
   addrDocPath: string | null = null;
   propertyTypes: any[] = [];
 
+  sessionId: string = crypto.randomUUID();
+
+  readonly documentTypeMap: Record<string, number> = {
+    allotmentLetter: 1,
+    lastPaymentReceipt: 2,
+    noDueCertificate: 3,
+    bForm: 4,
+    conveyanceDeed: 5,
+    saleDeed: 6,
+    transferOrder: 7,
+    legalHeirCertificate: 8,
+  };
+
+  uploadingStates: Record<string, boolean> = {};
+  uploadedDocData: Record<string, { userDocumentId: number; storedFileName: string; relativePath: string; fileUrl: string }> = {};
+
   constructor(
     private fb: FormBuilder,
     private service: Propertybidderregn,
     private userService: Userservice,
     private commonService: Common,
+    private fileService: FileService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
@@ -1132,6 +1150,12 @@ export class RegisterProperty implements OnInit {
   }
 
   viewDocument(filePath?: string | null, controlName?: string) {
+    if (controlName) {
+      const docKey = controlName.replace(/File$/, '');
+      if (this.uploadedDocData[docKey]?.relativePath) {
+        filePath = this.uploadedDocData[docKey].relativePath;
+      }
+    }
     const file = controlName ? (this.propertyForm.get(controlName)?.value as File | null) : null;
     if (file && file instanceof File) {
       const fileUrl = URL.createObjectURL(file);
@@ -1185,7 +1209,8 @@ export class RegisterProperty implements OnInit {
     return file?.name ?? 'No file chosen';
   }
 
-  onFileChange(event: Event, controlName: string): void {
+  onFileChange(event: Event, controlName: string, docKey?: string): void {
+    // debugger
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     const control = this.propertyForm.get(controlName);
@@ -1193,10 +1218,65 @@ export class RegisterProperty implements OnInit {
     control?.setValue(file);
     control?.markAsDirty();
     control?.updateValueAndValidity();
+
+    if (!docKey && controlName.endsWith('File')) {
+      docKey = controlName.replace(/File$/, '');
+    }
+
+    if (file && docKey && this.documentTypeMap[docKey]) {
+      const selectedControl = this.propertyForm.get(`${docKey}Selected`);
+      if (selectedControl && !selectedControl.value) {
+        selectedControl.setValue(true);
+      }
+
+      this.uploadingStates[docKey] = true;
+      const typeId = this.documentTypeMap[docKey];
+
+      const payload: FileUploadPayload = {
+        file,
+        documentCategoryId: 4, // Property Document
+        documentTypeId: typeId,
+        documentNumber: '',
+        sessionId: this.sessionId,
+      };
+
+      this.fileService.UploadFile(payload).subscribe({
+        next: (response) => {
+          this.uploadingStates[docKey!] = false;
+          if (response?.success && response?.data) {
+            this.uploadedDocData[docKey!] = {
+              userDocumentId: response.data.userDocumentId,
+              storedFileName: response.data.storedFileName,
+              relativePath: response.data.relativePath,
+              fileUrl: response.data.fileUrl || response.data.relativePath,
+            };
+            const docLabel = this.documents.find(d => d.key === docKey)?.label || 'Document';
+            this.toastr.success(`${docLabel} uploaded successfully.`, 'Upload Success');
+          } else {
+            this.toastr.error(response?.message || 'File upload failed.', 'Upload Error');
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.uploadingStates[docKey!] = false;
+          const msg = err?.error?.message || err?.message || 'Failed to upload document.';
+          this.toastr.error(msg, 'Upload Error');
+          this.cdr.detectChanges();
+        }
+      });
+    } else if (!file && docKey) {
+      delete this.uploadedDocData[docKey];
+    }
   }
 
   onSubmit(): void {
-    //debugger
+    // Check if any file is currently uploading
+    const isAnyUploading = Object.values(this.uploadingStates).some(state => state);
+    if (isAnyUploading) {
+      this.toastr.info('Please wait, documents are still being uploaded.', 'Uploading');
+      return;
+    }
+
     if (this.propertyForm.invalid) {
       this.propertyForm.markAllAsTouched();
       this.toastr.warning('Please fill in all required fields and upload at least one document.', 'Validation Error');
@@ -1204,6 +1284,13 @@ export class RegisterProperty implements OnInit {
     }
 
     const formValue = this.propertyForm.value;
+
+    const uploadedIds: number[] = [];
+    Object.keys(this.uploadedDocData).forEach(k => {
+      if (this.uploadedDocData[k]?.userDocumentId) {
+        uploadedIds.push(this.uploadedDocData[k].userDocumentId);
+      }
+    });
 
     const payload: any = {
       districtId: Number(formValue.districtId),
@@ -1225,7 +1312,20 @@ export class RegisterProperty implements OnInit {
       propertyCode: formValue.allotteeCode || this.propertyData?.propertyCode || this.propertyData?.allotteeCode || '',
       applicantId: this.getApplicantId(),
       planId: this.propertyData?.planId || null,
-      verificationUserEndStatusId: 1
+      verificationUserEndStatusId: 1,
+
+      // Document flags: '1' = uploaded, '0' = not uploaded
+      uploadAllotmentLetter: (formValue.allotmentLetterSelected && (this.uploadedDocData['allotmentLetter'] || formValue.allotmentLetterFile)) ? '1' : '0',
+      receiptDocument: (formValue.lastPaymentReceiptSelected && (this.uploadedDocData['lastPaymentReceipt'] || formValue.lastPaymentReceiptFile)) ? '1' : '0',
+      uploadNoDuesCertificate: (formValue.noDueCertificateSelected && (this.uploadedDocData['noDueCertificate'] || formValue.noDueCertificateFile)) ? '1' : '0',
+      bForm: (formValue.bFormSelected && (this.uploadedDocData['bForm'] || formValue.bFormFile)) ? '1' : '0',
+      conveyanceDeed: (formValue.conveyanceDeedSelected && (this.uploadedDocData['conveyanceDeed'] || formValue.conveyanceDeedFile)) ? '1' : '0',
+      saleDeed: (formValue.saleDeedSelected && (this.uploadedDocData['saleDeed'] || formValue.saleDeedFile)) ? '1' : '0',
+      transferOrder: (formValue.transferOrderSelected && (this.uploadedDocData['transferOrder'] || formValue.transferOrderFile)) ? '1' : '0',
+      upload1: (formValue.legalHeirCertificateSelected && (this.uploadedDocData['legalHeirCertificate'] || formValue.legalHeirCertificateFile)) ? '1' : '0',
+
+      sessionId: this.sessionId,
+      documentIds: uploadedIds
     };
 
     this.isSubmitting = true;
@@ -1298,6 +1398,9 @@ export class RegisterProperty implements OnInit {
     this.panDocPath = null;
     this.passportDocPath = null;
     this.addrDocPath = null;
+    this.sessionId = crypto.randomUUID();
+    this.uploadedDocData = {};
+    this.uploadingStates = {};
   }
 
   private fileTypeValidator(): ValidatorFn {

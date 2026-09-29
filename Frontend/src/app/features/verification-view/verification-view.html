@@ -4,7 +4,7 @@
       <div class="d-flex align-items-center flex-wrap gap-2">
         <h5 class="mb-0 text-white fw-bold fs-5">Property Ownership Verification</h5>
         <span class="badge rounded-pill px-3 py-2 fw-semibold shadow-sm" [ngClass]="verificationStatusClass">
-          {{ verificationStatus | titlecase }}
+          {{ displayStatusText || (verificationStatus | titlecase) }}
         </span>
       </div>
 
@@ -188,6 +188,18 @@
             <i class="fa-solid fa-circle-check me-1" *ngIf="!submitting || activeDecision !== 'approve'"></i>
             <span>Approve Property</span>
           </button>
+        </div>
+
+        <!-- API Success Message -->
+        <div class="alert alert-success d-flex align-items-center gap-2 mt-3 mb-0 rounded-3" *ngIf="apiSuccess">
+          <i class="fa-solid fa-circle-check fs-5"></i>
+          <span>{{ apiSuccess }}</span>
+        </div>
+
+        <!-- API Error Message -->
+        <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 mb-0 rounded-3" *ngIf="apiError">
+          <i class="fa-solid fa-circle-exclamation fs-5"></i>
+          <span>{{ apiError }}</span>
         </div>
 
         <!-- confirm dialog -->

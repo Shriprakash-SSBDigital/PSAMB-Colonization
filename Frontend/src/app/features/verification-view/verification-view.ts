@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ConfirmationService } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { Userservice } from '../../core/service/UserService/userservice';
 
 export interface UploadedDocument {
   key: string;
@@ -31,15 +33,15 @@ type DecisionType = 'approve' | 'sendback' | null;
   standalone: false,
   templateUrl: './verification-view.html',
   styleUrl: './verification-view.scss',
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, MessageService],
 })
 export class VerificationView implements OnInit {
-  // ---- Header info (empty by default, to be set when new API is integrated) ----
+  // ---- Header info ----
   propertyCode = '—';
   submittedOn = '—';
   verificationStatus: VerificationStatus = 'pending';
 
-  // ---- Property Details (Clean placeholders without fake data) ----
+  // ---- Property Details ----
   propertyDetails: DataField[] = [
     { label: 'District', value: '—' },
     { label: 'Market Committee', value: '—' },
@@ -49,7 +51,7 @@ export class VerificationView implements OnInit {
     { label: 'Plot Size', value: '—' },
   ];
 
-  // ---- Owner Information (Clean placeholders without fake data) ----
+  // ---- Owner Information ----
   ownerDetails: DataField[] = [
     { label: 'Current Owner Name', value: '—' },
     { label: "Father's / Husband Name", value: '—' },
@@ -77,7 +79,7 @@ export class VerificationView implements OnInit {
     },
   ];
 
-  // ---- Uploaded Documents list (All set to not uploaded, ready for real API) ----
+  // ---- Uploaded Documents list ----
   documents: UploadedDocument[] = [
     { key: 'allotmentLetter', label: 'Allotment Letter', fileName: null, fileUrl: null, uploaded: false },
     { key: 'lastPaymentReceipt', label: 'Last Payment Receipt', hint: 'Any one from last three receipts', fileName: null, fileUrl: null, uploaded: false },
@@ -96,18 +98,171 @@ export class VerificationView implements OnInit {
   activeDecision: DecisionType = null;
   showValidationHint = false;
   remarksReadOnly = '';
+  displayStatusText = '';
   previewDoc: UploadedDocument | null = null;
   copiedField: string | null = null;
 
+  // Populated from router state / queryParams
+  private propertyId: number | null = null;
+  private userRole = '';
+  apiError = '';
+  apiSuccess = '';
+
   constructor(
     private fb: FormBuilder,
-    private confirmationService: ConfirmationService
-  ) {}
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService,
+    private userService: Userservice,
+    private route: ActivatedRoute,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.decisionForm = this.fb.group({
       decision: [null, Validators.required],
       remarks: [''],
+    });
+
+    // ✅ Role pehle set karo — bindData ke andar status mapping role use karti hai
+    this.userRole = this.getUserRole();
+
+    // Read data passed via router state (from viewDetails click)
+    const nav = this.router.getCurrentNavigation();
+    const state = nav?.extras?.state as { registrationData?: any } | undefined;
+    const data = state?.registrationData ?? history.state?.registrationData;
+
+    if (data) {
+      this.propertyId = data.id ?? null;
+      this.bindData(data);
+    }
+
+    // Also read id from queryParams as fallback
+    this.route.queryParams.subscribe(params => {
+      if (!this.propertyId && params['id']) {
+        this.propertyId = Number(params['id']);
+      }
+    });
+  }
+
+  private bindData(d: any): void {
+    // Header
+    this.propertyCode = d.propertyCode || '—';
+    this.submittedOn = d.createdDate
+      ? new Date(d.createdDate).toLocaleDateString('en-IN')
+      : '—';
+
+    // Status mapping — role-aware (mirrors list page mapStatus logic)
+    const statusVal = d.status != null ? d.status : d.applicationStatusId;
+    const statusId = statusVal != null ? Number(statusVal) : null;
+    const role = this.userRole.trim().toLowerCase().replace('_', ' ');
+
+    this.remarksReadOnly = d.remarks || d.objectionRemarks || '';
+    const lvl = (d.levelId || '').trim().toLowerCase().replace('_', ' ');
+
+    if (statusId === 7) {
+      this.verificationStatus = 'objection';
+      if (role.includes('clerk') && lvl.includes('senior assistant')) {
+        this.displayStatusText = 'Objected by Senior Assistant';
+      } else {
+        this.displayStatusText = 'Objection';
+      }
+    } else if (role.includes('senior assistant')) {
+      // SA: status=2 means clerk approved, SA must still act → pending
+      // status=3/4 means SA already approved → verified
+      this.verificationStatus = (statusId === 3 || statusId === 4) ? 'verified' : 'pending';
+      this.displayStatusText = (statusId === 3 || statusId === 4) ? 'Verified' : 'Pending';
+    } else if (role.includes('clerk')) {
+      // Clerk: status=2 means clerk already approved → verified
+      this.verificationStatus = (statusId === 2 || statusId === 3 || statusId === 4) ? 'verified' : 'pending';
+      this.displayStatusText = (statusId === 2 || statusId === 3 || statusId === 4) ? 'Verified' : 'Pending';
+    } else {
+      this.verificationStatus = (statusId === 2 || statusId === 3 || statusId === 4) ? 'verified' : 'pending';
+      this.displayStatusText = (statusId === 2 || statusId === 3 || statusId === 4) ? 'Verified' : 'Pending';
+    }
+
+    // Property Details
+    this.propertyDetails = [
+      { label: 'District', value: d.districtName || '—' },
+      { label: 'Market Committee', value: d.branchName || '—' },
+      { label: 'Mandi', value: d.mandiName || '—' },
+      { label: 'Plot Type', value: d.plotType || '—' },
+      { label: 'Plot Number', value: d.plotNo?.toString() || '—', copyable: false },
+      { label: 'Plot Size', value: d.plotSize?.toString() || '—' },
+    ];
+
+    // Owner Information
+    // Aadhaar: API already returns it masked (e.g. "XXXXXXXX 6545"), display as-is
+    const rawAadhaar = d.aadhaarNumber || d.aadhaarNo || '';
+    const aadhaarDisplay = rawAadhaar.trim() !== '' ? rawAadhaar.trim() : '—';
+
+    // PAN: treat empty string as missing
+    const rawPan = d.panNumber || d.panNo || '';
+    const panDisplay = rawPan.trim() !== '' ? rawPan.trim() : '—';
+
+    this.ownerDetails = [
+      { label: 'Current Owner Name', value: d.currentOwnerName || '—' },
+      { label: "Father's / Husband Name", value: d.fatherHusbandName || d.fatherName || '—' },
+      { label: 'Mobile Number', value: d.mobileNumber || d.mobileNo || d.mobile || '—', copyable: false, isPhone: false },
+      { label: 'Email', value: d.email || d.emailId || '—', copyable: false, isEmail: false },
+      { label: 'State', value: d.ownerStateName || d.stateName || '—' },
+      { label: 'District', value: d.ownerDistrtictName || d.ownerDistrictName || '—' },
+      { label: 'City', value: d.ownerCityName || d.cityName || '—' },
+      { label: 'Address', value: d.address || d.permanentAddress || '—', fullWidth: true },
+      {
+        label: 'Aadhaar Number',
+        value: aadhaarDisplay,
+        maskedValue: aadhaarDisplay,  // already masked by server
+        isMasked: false,
+        isSecret: false,
+        copyable: false,
+      },
+      {
+        label: 'PAN No.',
+        value: panDisplay,
+        maskedValue: panDisplay,
+        isMasked: false,
+        isSecret: false,
+        copyable: false,
+      },
+    ];
+
+    const isDocUploaded = (val: any) => val === 1 || val === '1' || val === true || val === 'true' || (typeof val === 'string' && val.trim().length > 0 && val !== '0' && val !== 'false');
+
+    this.documents.forEach(doc => {
+      let isUploaded = false;
+      switch (doc.key) {
+        case 'allotmentLetter':
+          isUploaded = isDocUploaded(d.uploadAllotmentLetter ?? d.UploadAllotmentLetter);
+          break;
+        case 'lastPaymentReceipt':
+          isUploaded = isDocUploaded(d.receiptDocument ?? d.ReceiptDocument);
+          break;
+        case 'noDueCertificate':
+          isUploaded = isDocUploaded(d.uploadNoDuesCertificate ?? d.UploadNoDuesCertificate);
+          break;
+        case 'bForm':
+          isUploaded = isDocUploaded(d.bForm ?? d.BForm);
+          break;
+        case 'conveyanceDeed':
+          isUploaded = isDocUploaded(d.conveyanceDeed ?? d.ConveyanceDeed);
+          break;
+        case 'saleDeed':
+          isUploaded = isDocUploaded(d.saleDeed ?? d.SaleDeed);
+          break;
+        case 'transferOrder':
+          isUploaded = isDocUploaded(d.transferOrder ?? d.TransferOrder);
+          break;
+        case 'legalHeirCertificate':
+          isUploaded = isDocUploaded(d.upload1 ?? d.Upload1);
+          break;
+        case 'aadhaarProof':
+          isUploaded = isDocUploaded(d.aadhaarProof ?? d.idProofDoc ?? d.IdProofDoc);
+          break;
+        case 'passportProof':
+          isUploaded = isDocUploaded(d.passportProof ?? d.passportDocument ?? d.PassportDocument);
+          break;
+      }
+      doc.uploaded = isUploaded;
     });
   }
 
@@ -186,30 +341,140 @@ export class VerificationView implements OnInit {
 
   handleApprove(): void {
     this.onDecisionChange('approve');
+    this.apiError = '';
+    this.apiSuccess = '';
 
     this.confirmationService.confirm({
       header: 'Confirm Approval',
-      message:
-        'Are you sure you want to approve this property ownership verification? This action cannot be undone.',
+      message: 'Are you sure you want to approve this property ownership verification? This action cannot be undone.',
       icon: 'fa-solid fa-circle-question text-success fs-4 me-2',
       acceptLabel: 'Yes, Approve',
       rejectLabel: 'Cancel',
       acceptButtonStyleClass: 'btn btn-success px-3',
       rejectButtonStyleClass: 'btn btn-outline-secondary px-3',
       accept: () => {
-        // Ready for your new approval API call here
-        console.log('Approve confirmed');
+        this.callVerifyApi('approve', '');
       },
     });
   }
 
   handleSendBack(): void {
+    debugger
     this.onDecisionChange('sendback');
+    this.apiError = '';
+    this.apiSuccess = '';
+
     if (this.remarksControl.invalid) {
       this.showValidationHint = true;
       return;
     }
-    // Ready for your new send-back API call here
-    console.log('Send back submitted with remarks:', this.remarksControl.value);
+
+    this.confirmationService.confirm({
+      header: 'Confirm Send Back',
+      message: 'Are you sure you want to send this back to the user?',
+      icon: 'fa-solid fa-circle-question text-warning fs-4 me-2',
+      acceptLabel: 'Yes, Send Back',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'btn btn-warning px-3',
+      rejectButtonStyleClass: 'btn btn-outline-secondary px-3',
+      accept: () => {
+        this.callVerifyApi('sendback', this.remarksControl.value);
+      },
+    });
+  }
+
+  private callVerifyApi(decision: 'approve' | 'sendback', remarks: string): void {
+    if (!this.propertyId) {
+      this.apiError = 'Property ID not found. Please go back and try again.';
+      return;
+    }
+
+    this.submitting = true;
+    const userId = this.getCurrentUserId();
+
+    let normalizedRole = this.userRole;
+    const rLower = (this.userRole || '').toLowerCase();
+    if (rLower.includes('senior assistant') || rLower.includes('senior_assistant')) {
+      normalizedRole = 'Senior Assistant';
+    } else if (rLower.includes('clerk')) {
+      normalizedRole = 'Clerk';
+    }
+
+    const payload = {
+      Id: Number(this.propertyId),
+      Decision: decision,
+      Remarks: remarks || '',
+      Role: normalizedRole,
+      ModifiedBy: userId > 0 ? userId : null,
+    };
+
+    this.userService.VerifyByClerkForUser(payload).subscribe({
+      next: (res: any) => {
+        this.submitting = false;
+        if (res?.success) {
+          this.apiSuccess = decision === 'approve'
+            ? 'Property approved successfully!'
+            : 'Sent back to user successfully!';
+          setTimeout(() => {
+            this.router.navigate(['/property-ownership-verification']);
+          }, 1500);
+        } else {
+          this.apiError = res?.message || 'Action failed. Please try again.';
+        }
+      },
+      error: (err: any) => {
+        this.submitting = false;
+        this.apiError = err?.error?.message || 'Something went wrong. Please try again.';
+        console.error('VerifyByClerkForUser error:', err);
+      },
+    });
+  }
+
+  private getUserRole(): string {
+    try {
+      const cpMenus = sessionStorage.getItem('cp_menus');
+      if (cpMenus) {
+        const user = JSON.parse(cpMenus);
+        const role = user?.profile?.roles?.[0] || user?.roles?.[0] || user?.role;
+        if (role) return String(role);
+      }
+    } catch (e) {
+      console.error('Error reading role from cp_menus:', e);
+    }
+
+    try {
+      const storedRole = sessionStorage.getItem('role');
+      if (storedRole) return storedRole;
+    } catch (e) {}
+
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const session = JSON.parse(cpSession);
+        const role = session?.role || session?.userRole;
+        if (role) return String(role);
+      }
+    } catch (e) {}
+
+    return '';
+  }
+
+  private getCurrentUserId(): number {
+    try {
+      const sessionStr = sessionStorage.getItem('cp_session') || localStorage.getItem('cp_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session?.userId || session?.id || session?.applicantId || 0;
+      }
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return Number(payload?.UserId || payload?.userId || payload?.id || 0);
+      }
+    } catch (e) {
+      console.error('Error reading userId:', e);
+    }
+    return 0;
   }
 }
+

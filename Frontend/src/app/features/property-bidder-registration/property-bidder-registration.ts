@@ -2064,7 +2064,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       : null;
 
     const cleanSchedules = (this.calculatedSchedulesMatrix || []).map((s: InstallmentScheduleView) => ({
-      installmentNo: s.index,
+      installmentNo: s.index != null ? String(s.index) : null,
       calculatedDueDate: s.dueDate ? s.dueDate : null,
       basePrincipal: Number(s.baseAmountDue) || 0,
       interest: Number(s.interestAmount) || 0,
