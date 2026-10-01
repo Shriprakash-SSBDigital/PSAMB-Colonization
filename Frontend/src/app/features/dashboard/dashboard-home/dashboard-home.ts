@@ -27,10 +27,10 @@ export interface DashboardStats {
 export class DashboardHome implements OnInit {
   isLoggedIn = true;
 
-  totalProperties = 1280;
-  soldProperties = 850;
-  unsoldProperties = 430;
-  digitizedProperties = 1195;
+  totalProperties = 29360;
+  soldProperties = 21557;
+  unsoldProperties = 2739;
+  digitizedProperties = 21557;
   forfeitedProperties = 15;
   monthlyCollection = 4285000;
   monthlyDues = 1840000;

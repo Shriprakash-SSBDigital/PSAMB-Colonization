@@ -79,7 +79,7 @@ import { RoleGuard } from '../../core/guards/role-guard';
           {
             path: 'verification',
             canActivate: [RoleGuard],
-            data: { roles: ['DEO'] },
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
               import('../../features/data-entry-operator-verification-view/data-entry-operator-verification-view')
                 .then((m) => m.DataEntryOperatorVerificationView),
