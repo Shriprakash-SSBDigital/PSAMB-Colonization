@@ -101,6 +101,7 @@ export class VerificationView implements OnInit {
   displayStatusText = '';
   previewDoc: UploadedDocument | null = null;
   copiedField: string | null = null;
+  applicantID: any = null;
 
   // Populated from router state / queryParams
   private propertyId: number | null = null;
@@ -123,8 +124,17 @@ export class VerificationView implements OnInit {
       remarks: [''],
     });
 
-    // ✅ Role pehle set karo — bindData ke andar status mapping role use karti hai
+    // Role pehle set karo — bindData ke andar status mapping role use karti hai
     this.userRole = this.getUserRole();
+
+    this.route.queryParams.subscribe(params => {
+      if (!this.propertyId && params['id']) {
+        this.propertyId = Number(params['id']);
+      }
+      if (params['createdBy']) {
+        this.applicantID = Number(params['createdBy']);
+      }
+    });
 
     // Read data passed via router state (from viewDetails click)
     const nav = this.router.getCurrentNavigation();
@@ -136,12 +146,6 @@ export class VerificationView implements OnInit {
       this.bindData(data);
     }
 
-    // Also read id from queryParams as fallback
-    this.route.queryParams.subscribe(params => {
-      if (!this.propertyId && params['id']) {
-        this.propertyId = Number(params['id']);
-      }
-    });
   }
 
   private bindData(d: any): void {
@@ -314,8 +318,27 @@ export class VerificationView implements OnInit {
   }
 
   viewDocument(doc: UploadedDocument): void {
-    if (!doc.uploaded || !doc.fileUrl) return;
-    this.previewDoc = doc;
+    if (!doc.uploaded || !this.applicantID) {
+      return;
+    }
+ this.previewDoc = { ...doc };
+
+    this.userService.ViewDocumentsByUserId(this.applicantID).subscribe({
+      next: (res: any) => {
+        if (res?.success && res?.data) {
+          const docData = res.data.find((d: any) => d.key === doc.key);
+          if (docData && docData.fileUrl) {
+            this.previewDoc = { ...doc, fileUrl: docData.fileUrl };
+          } else {
+            console.warn(`Document with key "${doc.key}" not found in API response.`);
+            this.previewDoc = null;
+          }
+        }
+      },
+      error: (err: any) => {
+        console.error('Error occurred while fetching user documents:', err);
+      }
+    });
   }
 
   closePreview(): void {
