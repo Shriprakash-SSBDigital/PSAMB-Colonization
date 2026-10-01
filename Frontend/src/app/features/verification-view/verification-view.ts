@@ -469,7 +469,7 @@ export class VerificationView implements OnInit {
   this.previewDocSafeUrl = null;
 
   // Get the document URL from API using applicant ID
-  this.userService.ViewDocumentsByUserId(this.applicantID).subscribe({
+  this.userService.GetUserDocumentsByUserIDAsync(this.applicantID).subscribe({
     next: (res: any) => {
       if (res?.success && res?.data) {
         const docData = res.data.find(
@@ -485,10 +485,11 @@ export class VerificationView implements OnInit {
           };
 
           // Keep the existing PDF preview functionality
-          if (this.isPdf(this.previewDoc)) {
+          const previewUrl = this.previewDoc.fileUrl;
+          if (previewUrl && this.isPdf(this.previewDoc)) {
             this.previewDocSafeUrl =
               this.sanitizer.bypassSecurityTrustResourceUrl(
-                this.previewDoc.fileUrl
+                previewUrl
               );
           } else {
             this.previewDocSafeUrl = null;
