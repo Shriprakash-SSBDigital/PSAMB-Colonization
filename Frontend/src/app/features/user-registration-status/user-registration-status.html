@@ -52,6 +52,23 @@
             </tr>
           </thead>
           <tbody>
+
+            <!-- Loading State -->
+            <tr *ngIf="isLoading">
+              <td colspan="5" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                <span class="text-muted">Loading records...</span>
+              </td>
+            </tr>
+
+            <!-- Error State -->
+            <tr *ngIf="!isLoading && errorMessage">
+              <td colspan="5" class="text-center py-4 text-danger">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>{{ errorMessage }}
+              </td>
+            </tr>
+
+            <!-- Data Rows -->
             <tr *ngFor="let item of pagedPropertyList">
               <td>
                 <span class="fw-bold text-dark">{{ item.allotteeCode }}</span>
@@ -84,9 +101,10 @@
               </td>
             </tr>
 
-            <tr *ngIf="pagedPropertyList.length === 0">
+            <!-- No Records -->
+            <tr *ngIf="!isLoading && !errorMessage && pagedPropertyList.length === 0">
               <td colspan="5" class="text-center py-4 text-muted">
-                No matching records found.
+                <i class="fa-solid fa-inbox me-2 fs-5"></i>No matching records found.
               </td>
             </tr>
           </tbody>
@@ -99,4 +117,4 @@
   <mat-paginator [length]="filteredList.length" [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50, 100]"
     [pageIndex]="pageIndex" (page)="onPageChange($event)">
   </mat-paginator>
-</div>
+</div>

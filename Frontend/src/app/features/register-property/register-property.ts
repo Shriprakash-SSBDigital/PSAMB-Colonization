@@ -1,6 +1,6 @@
 import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, finalize } from 'rxjs';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
@@ -31,6 +31,9 @@ export class RegisterProperty implements OnInit {
 
   protected propertyForm: FormGroup;
   isSubmitting = false;
+  isEditMode = false;
+  editingId: number | null = null;
+  objectionRemarks: string | null = null;
   districts: any[] = [];
   bidderDistricts: any[] = [];
   states: any[] = [];
@@ -93,6 +96,7 @@ export class RegisterProperty implements OnInit {
     private fileService: FileService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {
     const documentControls = this.documents.reduce<Record<string, unknown>>((controls, document) => {
@@ -236,6 +240,279 @@ export class RegisterProperty implements OnInit {
         this.loadCities(districtId);
       }
     });
+
+    this.route.queryParams.subscribe(params => {
+      if (params['mode'] === 'edit') {
+        this.isEditMode = true;
+        if (params['id']) {
+          this.editingId = Number(params['id']);
+        }
+        const stateData = history.state?.registrationData;
+        if (stateData) {
+          this.patchRegistrationData(stateData);
+        } else if (params['propertyCode']) {
+          this.fetchAndPatchRegistration(params['propertyCode'], this.editingId);
+        }
+      }
+    });
+  }
+
+  fetchAndPatchRegistration(propertyCode: string, id: number | null): void {
+    this.userService.GetAllUserRegisterPropertyById().subscribe({
+      next: (res: any) => {
+        if (res?.success && Array.isArray(res.data)) {
+          const match = res.data.find((item: any) =>
+            (id && (item.id === id || item.propertyId === id)) ||
+            (propertyCode && ((item.allotteeCode || '').trim().toLowerCase() === propertyCode.trim().toLowerCase() ||
+                             (item.propertyCode || '').trim().toLowerCase() === propertyCode.trim().toLowerCase()))
+          );
+          if (match) {
+            this.patchRegistrationData(match);
+            return;
+          }
+        }
+        if (propertyCode) {
+          this.propertyForm.patchValue({ allotteeCode: propertyCode });
+          this.onSearch();
+        }
+      },
+      error: () => {
+        if (propertyCode) {
+          this.propertyForm.patchValue({ allotteeCode: propertyCode });
+          this.onSearch();
+        }
+      }
+    });
+  }
+
+  patchRegistrationData(d: any): void {
+    if (!d) return;
+    this.propertyData = d;
+    this.isEditMode = true;
+    if (d.id || d.propertyId) {
+      this.editingId = Number(d.id || d.propertyId);
+    }
+    if (d.remarks) {
+      this.objectionRemarks = d.remarks;
+    }
+    this.isOwnerInfoReadOnly = false;
+
+    const patchFormValues = () => {
+      let districtId: any = null;
+      let branchId: any = null;
+      let mandiId: any = null;
+      let plotTypeId: any = null;
+
+      // DISTRICT
+      if (d.districtId !== null && d.districtId !== undefined && d.districtId !== '') {
+        const districtValue = String(d.districtId).trim();
+        const match = this.districts?.find((p: any) =>
+          String(p.districtId ?? '').trim() === districtValue ||
+          String(p.id ?? '').trim() === districtValue ||
+          String(p.districtName ?? '').trim().toLowerCase() === districtValue.toLowerCase()
+        );
+        districtId = match ? (match.districtId ?? match.id) : d.districtId;
+      }
+
+      // BRANCH / MARKET COMMITTEE
+      if (d.branchId !== null && d.branchId !== undefined && d.branchId !== '') {
+        const branchValue = String(d.branchId).trim();
+        const match = this.marketCommittees?.find((p: any) =>
+          String(p.branchId ?? '').trim() === branchValue ||
+          String(p.id ?? '').trim() === branchValue ||
+          String(p.marketCommitteeName ?? '').trim().toLowerCase() === branchValue.toLowerCase()
+        );
+        branchId = match ? (match.branchId ?? match.id ?? match.marketCommitteeId) : d.branchId;
+      }
+
+      // MANDI
+      if (d.mandiId !== null && d.mandiId !== undefined && d.mandiId !== '') {
+        const mandiValue = String(d.mandiId).trim();
+        const match = this.mandis?.find((p: any) =>
+          String(p.mandiId ?? '').trim() === mandiValue ||
+          String(p.id ?? '').trim() === mandiValue ||
+          String(p.mandiName ?? '').trim().toLowerCase() === mandiValue.toLowerCase()
+        );
+        mandiId = match ? (match.mandiId ?? match.id) : d.mandiId;
+      }
+
+      // PLOT TYPE
+      if (d.plotTypeId !== null && d.plotTypeId !== undefined && d.plotTypeId !== '') {
+        const typeValue = String(d.plotTypeId).trim();
+        const match = this.plotTypes?.find((t: any) =>
+          String(t.plotTypeId ?? t.id ?? '').trim() === typeValue ||
+          String(t.plotType ?? t.name ?? '').trim().toLowerCase() === typeValue.toLowerCase()
+        );
+        plotTypeId = match ? (match.plotTypeId ?? match.id ?? match.plotType) : d.plotTypeId;
+      }
+
+      const patchValues: any = {
+        allotteeCode: d.allotteeCode || d.propertyCode || '',
+        districtId: districtId,
+        branchId: branchId,
+        mandiId: mandiId,
+        plotNumber: d.plotNo || d.plotNumber || '',
+        plotTypeId: plotTypeId,
+        plotSize: d.plotSize || d.plotsize || '',
+        currentOwnerName: d.currentOwnerName || d.allotteeName || d.bidderName || '',
+        guardianName: d.fatherHusbandName || d.allotteeFatherName || d.guardianName || d.fatherOrHusbandName || '',
+        mobileNumber: d.mobileNumber || d.allotteeMobileNo || d.mobileNo || '',
+        email: d.email || d.allotteeEmail || '',
+        state: d.ownerStateID || d.allotteeStateId || d.state || '',
+        ownerDistrict: d.ownerDistrtictID || d.allotteeDistrictId || d.ownerDistrict || '',
+        city: d.ownerCityID || d.allotteeCityId || d.city || '',
+        address: d.address || d.allotteeAddress || '',
+        aadhaarNumber: d.aadhaarNumber || d.aadharNumber || d.aadhaarNo || '',
+        panNo: d.panNumber || d.panNo || '',
+      };
+
+      const docFieldMap: Record<string, string> = {
+        allotmentLetter: 'uploadAllotmentLetter',
+        lastPaymentReceipt: 'receiptDocument',
+        noDueCertificate: 'uploadNoDuesCertificate',
+        bForm: 'bForm',
+        conveyanceDeed: 'conveyanceDeed',
+        saleDeed: 'saleDeed',
+        transferOrder: 'transferOrder',
+        legalHeirCertificate: 'upload1',
+      };
+
+      this.documents.forEach((doc) => {
+        const flagKey = docFieldMap[doc.key];
+        const val = d[flagKey];
+        const isSelected = val === '1' || val === 1 || val === true || (typeof val === 'string' && val.length > 3);
+        if (isSelected) {
+          patchValues[`${doc.key}Selected`] = true;
+          if (typeof val === 'string' && (val.includes('/') || val.includes('\\') || val.includes('.'))) {
+            this.uploadedDocData[doc.key] = {
+              userDocumentId: 0,
+              storedFileName: val.split('/').pop()?.split('\\').pop() || `${doc.label}.pdf`,
+              relativePath: val,
+              fileUrl: val
+            };
+          }
+        }
+      });
+
+      this.propertyForm.patchValue(patchValues, { emitEvent: false });
+      this.cdr.detectChanges();
+
+      const applicantId = d.applicantId || d.createdBy || this.getApplicantId();
+      if (applicantId && Number(applicantId) > 0) {
+        this.userService.GetUserDocumentsByUserIDAsync(Number(applicantId)).subscribe({
+          next: (res: any) => {
+            if (res?.success && Array.isArray(res.data)) {
+              const docMap: Record<number, string> = {
+                1: 'allotmentLetter',
+                2: 'lastPaymentReceipt',
+                3: 'noDueCertificate',
+                4: 'bForm',
+                5: 'conveyanceDeed',
+                6: 'saleDeed',
+                7: 'transferOrder',
+                8: 'legalHeirCertificate',
+              };
+              res.data.forEach((item: any) => {
+                const key = docMap[item.documentTypeId];
+                if (key) {
+                  this.uploadedDocData[key] = {
+                    userDocumentId: item.userDocumentId,
+                    storedFileName: item.storedFileName,
+                    relativePath: item.relativePath,
+                    fileUrl: item.fileUrl || item.relativePath
+                  };
+                  this.propertyForm.get(`${key}Selected`)?.setValue(true);
+                }
+              });
+              this.cdr.detectChanges();
+            }
+          },
+          error: (err: any) => {
+            // console.error('Error fetching user documents:', err);
+          }
+        });
+      }
+    };
+
+    const proceedToBidderLocationPatch = () => {
+      const stateVal = (d.ownerStateID && d.ownerStateID !== 0 && d.ownerStateID !== '0') ? d.ownerStateID :
+                      ((d.allotteeStateId && d.allotteeStateId !== 0 && d.allotteeStateId !== '0') ? d.allotteeStateId :
+                      ((d.state && d.state !== 0 && d.state !== '0') ? d.state : null));
+      const districtVal = (d.ownerDistrtictID && d.ownerDistrtictID !== 0 && d.ownerDistrtictID !== '0') ? d.ownerDistrtictID :
+                         ((d.allotteeDistrictId && d.allotteeDistrictId !== 0 && d.allotteeDistrictId !== '0') ? d.allotteeDistrictId :
+                         ((d.ownerDistrict && d.ownerDistrict !== 0 && d.ownerDistrict !== '0') ? d.ownerDistrict : null));
+
+      const tasks: { districts?: any; cities?: any } = {};
+      if (stateVal) tasks.districts = this.commonService.getAllDistrict(stateVal);
+      if (districtVal) tasks.cities = this.commonService.GetAllCityByDistrictID(districtVal);
+
+      if (Object.keys(tasks).length > 0) {
+        forkJoin(tasks).subscribe({
+          next: (resps: any) => {
+            if (resps.districts) this.bidderDistricts = resps.districts.data || resps.districts || [];
+            if (resps.cities) this.cities = resps.cities.data || resps.cities || [];
+            patchFormValues();
+          },
+          error: () => {
+            patchFormValues();
+          }
+        });
+      } else {
+        patchFormValues();
+      }
+    };
+
+    const proceedToMandiAndPlotTypePatch = () => {
+      const mandiId = d.mandiId;
+      const plotTypeId = d.plotTypeId;
+      const plotNo = d.plotNo || d.plotNumber;
+
+      if (mandiId) {
+        this.loadPlotTypes(mandiId, () => {
+          if (plotTypeId) {
+            this.loadPlotNumbers(mandiId, plotTypeId, () => {
+              if (plotNo) {
+                this.loadPlotSizes(plotNo, mandiId, plotTypeId, proceedToBidderLocationPatch);
+              } else {
+                proceedToBidderLocationPatch();
+              }
+            });
+          } else {
+            proceedToBidderLocationPatch();
+          }
+        });
+      } else {
+        proceedToBidderLocationPatch();
+      }
+    };
+
+    const startCascading = () => {
+      if (d.districtId) {
+        this.loadMarketCommittees(d.districtId, () => {
+          if (d.branchId) {
+            this.loadMandis(d.branchId, proceedToMandiAndPlotTypePatch);
+          } else {
+            proceedToMandiAndPlotTypePatch();
+          }
+        });
+      } else {
+        proceedToMandiAndPlotTypePatch();
+      }
+    };
+
+    if (!this.districts || this.districts.length === 0) {
+      this.service.getPropertyDistricts().subscribe({
+        next: (res: any) => {
+          this.districts = res?.data || res || [];
+          startCascading();
+        },
+        error: () => {
+          startCascading();
+        }
+      });
+    } else {
+      startCascading();
+    }
   }
 
   onSearch() {
@@ -1293,6 +1570,7 @@ export class RegisterProperty implements OnInit {
     });
 
     const payload: any = {
+      id: this.editingId || 0,
       districtId: Number(formValue.districtId),
       branchId: Number(formValue.branchId),
       mandiId: Number(formValue.mandiId),
@@ -1339,8 +1617,12 @@ export class RegisterProperty implements OnInit {
       .subscribe({
         next: (res: any) => {
           if (res?.success) {
-            this.toastr.success(res?.message || 'Property registered successfully.', 'Success');
+            this.toastr.success(res?.message || (this.isEditMode ? 'Property updated successfully.' : 'Property registered successfully.'), 'Success');
+            const wasEditing = this.isEditMode;
             this.resetForm();
+            if (wasEditing) {
+              this.router.navigate(['/application-status']);
+            }
           } else {
             this.toastr.error(res?.message || 'Failed to register property.', 'Error');
           }
@@ -1386,6 +1668,9 @@ export class RegisterProperty implements OnInit {
   }
 
   resetForm(): void {
+    this.isEditMode = false;
+    this.editingId = null;
+    this.objectionRemarks = null;
     this.isOwnerInfoReadOnly = false;
     this.propertyForm.reset();
     this.marketCommittees = [];
@@ -1421,7 +1706,8 @@ export class RegisterProperty implements OnInit {
   private atLeastOneDocumentValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
       const hasUploadedDocument = this.documents.some((document) => {
-        return !!group.get(`${document.key}Selected`)?.value && !!group.get(`${document.key}File`)?.value;
+        return !!group.get(`${document.key}Selected`)?.value &&
+          (!!group.get(`${document.key}File`)?.value || !!this.uploadedDocData[document.key]);
       });
 
       return hasUploadedDocument ? null : { documentRequired: true };

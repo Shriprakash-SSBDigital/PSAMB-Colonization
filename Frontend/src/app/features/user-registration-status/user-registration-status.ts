@@ -3,13 +3,16 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { PageEvent } from '@angular/material/paginator';
-import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
+import { Userservice } from '../../core/service/UserService/userservice';
 
 interface RegistrationRecord {
+  id: number;
+  propertyId: number;
   allotteeCode: string;
   allotteeName: string;
   approvalStatus: 'Approved' | 'Rejected' | 'Pending' | 'Objection' | 'Verified' | string;
   remarks: string;
+  rawData?: any;
 }
 
 @Component({
@@ -28,10 +31,12 @@ export class UserRegistrationStatus implements OnInit {
   pagedPropertyList: RegistrationRecord[] = [];
   registrationList: RegistrationRecord[] = [];
   filteredList: RegistrationRecord[] = [];
+  isLoading = false;
+  errorMessage: string | null = null;
 
   constructor(
     private router: Router,
-    private _service: Propertybidderregn,
+    private _userService: Userservice,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -39,14 +44,47 @@ export class UserRegistrationStatus implements OnInit {
     this.getRegistrationList();
   }
 
+  getRegistrationList(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this._userService.GetAllUserRegisterPropertyById().subscribe({
+      next: (res: any) => {
+        if (res?.success && Array.isArray(res.data)) {
+          this.registrationList = res.data.map((item: any) => ({
+            id:             item.id ?? 0,
+            propertyId:     item.propertyId ?? item.id ?? 0,
+            allotteeCode:   item.allotteeCode || item.propertyCode || '—',
+            allotteeName:   item.currentOwnerName || item.allotteeName || '—',
+            approvalStatus: item.applicationStatusName || (item.status === 1 ? 'Pending' : (item.status === 2 || item.status === 3 || item.status === 4 ? 'Verified' : (item.status === 7 ? 'Objection' : 'Pending'))),
+            remarks:        item.remarks ?? '',
+            rawData:        item,
+          }));
+        } else {
+          this.registrationList = [];
+        }
+        this.applyFilters();
+        this.updatePagedList();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching registration list:', err);
+        this.errorMessage = 'Failed to load records. Please try again.';
+        this.registrationList = [];
+        this.filteredList = [];
+        this.pagedPropertyList = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   onSearch(): void {
     this.pageIndex = 0;
     this.applyFilters();
     this.updatePagedList();
     this.cdr.detectChanges();
-  }
-
-  getRegistrationList(): void {
   }
 
   onFilterChange(): void {
@@ -57,8 +95,7 @@ export class UserRegistrationStatus implements OnInit {
   }
 
   setStatusFilter(status: string): void {
-    // Always apply the selected status; only the 'Records' (empty) button clears the filter
-      this.selectedFilter = status;
+    this.selectedFilter = status;
     this.pageIndex = 0;
     this.applyFilters();
     this.updatePagedList();
@@ -81,7 +118,6 @@ export class UserRegistrationStatus implements OnInit {
       if (filterStatus === '') {
         matchesStatus = true;
       } else if (filterStatus === 'approved/verified') {
-        // Combined filter: matches any status containing 'approved' OR 'verified'
         matchesStatus = itemStatus.includes('approved') || itemStatus.includes('verified');
       } else {
         matchesStatus = itemStatus.includes(filterStatus);
@@ -96,11 +132,15 @@ export class UserRegistrationStatus implements OnInit {
   }
 
   getPendingCount(): number {
-    return this.registrationList.filter(item => (item.approvalStatus || '').trim().toLowerCase().includes('pending')).length;
+    return this.registrationList.filter(item =>
+      (item.approvalStatus || '').trim().toLowerCase().includes('pending')
+    ).length;
   }
 
   getObjectionCount(): number {
-    return this.registrationList.filter(item => (item.approvalStatus || '').trim().toLowerCase().includes('objection')).length;
+    return this.registrationList.filter(item =>
+      (item.approvalStatus || '').trim().toLowerCase().includes('objection')
+    ).length;
   }
 
   getApprovedOrVerifiedCount(): number {
@@ -112,37 +152,44 @@ export class UserRegistrationStatus implements OnInit {
 
   getStatusClass(status: string | null | undefined): string {
     const s = (status || '').toLowerCase().trim();
-    if (s.includes('objection')) return 'status-objection';
-    if (s.includes('reject')) return 'status-rejected';
+    if (s.includes('objection'))                        return 'status-objection';
+    if (s.includes('reject'))                           return 'status-rejected';
     if (s.includes('verified') || s.includes('clerk')) return 'status-verified';
-    if (s.includes('approved')) return 'status-approved';
-    if (s.includes('pending')) return 'status-pending';
+    if (s.includes('approved'))                         return 'status-approved';
+    if (s.includes('pending'))                          return 'status-pending';
     return 'status-default';
   }
 
   onView(item: RegistrationRecord): void {
     this.router.navigate(['/user-verification'], {
       queryParams: {
-        mode: 'view',
-        propertyCode: item.allotteeCode,
+        mode:           'view',
+        propertyCode:   item.allotteeCode,
+        id:             item.id || item.propertyId,
         approvalStatus: item.approvalStatus || '',
-        remarks: item.remarks || ''
+        remarks:        item.remarks || ''
+      },
+      state: {
+        registrationData: item.rawData || item
       }
     });
   }
 
   onEdit(item: RegistrationRecord): void {
-    // debugger
     this.router.navigate(['/register-property'], {
       queryParams: {
-        mode: 'edit',
-        propertyCode: item.allotteeCode
+        mode:         'edit',
+        propertyCode: item.allotteeCode,
+        id:           item.id || item.propertyId
+      },
+      state: {
+        registrationData: item.rawData || item
       }
     });
   }
 
   onPageChange(event: PageEvent): void {
-    this.pageSize = event.pageSize;
+    this.pageSize  = event.pageSize;
     this.pageIndex = event.pageIndex;
     this.updatePagedList();
     this.cdr.detectChanges();
