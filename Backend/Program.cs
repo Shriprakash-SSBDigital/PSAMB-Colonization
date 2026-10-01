@@ -168,6 +168,7 @@ try
     builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
     builder.Services.AddScoped<IPropertyBidderRegistration, Backend.Services.Implementations.PropertyBidderRegistration>(); builder.Services.AddScoped<ICommon, Common>();
     builder.Services.AddScoped<IUserPropertyRegistrationService,UserPropertyRegistrationService>();
+    builder.Services.AddScoped<IReportService, ReportService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IFileService, FileService>();
     builder.Services.AddMemoryCache();
