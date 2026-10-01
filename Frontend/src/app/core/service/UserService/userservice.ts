@@ -36,4 +36,12 @@ export class Userservice {
   VerifyByClerkForUser(payload: any): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/UserPropertyRegistration/VerifyByClerkForUser`, payload);
   }
+
+  GetAllUserRegisterPropertyById(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/UserPropertyRegistration/GetAllUserRegisterPropertyById`);
+  }
+
+  GetUserDocumentsByUserIDAsync(applicantID: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/UserPropertyRegistration/GetUserDocumentsByUserIDAsync?applicantID=${applicantID}`);
+  }
 }

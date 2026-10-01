@@ -3,10 +3,11 @@
     <div class="bg-white rounded-4 p-3 p-lg-4 mb-3 border shadow-sm">
       <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
         <div>
-          <h1 class="h4 fw-bold text-success mb-1">Register Your Property</h1>
-          <!-- <p class="small text-success fw-semibold text-uppercase mb-1">Property ownership service</p> -->
-          <!-- <p class="text-dark mb-0 ">Search allottee details or submit the complete property and owner information
-            below.</p> -->
+          <h1 class="h4 fw-bold text-success mb-1">{{ isEditMode ? 'Edit / Resubmit Property Registration' : 'Register
+            Your Property' }}</h1>
+          @if (isEditMode) {
+          <p class="text-muted small mb-0">Update your property details and resubmit for verification.</p>
+          }
         </div>
         <form class="col-12 col-lg-4" [formGroup]="propertyForm">
           <!-- <label for="allotteeCode" class="form-label small text-dark fw-semibold text-uppercase mb-1">Search Allottee
@@ -23,6 +24,16 @@
         </form>
       </div>
     </div>
+
+    <!-- @if (isEditMode && objectionRemarks) {
+    <div class="alert alert-danger border-0 rounded-4 p-3 mb-3 d-flex align-items-center gap-3 shadow-sm" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important;">
+      <i class="fas fa-exclamation-circle text-danger fs-4 flex-shrink-0"></i>
+      <div>
+        <strong class="text-danger d-block">Objection Raised by Verification Officer:</strong>
+        <p class="mb-0 text-dark small">{{ objectionRemarks }}</p>
+      </div>
+    </div>
+    } -->
 
     <form [formGroup]="propertyForm" (ngSubmit)="onSubmit()" novalidate>
       <!-- <div class="alert alert-success rounded-4 mb-3 fw-semibold" role="alert">
@@ -229,8 +240,7 @@
                     [class.is-invalid]="isInvalid('plotSize')" [class.open]="isPlotSizeDropdownOpen"
                     placeholder="Select Plot Size"
                     [value]="isPlotSizeDropdownOpen ? plotSizeSearchText : (getSelectedPlotSizeName() || '')"
-                    (input)="onPlotSizeSearch($event)" (click)="togglePlotSizeDropdown($event)"
-                    autocomplete="off" />
+                    (input)="onPlotSizeSearch($event)" (click)="togglePlotSizeDropdown($event)" autocomplete="off" />
                   <i class="dropdown-chevron fas fa-chevron-down position-absolute"
                     [class.rotate-180]="isPlotSizeDropdownOpen" (click)="togglePlotSizeDropdown($event)"></i>
                 </div>
@@ -480,7 +490,7 @@
             <div class="col-md-6 col-xl-3">
               <div class="d-flex justify-content-between align-items-center">
                 <label for="passportProof" class="form-label small text-dark fw-semibold text-uppercase">Upload
-                  Passport
+                  Pan Card
                   Proof</label>
                 @if (passportDocPath || propertyForm.get('passportProof')?.value) {
                 <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 rounded-2"
@@ -535,11 +545,14 @@
                         class="form-control bg-white rounded-3 custom-input-color" [accept]="allowedFileTypes"
                         (change)="onFileChange($event, document.key + 'File', document.key)" />
                       @if (uploadingStates[document.key]) {
-                      <span class="spinner-border spinner-border-sm text-success flex-shrink-0" role="status" title="Uploading..."></span>
+                      <span class="spinner-border spinner-border-sm text-success flex-shrink-0" role="status"
+                        title="Uploading..."></span>
                       }
-                      @if (propertyForm.get(document.key + 'File')?.value) {
+                      @if (propertyForm.get(document.key + 'File')?.value || uploadedDocData[document.key]?.fileUrl ||
+                      uploadedDocData[document.key]?.relativePath) {
                       <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
-                        (click)="viewDocument(null, document.key + 'File')" title="View Selected File">
+                        (click)="viewDocument(uploadedDocData[document.key]?.fileUrl || uploadedDocData[document.key]?.relativePath, document.key + 'File')"
+                        title="View Selected File">
                         <i class="fas fa-eye"></i>
                       </button>
                       }
@@ -560,7 +573,7 @@
           [disabled]="isSubmitting">
           <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status"
             aria-hidden="true"></span>
-          {{ isSubmitting ? 'Saving...' : 'Save Property' }}
+          {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update & Resubmit' : 'Save Property') }}
         </button>
       </div>
     </form>

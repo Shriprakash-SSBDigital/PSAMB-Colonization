@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Userservice } from '../../core/service/UserService/userservice';
 
 export interface UploadedDocument {
@@ -100,7 +101,11 @@ export class VerificationView implements OnInit {
   remarksReadOnly = '';
   displayStatusText = '';
   previewDoc: UploadedDocument | null = null;
+  previewDocSafeUrl: SafeResourceUrl | null = null;
   copiedField: string | null = null;
+
+  isUserView = false;
+  propertyDataLoaded = false;
 
   // Populated from router state / queryParams
   private propertyId: number | null = null;
@@ -114,7 +119,8 @@ export class VerificationView implements OnInit {
     private messageService: MessageService,
     private userService: Userservice,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -132,21 +138,67 @@ export class VerificationView implements OnInit {
     const data = state?.registrationData ?? history.state?.registrationData;
 
     if (data) {
-      this.propertyId = data.id ?? null;
+      this.propertyId = data.id ?? data.propertyId ?? null;
       this.bindData(data);
     }
 
-    // Also read id from queryParams as fallback
+    // Also read id and mode from queryParams
     this.route.queryParams.subscribe(params => {
+      if (params['mode'] === 'view') {
+        this.isUserView = true;
+      }
       if (!this.propertyId && params['id']) {
         this.propertyId = Number(params['id']);
+      }
+      const code = params['propertyCode'];
+      // Fallback: If registration data was not available in navigation state, fetch it
+      if (!this.propertyDataLoaded && (code || this.propertyId)) {
+        this.loadDetails(code, this.propertyId || undefined);
       }
     });
   }
 
+  loadDetails(code?: string, id?: number): void {
+    if (this.isUserView) {
+      this.userService.GetAllUserRegisterPropertyById().subscribe({
+        next: (res: any) => {
+          if (res?.success && Array.isArray(res.data)) {
+            const found = res.data.find((item: any) =>
+              (code && (item.allotteeCode === code || item.propertyCode === code)) ||
+              (id && (item.id === id || item.propertyId === id))
+            );
+            if (found) {
+              this.propertyId = found.id || found.propertyId;
+              this.bindData(found);
+            }
+          }
+        },
+        error: (err: any) => {
+          console.error('Error loading property details for user:', err);
+        }
+      });
+    } else {
+      if (code) {
+        this.userService.GetPropertyOwnerVerification(code).subscribe({
+          next: (res: any) => {
+            if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+              this.propertyId = res.data[0].id;
+              this.bindData(res.data[0]);
+            }
+          },
+          error: (err: any) => {
+            console.error('Error loading property details for verification:', err);
+          }
+        });
+      }
+    }
+  }
+
   private bindData(d: any): void {
+    this.propertyDataLoaded = true;
+
     // Header
-    this.propertyCode = d.propertyCode || '—';
+    this.propertyCode = d.propertyCode || d.allotteeCode || '—';
     this.submittedOn = d.createdDate
       ? new Date(d.createdDate).toLocaleDateString('en-IN')
       : '—';
@@ -159,7 +211,17 @@ export class VerificationView implements OnInit {
     this.remarksReadOnly = d.remarks || d.objectionRemarks || '';
     const lvl = (d.levelId || '').trim().toLowerCase().replace('_', ' ');
 
-    if (statusId === 7) {
+    if (this.isUserView && d.applicationStatusName) {
+      this.displayStatusText = d.applicationStatusName;
+      const s = d.applicationStatusName.toLowerCase();
+      if (s.includes('objection')) {
+        this.verificationStatus = 'objection';
+      } else if (s.includes('verified') || s.includes('approved')) {
+        this.verificationStatus = 'verified';
+      } else {
+        this.verificationStatus = 'pending';
+      }
+    } else if (statusId === 7) {
       this.verificationStatus = 'objection';
       if (role.includes('clerk') && lvl.includes('senior assistant')) {
         this.displayStatusText = 'Objected by Senior Assistant';
@@ -177,7 +239,7 @@ export class VerificationView implements OnInit {
       this.displayStatusText = (statusId === 2 || statusId === 3 || statusId === 4) ? 'Verified' : 'Pending';
     } else {
       this.verificationStatus = (statusId === 2 || statusId === 3 || statusId === 4) ? 'verified' : 'pending';
-      this.displayStatusText = (statusId === 2 || statusId === 3 || statusId === 4) ? 'Verified' : 'Pending';
+      this.displayStatusText = d.applicationStatusName || ((statusId === 2 || statusId === 3 || statusId === 4) ? 'Verified' : 'Pending');
     }
 
     // Property Details
@@ -192,7 +254,7 @@ export class VerificationView implements OnInit {
 
     // Owner Information
     // Aadhaar: API already returns it masked (e.g. "XXXXXXXX 6545"), display as-is
-    const rawAadhaar = d.aadhaarNumber || d.aadhaarNo || '';
+    const rawAadhaar = d.aadhaarNumber || d.aadhaarNo || d.aadharNumber || '';
     const aadhaarDisplay = rawAadhaar.trim() !== '' ? rawAadhaar.trim() : '—';
 
     // PAN: treat empty string as missing
@@ -200,14 +262,14 @@ export class VerificationView implements OnInit {
     const panDisplay = rawPan.trim() !== '' ? rawPan.trim() : '—';
 
     this.ownerDetails = [
-      { label: 'Current Owner Name', value: d.currentOwnerName || '—' },
-      { label: "Father's / Husband Name", value: d.fatherHusbandName || d.fatherName || '—' },
-      { label: 'Mobile Number', value: d.mobileNumber || d.mobileNo || d.mobile || '—', copyable: false, isPhone: false },
-      { label: 'Email', value: d.email || d.emailId || '—', copyable: false, isEmail: false },
-      { label: 'State', value: d.ownerStateName || d.stateName || '—' },
-      { label: 'District', value: d.ownerDistrtictName || d.ownerDistrictName || '—' },
-      { label: 'City', value: d.ownerCityName || d.cityName || '—' },
-      { label: 'Address', value: d.address || d.permanentAddress || '—', fullWidth: true },
+      { label: 'Current Owner Name', value: d.currentOwnerName || d.allotteeName || '—' },
+      { label: "Father's / Husband Name", value: d.fatherHusbandName || d.allotteeFatherName || d.fatherName || '—' },
+      { label: 'Mobile Number', value: d.mobileNumber || d.allotteeMobileNo || d.mobileNo || d.mobile || '—', copyable: false, isPhone: false },
+      { label: 'Email', value: d.email || d.allotteeEmail || d.emailId || '—', copyable: false, isEmail: false },
+      { label: 'State', value: d.ownerStateName || d.ownerState || d.stateName || '—' },
+      { label: 'District', value: d.ownerDistrtictName || d.ownerDistrict || d.districtName || '—' },
+      { label: 'City', value: d.ownerCityName || d.ownerCity || d.cityName || '—' },
+      { label: 'Address', value: d.address || d.allotteeAddress || d.permanentAddress || '—', fullWidth: true },
       {
         label: 'Aadhaar Number',
         value: aadhaarDisplay,
@@ -226,44 +288,97 @@ export class VerificationView implements OnInit {
       },
     ];
 
-    const isDocUploaded = (val: any) => val === 1 || val === '1' || val === true || val === 'true' || (typeof val === 'string' && val.trim().length > 0 && val !== '0' && val !== 'false');
+    const isDocUploaded = (val: any) =>
+      val === 1 || val === '1' || val === true || val === 'true' ||
+      (typeof val === 'string' && val.trim().length > 0 && val !== '0' && val !== 'false');
 
     this.documents.forEach(doc => {
       let isUploaded = false;
+      let filePath: string | null = null;
       switch (doc.key) {
         case 'allotmentLetter':
           isUploaded = isDocUploaded(d.uploadAllotmentLetter ?? d.UploadAllotmentLetter);
+          filePath = d.uploadAllotmentLetter ?? d.UploadAllotmentLetter;
           break;
         case 'lastPaymentReceipt':
           isUploaded = isDocUploaded(d.receiptDocument ?? d.ReceiptDocument);
+          filePath = d.receiptDocument ?? d.ReceiptDocument;
           break;
         case 'noDueCertificate':
           isUploaded = isDocUploaded(d.uploadNoDuesCertificate ?? d.UploadNoDuesCertificate);
+          filePath = d.uploadNoDuesCertificate ?? d.UploadNoDuesCertificate;
           break;
         case 'bForm':
           isUploaded = isDocUploaded(d.bForm ?? d.BForm);
+          filePath = d.bForm ?? d.BForm;
           break;
         case 'conveyanceDeed':
           isUploaded = isDocUploaded(d.conveyanceDeed ?? d.ConveyanceDeed);
+          filePath = d.conveyanceDeed ?? d.ConveyanceDeed;
           break;
         case 'saleDeed':
           isUploaded = isDocUploaded(d.saleDeed ?? d.SaleDeed);
+          filePath = d.saleDeed ?? d.SaleDeed;
           break;
         case 'transferOrder':
           isUploaded = isDocUploaded(d.transferOrder ?? d.TransferOrder);
+          filePath = d.transferOrder ?? d.TransferOrder;
           break;
         case 'legalHeirCertificate':
           isUploaded = isDocUploaded(d.upload1 ?? d.Upload1);
+          filePath = d.upload1 ?? d.Upload1;
           break;
         case 'aadhaarProof':
           isUploaded = isDocUploaded(d.aadhaarProof ?? d.idProofDoc ?? d.IdProofDoc);
+          filePath = d.aadhaarProof ?? d.idProofDoc ?? d.IdProofDoc;
           break;
         case 'passportProof':
           isUploaded = isDocUploaded(d.passportProof ?? d.passportDocument ?? d.PassportDocument);
+          filePath = d.passportProof ?? d.passportDocument ?? d.PassportDocument;
           break;
       }
       doc.uploaded = isUploaded;
+      if (filePath && typeof filePath === 'string' && filePath.length > 5 && (filePath.includes('/') || filePath.includes('\\') || filePath.includes('.'))) {
+        doc.fileUrl = this.formatFileUrl(filePath);
+        doc.fileName = filePath.split('/').pop()?.split('\\').pop() || `${doc.label}.pdf`;
+      }
     });
+
+    // If user's createdBy / applicantId is available, fetch all uploaded documents for preview/download
+    const applicantId = d.createdBy || d.applicantId;
+    if (applicantId && Number(applicantId) > 0) {
+      this.userService.GetUserDocumentsByUserIDAsync(Number(applicantId)).subscribe({
+        next: (res: any) => {
+          if (res?.success && Array.isArray(res.data)) {
+            const docMap: Record<number, string> = {
+              1: 'allotmentLetter',
+              2: 'lastPaymentReceipt',
+              3: 'noDueCertificate',
+              4: 'bForm',
+              5: 'conveyanceDeed',
+              6: 'saleDeed',
+              7: 'transferOrder',
+              8: 'legalHeirCertificate',
+            };
+
+            res.data.forEach((item: any) => {
+              const key = docMap[item.documentTypeId];
+              if (key) {
+                const doc = this.documents.find(x => x.key === key);
+                if (doc) {
+                  doc.uploaded = true;
+                  doc.fileName = item.originalFileName || `${doc.label}.pdf`;
+                  doc.fileUrl = this.formatFileUrl(item.fileUrl || item.relativePath);
+                }
+              }
+            });
+          }
+        },
+        error: (err: any) => {
+          console.error('Error fetching user documents:', err);
+        }
+      });
+    }
   }
 
   get remarksControl() {
@@ -275,7 +390,10 @@ export class VerificationView implements OnInit {
   }
 
   get showActionButtons(): boolean {
-    return this.verificationStatus === 'pending';
+    if (this.isUserView) return false;
+    const r = (this.userRole || '').trim().toLowerCase();
+    const isStaff = r.includes('clerk') || r.includes('senior assistant') || r.includes('admin') || r.includes('officer');
+    return isStaff && this.verificationStatus === 'pending';
   }
 
   get showRemarksReadOnly(): boolean {
@@ -297,6 +415,24 @@ export class VerificationView implements OnInit {
     }
   }
 
+  goBack(): void {
+    if (this.isUserView) {
+      this.router.navigate(['/user-registration-status']);
+    } else {
+      this.router.navigate(['/property-ownership-verification']);
+    }
+  }
+
+  private formatFileUrl(filePath: string): string {
+    if (!filePath) return '';
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return filePath;
+    }
+    const apiBase = this.userService.baseUrl.replace(/\/api\/?$/, '');
+    const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    return `${apiBase}/${cleanPath}`;
+  }
+
   toggleFieldMask(field: DataField): void {
     field.isMasked = !field.isMasked;
   }
@@ -315,11 +451,17 @@ export class VerificationView implements OnInit {
 
   viewDocument(doc: UploadedDocument): void {
     if (!doc.uploaded || !doc.fileUrl) return;
+    if (this.isPdf(doc)) {
+      this.previewDocSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(doc.fileUrl);
+    } else {
+      this.previewDocSafeUrl = null;
+    }
     this.previewDoc = doc;
   }
 
   closePreview(): void {
     this.previewDoc = null;
+    this.previewDocSafeUrl = null;
   }
 
   isPdf(doc: UploadedDocument | null): boolean {

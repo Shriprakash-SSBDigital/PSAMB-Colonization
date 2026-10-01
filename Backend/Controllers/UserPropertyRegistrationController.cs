@@ -1,4 +1,4 @@
-﻿using Backend.Helpers;
+using Backend.Helpers;
 using Backend.Models.Dtos;
 using Backend.Models.DTOs;
 using Backend.Services.Interfaces;
@@ -86,6 +86,38 @@ namespace Backend.Controllers
             }
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// User ke View button click par — createdBy (ApplicantId) ke base par
+        /// us user ke saare PropertyDocuments (with file path) return karta hai.
+        /// </summary>
+        [HttpGet("GetUserDocumentsByUserIDAsync")]
+        public async Task<IActionResult> GetUserDocumentsByUserIDAsync(int applicantID)
+        {
+            if (applicantID <= 0)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Invalid user details."
+                });
+            }
+
+            var result = await _service.GetUserDocumentsByUserIDAsync(applicantID);
+            return Ok(result);
+        }
+
+        [HttpGet("GetAllUserRegisterPropertyById")]
+        public async Task<IActionResult> GetAllUserRegisterPropertyById()
+        {
+            var response = await _service.GetAllUserRegisterPropertyById(GetUserId());
+            if (!response.Success)
+            {
+                return NotFound(response);
+            }
+
+            return Ok(response);
         }
 
     }
