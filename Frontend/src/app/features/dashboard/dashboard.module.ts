@@ -125,6 +125,22 @@ import { RoleGuard } from '../../core/guards/role-guard';
                 .then((m) => m.PlotWiseConsolidateDetails),
           },
           {
+            path: 'digitised-summary-report',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadComponent: () =>
+              import('../../features/digitised-summary-report/digitised-summary-report')
+                .then((m) => m.DigitisedSummaryReport),
+          },
+          {
+            path: 'plot-sold-unsold-report',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadComponent: () =>
+              import('../../features/plot-sold-unsold-report/plot-sold-unsold-report')
+                .then((m) => m.PlotSoldUnsoldReport),
+          },
+          {
             path : 'online-payment-details',
             canActivate: [RoleGuard],
             data: { roles: ['User'] },

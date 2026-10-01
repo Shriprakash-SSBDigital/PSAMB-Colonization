@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+.table-header-portal {
+  background-color: var(--theme-primary) !important;
+  color: #ffffff !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border-bottom: none !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.table-row {
+  background-color: #ffffff;
+  transition: background-color 0.15s ease-in-out;
+
+  td {
+    background-color: #ffffff !important;
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  &:hover td {
+    background-color: #f8fafc !important;
+  }
+}
+
+.col-index {
+  width: 60px;
+}
+
+.col-date {
+  width: 200px;
+}
+
+.col-count {
+  width: 120px;
+}
+
+::ng-deep .mat-mdc-paginator {
+  background: transparent;
+  font-size: 0.85rem;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-icon-button:not([disabled]) {
+  color: var(--theme-primary);
+}
+
+.btn-export-excel {
+  border-color: #198754;
+  background-color: #ffffff;
+  transition: all 0.15s ease-in-out;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background-color: #e8f5e9 !important;
+    border-color: #198754 !important;
+    color: #198754 !important;
+  }
+}
+
+
