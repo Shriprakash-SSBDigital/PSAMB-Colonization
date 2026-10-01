@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { finalize } from 'rxjs';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
-import { ChangeDetectorRef } from '@angular/core';
+import { MandiWiseService } from '../../core/service/Mandi-Wise-Summary-Service/mandi-wise-service';
 
 export interface LookupItem {
   id: number;
@@ -11,6 +12,9 @@ export interface LookupItem {
 }
 
 export interface AllotmentRow {
+  districtId?: number;
+  branchId?: number;
+  mandiId?: number;
   alloteeCode: string;
   name: string;
   district: string;
@@ -57,7 +61,8 @@ export class MandiWiseAllotmentSummary implements OnInit {
   constructor(
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private propertyService: Propertybidderregn
+    private propertyService: Propertybidderregn,
+    private mandiWiseService: MandiWiseService
   ) { }
 
   ngOnInit(): void {
@@ -213,9 +218,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
 
   updateData(): void {
     const filters = this.form.getRawValue();
-    const districtId = filters.districtId ? Number(filters.districtId) : null;
-    const branchId = filters.branchId ? Number(filters.branchId) : null;
-    const mandiId = filters.mandiId ? Number(filters.mandiId) : null;
+    const districtId = filters.districtId ? Number(filters.districtId) : 0;
+    const branchId = filters.branchId ? Number(filters.branchId) : 0;
+    const mandiId = filters.mandiId ? Number(filters.mandiId) : 0;
 
     if (!districtId) {
       this.rows = [];
@@ -228,14 +233,66 @@ export class MandiWiseAllotmentSummary implements OnInit {
     this.loading = true;
     this.cdr.detectChanges();
 
-    setTimeout(() => {
-      this.rows = this.mockRows(districtId, branchId, mandiId);
-      this.searched = true;
-      this.pageIndex = 0;
-      this.sortKey = null;
-      this.loading = false;
-      this.cdr.detectChanges();
-    }, 100);
+    this.mandiWiseService.getMandiWiseAllotmentSummary(districtId, branchId, mandiId)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (res: any) => {
+          const rawList = res?.data ?? (Array.isArray(res) ? res : []);
+          const allList: AllotmentRow[] = Array.isArray(rawList)
+            ? rawList.map((d: any) => this.mapToRow(d))
+            : [];
+
+          this.rows = allList;
+          this.searched = true;
+          this.pageIndex = 0;
+          this.sortKey = null;
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error fetching mandi wise allotment summary:', err);
+          this.rows = [];
+          this.searched = true;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  private mapToRow(d: any): AllotmentRow {
+    return {
+      districtId: Number(d.districtId ?? d.DistrictId ?? 0),
+      branchId: Number(d.branchId ?? d.BranchId ?? 0),
+      mandiId: Number(d.mandiId ?? d.MandiId ?? 0),
+      alloteeCode: d.allotteeCode ?? d.AllotteeCode ?? d.alloteeCode ?? d.AlloteeCode ?? '-',
+      name: d.allotteeName ?? d.AllotteeName ?? d.name ?? d.Name ?? '-',
+      district: d.districtName ?? d.DistrictName ?? d.district ?? d.District ?? '-',
+      mandi: d.mandiName ?? d.MandiName ?? d.mandi ?? d.Mandi ?? '-',
+      plotType: d.plotType ?? d.PlotType ?? '-',
+      plotNo: d.plotNo != null ? String(d.plotNo) : (d.PlotNo != null ? String(d.PlotNo) : '-'),
+      plotSize: d.plotSize ?? d.PlotSize ?? '-',
+      auctionDate: this.formatDate(d.auctionDate ?? d.AuctionDate),
+      allotmentDate: this.formatDate(d.dateOfAllotment ?? d.DateOfAllotment ?? d.allotmentDate ?? d.AllotmentDate),
+      allotmentNo: d.allotmentNo ?? d.AllotmentNo ?? d.allotteeCode ?? d.AllotteeCode ?? '-',
+      allotmentPrice: Number(d.allotmentPrice ?? d.AllotmentPrice ?? d.finalBidPrice ?? d.FinalBidPrice ?? d.price ?? d.Price ?? 0),
+    };
+  }
+
+  private formatDate(dateVal: any): string {
+    if (!dateVal) return '-';
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return String(dateVal);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    } catch {
+      return String(dateVal);
+    }
   }
 
   onReset(): void {
@@ -281,14 +338,13 @@ export class MandiWiseAllotmentSummary implements OnInit {
     this.cdr.detectChanges();
   }
 
-
   isInvalid(control: string): boolean {
     const c = this.form.get(control);
     return !!c && c.invalid && (c.touched || c.dirty);
   }
 
   get totalValue(): number {
-    return this.rows.reduce((sum, r) => sum + r.allotmentPrice, 0);
+    return this.rows.reduce((sum, r) => sum + (r.allotmentPrice || 0), 0);
   }
 
   get selectedMandiName(): string {
@@ -298,29 +354,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
     return this.mandis.find((m) => m.id === id)?.name ?? '';
   }
 
-  trackByRow = (_: number, row: AllotmentRow): string => row.allotmentNo;
+  trackByRow = (index: number, row: AllotmentRow): any => {
+    return row.alloteeCode ? `${row.alloteeCode}_${index}` : index;
+  };
 
   skeletonRows = Array.from({ length: 6 });
-
-  private mockRows(districtId: number, branchId?: number | null, mandiId?: number | null): AllotmentRow[] {
-    const district = this.districts.find((d) => d.id === districtId)?.name ?? 'District';
-    const committee = this.committees.find((c) => c.id === branchId)?.name;
-    const mandi = this.mandis.find((m) => m.id === mandiId)?.name;
-
-    const baseMandi = mandi || (committee ? `${committee} Mandi` : `${district} Mandi`);
-
-    return Array.from({ length: 12 }, (_, i) => ({
-      alloteeCode: `ALT-${districtId}${branchId ? `-${branchId}` : ''}-${1000 + i}`,
-      name: ['Gurpreet Singh', 'Manjit Kaur', 'Harnek Singh', 'Simran Kaur', 'Rajwinder Singh', 'Jaspreet Kaur'][i % 6],
-      district,
-      mandi: mandi || `${baseMandi} - ${(i % 3) + 1}`,
-      plotType: i % 2 ? 'Commercial' : 'Residential',
-      plotNo: `P-${i + 1}`,
-      plotSize: `${100 + i * 10} sq yd`,
-      auctionDate: '12-03-2025',
-      allotmentDate: '28-03-2025',
-      allotmentNo: `ALM/2025/${100 + i}`,
-      allotmentPrice: 850000 + i * 35000,
-    }));
-  }
 }
