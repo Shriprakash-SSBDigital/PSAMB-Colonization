@@ -7,6 +7,8 @@ namespace Backend.Models.DTOs
 
         public int Id { get; set; }
         public string? PropertyCode { get; set; }
+        public int? PropertyId { get; set; }
+
         public int MandiId { get; set; }
         public int BranchId { get; set; }
         public int DistrictId { get; set; }
@@ -53,6 +55,8 @@ namespace Backend.Models.DTOs
 
         public string? SessionId { get; set; }
         public List<int>? DocumentIds { get; set; }
+        public string? StatusName { get; set; }
+
     }
 
     public class PlotSizesDto

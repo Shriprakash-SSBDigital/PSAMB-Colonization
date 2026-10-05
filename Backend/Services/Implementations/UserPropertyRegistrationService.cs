@@ -551,13 +551,16 @@ namespace Backend.Services.Implementations
 
                 var baseUrl = _config["FileStorage:BaseUrl"]?.TrimEnd('/') ?? string.Empty;
 
-                var documents = await _context.UserDocuments
+                var rawDocuments = await _context.UserDocuments
                     .Where(d =>
                         d.ApplicantId == applicantID && 
                         d.IsActive &&
                         !d.IsDeleted)
                     .OrderBy(d => d.DocumentTypeId)
                     .ThenBy(d => d.CreatedDate)
+                    .ToListAsync();
+
+                var documents = rawDocuments
                     .Select(d => new UserDocumentResponseDto
                     {
                         UserDocumentId    = d.UserDocumentId,
@@ -565,8 +568,8 @@ namespace Backend.Services.Implementations
                         TempSessionId     = d.TempSessionId,
                         DocumentCategoryId = d.DocumentCategoryId,
                         DocumentTypeId    = d.DocumentTypeId,
-                        DocumentTypeName  = docTypeNames.ContainsKey(d.DocumentTypeId)
-                                                ? docTypeNames[d.DocumentTypeId]
+                        DocumentTypeName  = docTypeNames.TryGetValue(d.DocumentTypeId, out var typeName)
+                                                ? typeName
                                                 : "Unknown",
                         OriginalFileName  = d.OriginalFileName,
                         StoredFileName    = d.StoredFileName,
@@ -580,7 +583,7 @@ namespace Backend.Services.Implementations
                                                 : $"{baseUrl}/{d.RelativePath}",
                         CreatedDate       = d.CreatedDate
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 return ApiResponse<List<UserDocumentResponseDto>>.Ok(
                     documents,
@@ -644,9 +647,9 @@ namespace Backend.Services.Implementations
                             ? row["PropertyCode"]?.ToString()
                             : (table.Columns.Contains("AllotteeCode") && row["AllotteeCode"] != DBNull.Value ? row["AllotteeCode"]?.ToString() : null);
 
-                        response.AllotteeCode = table.Columns.Contains("AllotteeCode") && row["AllotteeCode"] != DBNull.Value
-                            ? row["AllotteeCode"]?.ToString()
-                            : response.PropertyCode;
+                        //response.PropertyCode = table.Columns.Contains("AllotteeCode") && row["AllotteeCode"] != DBNull.Value
+                        //    ? row["AllotteeCode"]?.ToString()
+                        //    : response.PropertyCode;
 
                         response.ApplicantId = table.Columns.Contains("ApplicantId") && row["ApplicantId"] != DBNull.Value
                             ? Convert.ToInt32(row["ApplicantId"])
@@ -737,7 +740,7 @@ namespace Backend.Services.Implementations
                             ? Convert.ToInt32(row["Status"])
                             : null;
 
-                        response.ApplicationStatusName = table.Columns.Contains("ApplicationStatusName") && row["ApplicationStatusName"] != DBNull.Value
+                        response.StatusName = table.Columns.Contains("ApplicationStatusName") && row["ApplicationStatusName"] != DBNull.Value
                             ? row["ApplicationStatusName"]?.ToString()
                             : null;
 

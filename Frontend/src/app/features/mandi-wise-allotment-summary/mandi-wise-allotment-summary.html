@@ -46,10 +46,10 @@
                         Market Committee
                     </label>
                     <select id="marketCommittee" class="form-select custom-input-color rounded-3"
-                        formControlName="branchId"
-                        (change)="onCommitteeChange()">
+                        formControlName="branchId" (change)="onCommitteeChange()">
                         <option [ngValue]="null">
-                            {{ form.get('branchId')?.disabled ? 'Select a district first' : (isLoadingCommittees ? 'Loading committees...' : 'Select committee') }}
+                            {{ form.get('branchId')?.disabled ? 'Select a district first' : (isLoadingCommittees ?
+                            'Loading committees...' : 'Select committee') }}
                         </option>
                         <option *ngFor="let c of committees" [ngValue]="c.id">{{ c.name }}</option>
                     </select>
@@ -62,7 +62,8 @@
                     <select id="mandi" class="form-select custom-input-color rounded-3" formControlName="mandiId"
                         (change)="onMandiChange()">
                         <option [ngValue]="null">
-                            {{ form.get('mandiId')?.disabled ? 'Select a committee first' : (isLoadingMandis ? 'Loading mandis...' : 'Select mandi') }}
+                            {{ form.get('mandiId')?.disabled ? 'Select a committee first' : (isLoadingMandis ? 'Loading
+                            mandis...' : 'Select mandi') }}
                         </option>
                         <option *ngFor="let m of mandis" [ngValue]="m.id">{{ m.name }}</option>
                     </select>
@@ -70,11 +71,11 @@
 
                 <div class="col-12 col-md-6 col-xl-3 d-flex align-items-end">
                     <div class="d-flex gap-2 w-100">
-                        <button type="submit" class="btn btn-portal rounded-3 flex-fill" [disabled]="loading">
+                        <!-- <button type="submit" class="btn btn-portal rounded-3 flex-fill" [disabled]="loading">
                             <span class="spinner-border spinner-border-sm me-2" *ngIf="loading"
                                 aria-hidden="true"></span>
                             {{ loading ? 'Loading' : 'Show summary' }}
-                        </button>
+                        </button> -->
                         <button type="button" class="btn btn-ghost rounded-3" (click)="onReset()" [disabled]="loading">
                             Clear
                         </button>
@@ -153,7 +154,8 @@
                             <td colspan="12" class="empty-cell text-center">
                                 <ng-container *ngIf="!searched">
                                     <p class="fw-semibold mb-1 text-dark">No Data Available</p>
-                                    <p class="small text-muted mb-0">Select a district to view the allotment summary.</p>
+                                    <p class="small text-muted mb-0">Select a district to view the allotment summary.
+                                    </p>
                                 </ng-container>
                                 <ng-container *ngIf="searched">
                                     <p class="fw-semibold mb-1 text-dark">No allotments found</p>
