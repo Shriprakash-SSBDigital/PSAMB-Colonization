@@ -159,7 +159,7 @@ import { RoleGuard } from '../../core/guards/role-guard';
           {
             path: 'role-management',
             canActivate: [RoleGuard],
-            data: { roles: ['Deputy Director', 'Director'] },
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
               import('../admin-pages/role-management/role-management')
                 .then((m) => m.RoleManagement),
