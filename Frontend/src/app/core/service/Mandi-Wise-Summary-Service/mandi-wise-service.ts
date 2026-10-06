@@ -19,4 +19,13 @@ export class MandiWiseService {
 
     return this.http.get<any>(`${this.baseUrl}/Report/GetMandiWiseAllotmentSummary`, { params });
   }
+
+  getPlotWiseConsolidateDetails(mandiId: number | string): Observable<any> {
+    const params = new HttpParams().set('mandiId', mandiId.toString());
+    return this.http.get<any>(`${this.baseUrl}/Report/GetPlotWiseConsolidateDetails`, { params });
+  }
+
+  getMandisForPropertyReport(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/Report/GetMandisForPropertyReport`);
+  }
 }

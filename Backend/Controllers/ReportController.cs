@@ -1,4 +1,4 @@
-﻿using Backend.Services.Interfaces;
+using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,5 +22,23 @@ namespace Backend.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("GetMandisForPropertyReport")]
+        public async Task<IActionResult> GetMandisForPropertyReport()
+        {
+            var response = await _service.GetMandisForPropertyReportAsync();
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetPlotWiseConsolidateDetails")]
+        public async Task<IActionResult> GetPlotWiseConsolidateDetails([FromQuery] long mandiId)
+        {
+            var response = await _service.GetPlotWiseConsolidateDetailsAsync(mandiId);
+
+            return Ok(response);
+        }
+
+    
     }
 }
