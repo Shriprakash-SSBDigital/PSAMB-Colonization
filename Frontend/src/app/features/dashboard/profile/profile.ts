@@ -352,13 +352,15 @@ export class Profile implements OnInit {
     });
   }
 
-  //get profile image 
-
+  // Get profile image
   getProfileImage(): void {
     this.commonService.GetProfileImageByUserId().subscribe({
       next: (response: any) => {
-        this.avatarUrl = response?.url ?? response?.data?.url ?? '';
-        this.profileSessionId = response?.sessionId ?? response?.data?.sessionId ?? '';
+        if (response?.success && response?.data) {
+          const imageData = response.data;
+        this.avatarUrl = imageData.base64Image ?? '';
+        this.profileSessionId = imageData.tempSessionId ?? '';
+        }
         this.cdr.detectChanges();
       },
       error: (err: any) => {

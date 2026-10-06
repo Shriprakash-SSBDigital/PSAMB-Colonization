@@ -103,6 +103,7 @@ export class VerificationView implements OnInit {
   previewDoc: UploadedDocument | null = null;
   previewDocSafeUrl: SafeResourceUrl | null = null;
   copiedField: string | null = null;
+  applicantID: any = null;
 
   isUserView = false;
   propertyDataLoaded = false;
@@ -129,8 +130,17 @@ export class VerificationView implements OnInit {
       remarks: [''],
     });
 
-    // ✅ Role pehle set karo — bindData ke andar status mapping role use karti hai
+    // Role pehle set karo — bindData ke andar status mapping role use karti hai
     this.userRole = this.getUserRole();
+
+    this.route.queryParams.subscribe(params => {
+      if (!this.propertyId && params['id']) {
+        this.propertyId = Number(params['id']);
+      }
+      if (params['createdBy']) {
+        this.applicantID = Number(params['createdBy']);
+      }
+    });
 
     // Read data passed via router state (from viewDetails click)
     const nav = this.router.getCurrentNavigation();
@@ -449,15 +459,64 @@ export class VerificationView implements OnInit {
     }
   }
 
-  viewDocument(doc: UploadedDocument): void {
-    if (!doc.uploaded || !doc.fileUrl) return;
-    if (this.isPdf(doc)) {
-      this.previewDocSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(doc.fileUrl);
-    } else {
+ viewDocument(doc: UploadedDocument): void {
+  if (!doc.uploaded || !this.applicantID) {
+    return;
+  }
+
+  // Keep the selected document while API request is in progress
+  this.previewDoc = { ...doc };
+  this.previewDocSafeUrl = null;
+
+  // Get the document URL from API using applicant ID
+  this.userService.GetUserDocumentsByUserIDAsync(this.applicantID).subscribe({
+    next: (res: any) => {
+      if (res?.success && res?.data) {
+        const docData = res.data.find(
+          (d: any) => d.key === doc.key
+        );
+
+        if (docData?.fileUrl) {
+
+          // Use the fileUrl returned by API
+          this.previewDoc = {
+            ...doc,
+            fileUrl: docData.fileUrl
+          };
+
+          // Keep the existing PDF preview functionality
+          const previewUrl = this.previewDoc.fileUrl;
+          if (previewUrl && this.isPdf(this.previewDoc)) {
+            this.previewDocSafeUrl =
+              this.sanitizer.bypassSecurityTrustResourceUrl(
+                previewUrl
+              );
+          } else {
+            this.previewDocSafeUrl = null;
+          }
+
+        } else {
+          console.warn(
+            `Document with key "${doc.key}" not found in API response.`
+          );
+
+          this.previewDoc = null;
+          this.previewDocSafeUrl = null;
+        }
+      }
+    },
+
+    error: (err: any) => {
+      console.error(
+        'Error occurred while fetching user documents:',
+        err
+      );
+
+      this.previewDoc = null;
       this.previewDocSafeUrl = null;
     }
-    this.previewDoc = doc;
-  }
+  });
+}
 
   closePreview(): void {
     this.previewDoc = null;

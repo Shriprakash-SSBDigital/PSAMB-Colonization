@@ -83,6 +83,8 @@ export class MainLayout {
       '/plot-wise-consolidate-details',
       '/property-ownership-verification',
       '/application-status',
+      '/digitised-summary-report',
+      '/plot-sold-unsold-report',
     ];
     return dashboardRoutes.some(
       (route) =>

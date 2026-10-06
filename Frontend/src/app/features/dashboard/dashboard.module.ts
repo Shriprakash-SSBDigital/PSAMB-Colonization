@@ -6,6 +6,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { Sidebar } from './sidebar/sidebar';
 import { Header } from './header/header';
 import { Footer } from './footer/footer';
+import { RoleGuard } from '../../core/guards/role-guard';
 
 @NgModule({
   declarations: [DashboardComponent, Sidebar, Header, Footer],
@@ -24,107 +25,144 @@ import { Footer } from './footer/footer';
                 .then((m) => m.DashboardHome),
           },
           {
-            path: 'register-property',
-            loadChildren: () =>
-              import('../register-property/register-property.module')
-                .then((m) => m.RegisterPropertyModule),
-          },
-          {
-            path: 'property-bidder-registration',
-            loadChildren: () =>
-              import('../property-bidder-registration/property-bidder-registration.module')
-                .then((m) => m.PropertyBidderRegistrationModule),
-          },
-          {
-            path: 'property-verification',
-            loadChildren: () =>
-              import('../property-verification/property-verification.module')
-                .then((m) => m.PropertyVerificationModule),
-          },
-          {
             path: 'profile',
             loadChildren: () =>
               import('./profile/profile.module')
                 .then((m) => m.ProfileModule),
           },
           {
-            path: 'user-verification',
-            loadChildren: () =>
-              import('../verification-view/verification-view.module')
-                .then((m) => m.VerificationViewModule),
-          },
-          // {
-          //   path: 'verification',
-          //   loadComponent: () =>
-          //     import('../deo-verification/deo-verification')
-          //       .then((m) => m.DeoVerification),
-          // },
-          {
-            path: 'registration-status',
+            path: 'coming-soon',
             loadComponent: () =>
-              import('../deo-registration-status/deo-registration-status')
-                .then((m) => m.DeoRegistrationStatus),
-          },
-          {
-            path: 'property-details',
-            loadComponent: () =>
-              import('../property-balance-calculate/property-balance-calculate')
-                .then((m) => m.PropertyBalanceCalculate),
+              import('../../features/comming-soon-pages/comming-soon-pages')
+                .then((m) => m.CommingSoonPages),
           },
           {
             path: 'dashboard-citizen-services',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
             loadComponent: () =>
               import('../citizen-services/citizen-services')
                 .then((m) => m.CitizenServices),
           },
           {
-            path: 'role-management',
-            loadComponent: () =>
-              import('../admin-pages/role-management/role-management')
-                .then((m) => m.RoleManagement),
+            path: 'register-property',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
+            loadChildren: () =>
+              import('../register-property/register-property.module')
+                .then((m) => m.RegisterPropertyModule),
           },
           {
-            path: 'online-payment-details',
-            loadComponent: () =>
-              import('../../features/online-payment-detail/online-payment-detail')
-                .then((m) => m.OnlinePaymentDetail),
+            path: 'property-bidder-registration',
+            canActivate: [RoleGuard],
+            data: { roles: ['DEO'] },
+            loadChildren: () =>
+              import('../property-bidder-registration/property-bidder-registration.module')
+                .then((m) => m.PropertyBidderRegistrationModule),
           },
-          // deo verification view route 
           {
-            path : 'verification',
+            path: 'property-details',
+            canActivate: [RoleGuard],
+            data: { roles: ['User', 'DEO', 'Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadComponent: () =>
+              import('../property-balance-calculate/property-balance-calculate')
+                .then((m) => m.PropertyBalanceCalculate),
+          },
+          {
+            path: 'registration-status',
+            canActivate: [RoleGuard],
+            data: { roles: ['DEO'] },
+            loadComponent: () =>
+              import('../deo-registration-status/deo-registration-status')
+                .then((m) => m.DeoRegistrationStatus),
+          },
+          {
+            path: 'verification',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
               import('../../features/data-entry-operator-verification-view/data-entry-operator-verification-view')
                 .then((m) => m.DataEntryOperatorVerificationView),
           },
           {
+            path: 'property-verification',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadChildren: () =>
+              import('../property-verification/property-verification.module')
+                .then((m) => m.PropertyVerificationModule),
+          },
+          {
+            path: 'user-verification',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadChildren: () =>
+              import('../verification-view/verification-view.module')
+                .then((m) => m.VerificationViewModule),
+          },
+          {
+            path: 'property-ownership-verification',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadComponent: () =>
+              import('../../features/property-ownership-verification/property-ownership-verification')
+                .then((m) => m.PropertyOwnershipVerification),
+          },
+          {
             path: 'mandi-wise-allotment-summary',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
               import('../../features/mandi-wise-allotment-summary/mandi-wise-allotment-summary')
                 .then((m) => m.MandiWiseAllotmentSummary),
           },
           {
             path: 'plot-wise-consolidate-details',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
               import('../../features/plot-wise-consolidate-details/plot-wise-consolidate-details')
                 .then((m) => m.PlotWiseConsolidateDetails),
           },
           {
-            path : 'property-ownership-verification',
+            path: 'digitised-summary-report',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
-              import('../../features/property-ownership-verification/property-ownership-verification')
-                .then((m) => m.PropertyOwnershipVerification),
+              import('../../features/digitised-summary-report/digitised-summary-report')
+                .then((m) => m.DigitisedSummaryReport),
+          },
+          {
+            path: 'plot-sold-unsold-report',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            loadComponent: () =>
+              import('../../features/plot-sold-unsold-report/plot-sold-unsold-report')
+                .then((m) => m.PlotSoldUnsoldReport),
+          },
+          {
+            path : 'online-payment-details',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
+            loadComponent: () =>
+              import('../../features/online-payment-detail/online-payment-detail')
+                .then((m) => m.OnlinePaymentDetail),
           },
           {
             path : 'application-status',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
             loadComponent: () =>
               import('../../features/user-registration-status/user-registration-status')
                 .then((m) => m.UserRegistrationStatus),
           },
           {
-            path: 'coming-soon',
+            path: 'role-management',
+            canActivate: [RoleGuard],
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
             loadComponent: () =>
-              import('../../features/comming-soon-pages/comming-soon-pages')
-                .then((m) => m.CommingSoonPages),
+              import('../admin-pages/role-management/role-management')
+                .then((m) => m.RoleManagement),
           }
         ]
       }

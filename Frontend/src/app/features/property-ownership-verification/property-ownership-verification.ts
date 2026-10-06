@@ -10,6 +10,7 @@ import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnServi
 
 interface OwnershipPropertyModel {
   id: number;
+  createdBy: number | null;
   propertyNo: string;
   ownerName: string;
   district: string;
@@ -169,6 +170,7 @@ export class PropertyOwnershipVerification implements OnInit {
           const statusVal = d.status != null ? d.status : d.applicationStatusId;
           return {
             id: d.id,
+            createdBy: d.createdBy ?? d.CreatedBy ?? null,
             propertyNo: d.propertyCode,
             ownerName: d.currentOwnerName || 'N/A',
             branch: d.branchName || 'N/A',
@@ -327,9 +329,8 @@ export class PropertyOwnershipVerification implements OnInit {
   }
 
   viewDetails(property: OwnershipPropertyModel): void {
-    debugger
     this.router.navigate(['/user-verification'], {
-      queryParams: { id: property.id },
+      queryParams: { id: property.id, createdBy: property.createdBy },
       state: { registrationData: property.registrationData },
 
     });

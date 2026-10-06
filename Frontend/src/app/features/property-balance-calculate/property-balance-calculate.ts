@@ -790,6 +790,6 @@ export class PropertyBalanceCalculate implements OnInit {
       return 0;
     }
 
-    return year < 1972 ? 6 : 12;
+    return year < 1992 ? 6 : 12;
   }
 }
