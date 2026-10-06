@@ -23,7 +23,7 @@ export class Sidebar implements OnInit {
 
   private loadMenus(): void {
     this.isLoading = true;
-    this.menuService.fetchMenus().subscribe({
+    this.menuService.fetchMenus(true).subscribe({
       next: (menus) => {
         this.menus = this.sortMenus(menus);
         this.isLoading = false;

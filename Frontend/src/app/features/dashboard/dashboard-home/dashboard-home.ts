@@ -55,7 +55,7 @@ export class DashboardHome implements OnInit {
 
   ngOnInit(): void {
     this.extractUserFromStorage();
-    this.menuService.fetchMenus().subscribe({
+    this.menuService.menus$.subscribe({
       next: (menus) => {
         this.availableServices = this.flattenServices(menus);
         this.cdr.detectChanges();

@@ -560,7 +560,6 @@ export class VerificationView implements OnInit {
   }
 
   handleSendBack(): void {
-    debugger
     this.onDecisionChange('sendback');
     this.apiError = '';
     this.apiSuccess = '';
