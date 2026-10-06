@@ -92,7 +92,7 @@
 
             </div>
         </div>
-
+    </div>
         <div class="text-center py-5" *ngIf="loading">
             <div class="spinner-border text-success"></div>
             <div class="text-muted small mt-2">Loading details...</div>
@@ -103,7 +103,7 @@
             <div class="fw-semibold">No records found.</div>
         </div>
 
-        <div class="table-responsive" *ngIf="hasData && !loading">
+        <div class="table-responsive mt-3 rounded-top-3" *ngIf="hasData && !loading">
             <table mat-table [dataSource]="dataSource" class="table table-hover align-middle mb-0 bg-white">
 
                 <ng-container matColumnDef="index">
@@ -163,5 +163,5 @@
                 [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)">
             </mat-paginator>
         </div>
-    </div>
+    <!-- </div> -->
 </div>
