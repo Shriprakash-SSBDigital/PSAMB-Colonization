@@ -1,4 +1,4 @@
-﻿namespace Backend.Models.DTOs
+namespace Backend.Models.DTOs
 {
     public class ReportDto
     {
@@ -27,5 +27,24 @@
         public DateTime? DateOfAllotment { get; set; }
         public decimal? FinalBidPrice { get; set; }
 
+    }
+
+    public class PlotWiseConsolidateDetailsDto
+    {
+        public string? PlotType { get; set; }
+        public string? PlotSize { get; set; }
+        public int TotalPlots { get; set; }
+        public int TotalSoldPlots { get; set; }
+        public int TotalUnsoldPlots { get; set; }
+        public string? AllPlots { get; set; }
+        public string? SoldPlots { get; set; }
+        public string? UnsoldPlots { get; set; }
+    }
+
+    public class MandiForPropertyReportDto
+    {
+        public long MandiId { get; set; }
+        public string? MandiName { get; set; }
+        public int DistrictId { get; set; }
     }
 }

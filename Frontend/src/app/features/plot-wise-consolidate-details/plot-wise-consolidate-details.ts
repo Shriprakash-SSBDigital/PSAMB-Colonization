@@ -1,20 +1,26 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { ReportService } from '../../core/service/ReportService/report.service';
 
 export interface PlotSummaryRow {
   plotType: string;
   plotSize: string;
   totalPlots: number;
-  allPlots: number;
-  soldPlots: number;
-  unsoldPlots: number;
+  totalSoldPlots: number;
+  totalUnsoldPlots: number;
+  allPlots: string;
+  soldPlots: string;
+  unsoldPlots: string;
 }
 
 export interface MandiOption {
-  value: string;
+  mandiId: number;
+  mandiName: string;
+  districtId?: number;
+  value: number | string;
   label: string;
 }
 
@@ -28,18 +34,13 @@ export interface MandiOption {
 export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
-
-  mandiOptions: MandiOption[] = [
-    { value: 'mandi1', label: 'Mandi 1 - Ludhiana' },
-    { value: 'mandi2', label: 'Mandi 2 - Khanna' },
-    { value: 'mandi3', label: 'Mandi 3 - Jagraon' },
-  ];
+  mandiOptions: MandiOption[] = [];
 
   allRows: PlotSummaryRow[] = [];
-
   pagedRows: PlotSummaryRow[] = [];
 
   loading = false;
+  isLoadingMandis = false;
   searched = false;
   errorMessage = '';
 
@@ -48,17 +49,23 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
 
   filterForm: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: ReportService,
+    private cdr: ChangeDetectorRef
+  ) {
     this.filterForm = this.fb.group({
       mandi: ['', Validators.required],
     });
   }
 
   ngOnInit(): void {
+    this.loadMandis();
+
     this.filterForm
       .get('mandi')
       ?.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe((mandi: string) => {
+      .subscribe((mandi: string | number) => {
         if (mandi) {
           this.fetchMandiSummary(mandi);
         } else {
@@ -78,20 +85,86 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
 
   get selectedMandiLabel(): string {
     const value = this.mandiControl?.value;
-    return this.mandiOptions.find((m) => m.value === value)?.label ?? '';
+    if (!value) return '';
+    const match = this.mandiOptions.find((m) => m.mandiId == value || m.value == value);
+    return match?.mandiName ?? match?.label ?? '';
   }
 
-  private fetchMandiSummary(mandi: string): void {
+  loadMandis(): void {
+    this.isLoadingMandis = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .getMandisForPropertyReport()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoadingMandis = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (res: any) => {
+          const list = res?.data || (Array.isArray(res) ? res : []);
+          this.mandiOptions = list.map((item: any) => ({
+            mandiId: item.mandiId ?? item.MandiId,
+            mandiName: item.mandiName ?? item.MandiName,
+            districtId: item.districtId ?? item.DistrictId,
+            value: item.mandiId ?? item.MandiId,
+            label: item.mandiName ?? item.MandiName,
+          }));
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error fetching mandis:', err);
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  private fetchMandiSummary(mandi: string | number): void {
     this.loading = true;
     this.searched = true;
     this.errorMessage = '';
     this.pageIndex = 0;
+    this.cdr.detectChanges();
 
-    setTimeout(() => {
-      this.allRows = this.getMockData(mandi);
-      this.updatePagedRows();
-      this.loading = false;
-    }, 500);
+    this.reportService
+      .getPlotWiseConsolidateDetails(mandi)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (res: any) => {
+          const list = res?.data || (Array.isArray(res) ? res : []);
+          this.allRows = list.map((row: any) => ({
+            plotType: row.plotType ?? row.PlotType ?? '',
+            plotSize: row.plotSize ?? row.PlotSize ?? '',
+            totalPlots: Number(row.totalPlots ?? row.TotalPlots ?? 0),
+            totalSoldPlots: Number(row.totalSoldPlots ?? row.TotalSoldPlots ?? 0),
+            totalUnsoldPlots: Number(row.totalUnsoldPlots ?? row.TotalUnsoldPlots ?? 0),
+            allPlots: row.allPlots ?? row.AllPlots ?? '',
+            soldPlots: row.soldPlots ?? row.SoldPlots ?? '',
+            unsoldPlots: row.unsoldPlots ?? row.UnsoldPlots ?? '',
+          }));
+
+          if (this.allRows.length === 0 && res?.message) {
+            this.errorMessage = res.message;
+          }
+          this.updatePagedRows();
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          this.errorMessage = err?.error?.message || 'Error fetching plot consolidate details.';
+          this.allRows = [];
+          this.pagedRows = [];
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   private resetResults(): void {
@@ -99,19 +172,23 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     this.pagedRows = [];
     this.searched = false;
     this.loading = false;
+    this.errorMessage = '';
     this.pageIndex = 0;
+    this.cdr.detectChanges();
   }
 
   onPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
     this.updatePagedRows();
+    this.cdr.detectChanges();
   }
 
   private updatePagedRows(): void {
     const start = this.pageIndex * this.pageSize;
     const end = start + this.pageSize;
     this.pagedRows = this.allRows.slice(start, end);
+    this.cdr.detectChanges();
   }
 
   rowNumber(indexInPage: number): number {
@@ -123,46 +200,103 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   }
 
   exportToExcel(): void {
-    console.log('Exporting to Excel for mandi:', this.mandiControl?.value, this.allRows);
+    if (!this.allRows.length) return;
+
+    const totalPlots = this.totalTotalPlots;
+    const soldPlots = this.totalSoldPlots;
+    const unsoldPlots = this.totalUnsoldPlots;
+
+    let tableRows = '';
+    for (const r of this.allRows) {
+      tableRows += `
+        <tr>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.plotType || ''}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.plotSize || ''}</td>
+          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.totalPlots ?? 0}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.allPlots || ''}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.soldPlots || ''}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.unsoldPlots || ''}</td>
+        </tr>`;
+    }
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Sheet1</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+          th { border: 1px solid black; font-weight: bold; background-color: #ffffff; padding: 4px 6px; }
+          td { padding: 4px 6px; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <th style="border: 1px solid black; text-align: left;">Plot Type</th>
+            <th style="border: 1px solid black; text-align: left;">Plot Size</th>
+            <th style="border: 1px solid black; text-align: left;">Total Plot</th>
+            <th style="border: 1px solid black; text-align: left;">AllPlotsNumber</th>
+            <th style="border: 1px solid black; text-align: left;">Sold Plots</th>
+            <th style="border: 1px solid black; text-align: left;">UnSold Plots</th>
+          </tr>
+          ${tableRows}
+          <tr>
+            <td style="border: 1px solid black;"></td>
+            <td style="border: 1px solid black; font-weight: bold; text-align: right;">Total</td>
+            <td style="border: 1px solid black; font-weight: bold; text-align: right; mso-number-format: '#,##0';">${totalPlots}</td>
+            <td style="border: 1px solid black;"></td>
+            <td style="border: 1px solid black; font-weight: bold; text-align: right; mso-number-format: '#,##0';">${soldPlots}</td>
+            <td style="border: 1px solid black; font-weight: bold; text-align: right; mso-number-format: '#,##0';">${unsoldPlots}</td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `PlotWiseConsolidateDetails_${this.selectedMandiLabel || 'Report'}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   printTable(): void {
     window.print();
   }
 
-  private getMockData(mandi: string): PlotSummaryRow[] {
-    const base: PlotSummaryRow[] = [
-      { plotType: 'Residential', plotSize: '100 sq. yd.', totalPlots: 120, allPlots: 120, soldPlots: 95, unsoldPlots: 25 },
-      { plotType: 'Residential', plotSize: '150 sq. yd.', totalPlots: 80, allPlots: 80, soldPlots: 60, unsoldPlots: 20 },
-      { plotType: 'Commercial', plotSize: '200 sq. yd.', totalPlots: 40, allPlots: 40, soldPlots: 30, unsoldPlots: 10 },
-      { plotType: 'Commercial', plotSize: '300 sq. yd.', totalPlots: 25, allPlots: 25, soldPlots: 18, unsoldPlots: 7 },
-      { plotType: 'Industrial', plotSize: '500 sq. yd.', totalPlots: 15, allPlots: 15, soldPlots: 10, unsoldPlots: 5 },
-      { plotType: 'Institutional', plotSize: '250 sq. yd.', totalPlots: 10, allPlots: 10, soldPlots: 4, unsoldPlots: 6 },
-      { plotType: 'Residential', plotSize: '200 sq. yd.', totalPlots: 60, allPlots: 60, soldPlots: 45, unsoldPlots: 15 },
-      { plotType: 'Commercial', plotSize: '150 sq. yd.', totalPlots: 35, allPlots: 35, soldPlots: 20, unsoldPlots: 15 },
-      { plotType: 'Residential', plotSize: '250 sq. yd.', totalPlots: 50, allPlots: 50, soldPlots: 38, unsoldPlots: 12 },
-      { plotType: 'Industrial', plotSize: '400 sq. yd.', totalPlots: 12, allPlots: 12, soldPlots: 9, unsoldPlots: 3 },
-      { plotType: 'Institutional', plotSize: '350 sq. yd.', totalPlots: 8, allPlots: 8, soldPlots: 5, unsoldPlots: 3 },
-      { plotType: 'Residential', plotSize: '300 sq. yd.', totalPlots: 30, allPlots: 30, soldPlots: 22, unsoldPlots: 8 },
-    ];
-
-    const multiplier = mandi === 'mandi2' ? 0.7 : mandi === 'mandi3' ? 1.3 : 1;
-    return base.map((row) => ({
-      ...row,
-      totalPlots: Math.round(row.totalPlots * multiplier),
-      allPlots: Math.round(row.allPlots * multiplier),
-      soldPlots: Math.round(row.soldPlots * multiplier),
-      unsoldPlots: Math.round(row.unsoldPlots * multiplier),
-    }));
-  }
-
   get totalTotalPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + r.totalPlots, 0);
+    return this.allRows.reduce((sum, r) => sum + (Number(r.totalPlots) || 0), 0);
   }
   get totalSoldPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + r.soldPlots, 0);
+    return this.allRows.reduce((sum, r) => sum + (Number(r.totalSoldPlots) || 0), 0);
   }
   get totalUnsoldPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + r.unsoldPlots, 0);
+    return this.allRows.reduce((sum, r) => sum + (Number(r.totalUnsoldPlots) || 0), 0);
   }
 }
