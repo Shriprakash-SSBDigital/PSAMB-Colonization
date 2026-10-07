@@ -235,6 +235,7 @@ namespace Backend.Services.Implementations
                 {
                     var item = new PlotWiseConsolidateDetailsDto
                     {
+                        PlotTypeId = row["PlotTypeId"] == DBNull.Value ? 0 : Convert.ToInt32(row["PlotTypeId"]),
                         PlotType = row["PlotType"] == DBNull.Value ? null : row["PlotType"].ToString(),
                         PlotSize = row["PlotSize"] == DBNull.Value ? null : row["PlotSize"].ToString(),
                         TotalPlots = row["TotalPlots"] == DBNull.Value ? 0 : Convert.ToInt32(row["TotalPlots"]),
@@ -259,6 +260,73 @@ namespace Backend.Services.Implementations
             }
         }
 
-       
+        public async Task<ApiResponse<List<PlotSoldUnsoldDto>>> GetPlotSoldUnsoldDetailsAsync(int districtId = 0, int branchId = 0)
+        {
+            try
+            {
+                var result = new List<PlotSoldUnsoldDto>();
+
+                await using var connection = _context.Database.GetDbConnection();
+
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                await using var command = connection.CreateCommand();
+
+                command.CommandText = "SP_GetPlotSoldUnsoldDetails";
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new SqlParameter("@DistrictId", districtId));
+                command.Parameters.Add(new SqlParameter("@BranchId", branchId));
+
+                await using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new PlotSoldUnsoldDto
+                    {
+                        SrNo = reader["SrNo"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["SrNo"]),
+
+                        DistrictId = reader["DistrictId"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["DistrictId"]),
+
+                        DistrictName = reader["DistrictName"] == DBNull.Value
+                            ? null
+                            : reader["DistrictName"].ToString(),
+
+                        BranchId = reader["BranchId"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["BranchId"]),
+
+                        MarketCommittee = reader["MarketCommittee"] == DBNull.Value
+                            ? null
+                            : reader["MarketCommittee"].ToString(),
+
+                        TotalPlots = reader["TotalPlots"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["TotalPlots"]),
+
+                        SoldPlots = reader["SoldPlots"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["SoldPlots"]),
+
+                        UnsoldPlots = reader["UnsoldPlots"] == DBNull.Value
+                            ? 0
+                            : Convert.ToInt32(reader["UnsoldPlots"])
+                    });
+                }
+
+                return ApiResponse<List<PlotSoldUnsoldDto>>.Ok(
+                    result,"Plot details fetched successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<PlotSoldUnsoldDto>>.Fail(
+                    $"Error fetching plot details: {ex.Message}");
+            }
+        }
     }
 }

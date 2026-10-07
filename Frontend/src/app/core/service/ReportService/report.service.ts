@@ -20,6 +20,17 @@ export interface MandiForPropertyReport {
   districtId: number;
 }
 
+export interface PlotSoldUnsoldDetail {
+  srNo: number;
+  districtId: number;
+  districtName: string;
+  branchId: number;
+  marketCommittee: string;
+  totalPlots: number;
+  soldPlots: number;
+  unsoldPlots: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -44,5 +55,13 @@ export class ReportService {
     params = params.set('mandiId', (mandiId || 0).toString());
 
     return this.http.get<any>(`${this.baseUrl}/Report/GetMandiWiseAllotmentSummary`, { params });
+  }
+
+  getPlotSoldUnsoldDetails(districtId: number = 0, branchId: number = 0): Observable<any> {
+    let params = new HttpParams();
+    params = params.set('districtId', (districtId || 0).toString());
+    params = params.set('branchId', (branchId || 0).toString());
+
+    return this.http.get<any>(`${this.baseUrl}/Report/GetPlotSoldUnsoldDetails`, { params });
   }
 }
