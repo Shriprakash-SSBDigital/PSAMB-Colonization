@@ -67,3 +67,12 @@
         display: none !important;
     }
 }
+.header-spacer {
+    min-width: 200px;
+}
+.header-actions {
+    min-width: 200px;
+}
+.bg-success{
+    background-color: var(--theme-primary) !important;
+}

@@ -1,12 +1,14 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { ReportService } from '../../core/service/ReportService/report.service';
+import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 
 export interface PlotSummaryRow {
   plotType: string;
+  plotTypeId: number;
   plotSize: string;
   totalPlots: number;
   totalSoldPlots: number;
@@ -43,15 +45,21 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   isLoadingMandis = false;
   searched = false;
   errorMessage = '';
-
   pageIndex = 0;
   pageSize = 10;
+  selectedMandiId: number | null = null;
+  selectedPlotNo: string = '';
+  plotDetail: any = null;
+  plotDetailLoading = false;
+  plotDetailError = '';
+  @ViewChild('plotDetailModal') plotDetailModalRef!: ElementRef;
 
   filterForm: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private reportService: ReportService,
+    private service: Propertybidderregn,
     private cdr: ChangeDetectorRef
   ) {
     this.filterForm = this.fb.group({
@@ -67,13 +75,71 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       ?.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((mandi: string | number) => {
         if (mandi) {
+          const found = this.mandiOptions.find((m) => m.value == mandi || m.mandiId == mandi);
+          this.selectedMandiId = found?.mandiId ?? Number(mandi);
           this.fetchMandiSummary(mandi);
         } else {
+          this.selectedMandiId = null;
           this.resetResults();
         }
       });
   }
 
+  closePreviewModal(): void {
+    this.plotDetail = null;
+    this.plotDetailError = '';
+    this.selectedPlotNo = '';
+  }
+
+  openPlotModal(plotNo: string, row: PlotSummaryRow): void {
+    this.selectedPlotNo = plotNo;
+    this.plotDetail = null;
+    this.plotDetailError = '';
+    this.plotDetailLoading = true;
+    this.cdr.detectChanges();
+
+    const mandiId    = this.selectedMandiId;
+    const plotTypeId = row.plotTypeId;
+    const plotSize   = row.plotSize;
+
+    this.service
+      .getPropertyDetailsByMandiPlot(mandiId, plotTypeId, plotNo, plotSize, true)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.plotDetailLoading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (res: any) => {
+          const d = res?.data ?? res;
+          this.plotDetail = {
+            propertyCode:    d?.propertyCode    ?? d?.PropertyCode    ?? '',
+            district:        d?.district        ?? d?.District        ?? '',
+            marketCommittee: d?.marketCommittee ?? d?.MarketCommittee ?? '',
+            mandi:           d?.mandi           ?? d?.Mandi           ?? '',
+            plotNo:          d?.plotNo          ?? d?.PlotNo          ?? plotNo,
+            plotType:        d?.plotType        ?? d?.PlotType        ?? row.plotType,
+            plotSize:        d?.plotSize        ?? d?.PlotSize        ?? row.plotSize,
+            plotStatus:      d?.plotStatus      ?? d?.PlotStatus      ?? 'Sold',
+            plan:            d?.plan            ?? d?.Plan            ?? '',
+            mandiCategory:   d?.mandiCategory   ?? d?.MandiCategory   ?? '',
+            auctionDate:     d?.auctionDate     ?? d?.AuctionDate     ?? '',
+            alloteeName:     d?.alloteeName     ?? d?.AlloteeName     ?? '',
+            allotmentAmount: d?.allotmentAmount ?? d?.AllotmentAmount ?? '',
+            allotmentDate:   d?.allotmentDate   ?? d?.AllotmentDate   ?? '',
+            alloteeEmail:    d?.alloteeEmail    ?? d?.AlloteeEmail    ?? '',
+            alloteePhone:    d?.alloteePhone    ?? d?.AlloteePhone    ?? '',
+          };
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          this.plotDetailError = err?.error?.message || 'Failed to load plot details. Please try again.';
+          this.cdr.detectChanges();
+        },
+      });
+  }
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -143,6 +209,7 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
           const list = res?.data || (Array.isArray(res) ? res : []);
           this.allRows = list.map((row: any) => ({
             plotType: row.plotType ?? row.PlotType ?? '',
+            plotTypeId: Number(row.plotTypeId ?? row.PlotTypeId ?? 0),
             plotSize: row.plotSize ?? row.PlotSize ?? '',
             totalPlots: Number(row.totalPlots ?? row.TotalPlots ?? 0),
             totalSoldPlots: Number(row.totalSoldPlots ?? row.TotalSoldPlots ?? 0),
