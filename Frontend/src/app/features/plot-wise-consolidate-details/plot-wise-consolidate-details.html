@@ -151,7 +151,7 @@
 <!-- Bootstrap Modal: Sold Plot Details -->
 <div class="modal fade" id="plotDetailModal" tabindex="-1" aria-labelledby="plotDetailModalLabel" aria-hidden="true"
     #plotDetailModal>
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-3 shadow-lg">
 
             <!-- Modal Header -->
@@ -166,7 +166,7 @@
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-0">
+            <div class="modal-body p-3 p-lg-4">
 
                 <!-- Loading state -->
                 <div class="text-center py-5" *ngIf="plotDetailLoading">
@@ -177,105 +177,275 @@
                 </div>
 
                 <!-- Error state -->
-                <div class="p-4" *ngIf="!plotDetailLoading && plotDetailError">
+                <div class="p-3" *ngIf="!plotDetailLoading && plotDetailError">
                     <div class="alert alert-danger rounded-3 mb-0" role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ plotDetailError }}
                     </div>
                 </div>
 
                 <!-- Detail sections -->
-                <div *ngIf="!plotDetailLoading && !plotDetailError && plotDetail">
+                <div *ngIf="!plotDetailLoading && !plotDetailError && balanceData">
 
-                    <!-- Section 1: Property Information -->
-                    <div class="p-4 border-bottom">
-                        <h6 class="text-success fw-bold text-uppercase small mb-3 d-flex align-items-center gap-2">
-                            <i class="bi bi-building"></i> Property Information
-                        </h6>
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Search / Property Code</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.propertyCode || '-' }}</p>
+                    <div class="row g-2 bg-light rounded-3 p-3 mb-3 border">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <span class="fw-semibold">Allottee Code :</span>
+                                {{ balanceData.propertyInfo.allotteeCode || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Name of Allottee :</span>
+                                {{ balanceData.propertyInfo.nameOfAllottee || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Auction Date :</span>
+                                {{ balanceData.propertyInfo.auctionDate || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Allotment Date :</span>
+                                {{ balanceData.propertyInfo.allotmentDate || '-' }}
+                            </p>
+                            <p class="mb-0">
+                                <span class="fw-semibold">Allotment Amount(Rs.) :</span>
+                                ₹{{ (balanceData.propertyInfo.finalBidPrice | number) || '0' }}
+                            </p>
                             </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">District</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.district || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Market Committee</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.marketCommittee || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Mandi</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.mandi || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Plot No.</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.plotNo || selectedPlotNo || '-' }}
-                                </p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Plot Type</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.plotType || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Plot Size</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.plotSize || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Plan</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.plan || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Mandi Category</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.mandiCategory || '-' }}</p>
-                            </div>
+                            <div class="col-md-6">
+                            <p class="mb-2">
+                                <span class="fw-semibold">Mandi Name :</span>
+                                {{ balanceData.propertyInfo.mandiName || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Plot Type :</span>
+                                {{ balanceData.propertyInfo.plotType || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Plot Number :</span>
+                                {{ balanceData.propertyInfo.plotNo || selectedPlotNo || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Size of Plot :</span>
+                                {{ balanceData.propertyInfo.sizeOfPlot || '-' }}
+                            </p>
+                            <p class="mb-0">
+                                <span class="fw-semibold">Address :</span>
+                                {{ balanceData.propertyInfo.address || '-' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Detail of Initial 25% deposited :
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft/Cheque/RTGS No</th>
+                                        <th>Draft/Cheque/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Bank</th>
+                                        <th class="text-end">Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.initialDeposits.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let deposit of balanceData.initialDeposits">
+                                        <td>{{ deposit.receiptNo || '-' }}</td>
+                                        <td>{{ deposit.receiptDate || '-' }}</td>
+                                        <td>{{ deposit.draftChequeRtgsNo || '-' }}</td>
+                                        <td>{{ deposit.draftChequeRtgsDate || '-' }}</td>
+                                        <td>{{ deposit.paymentMode || '-' }}</td>
+                                        <td>{{ deposit.bank || '-' }}</td>
+                                        <td class="text-end">₹{{ deposit.amount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.initialDeposits.length">
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.initialDeposits, 'amount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Section 2: Allotment Details -->
-                    <div class="p-4">
-                        <h6 class="text-success fw-bold text-uppercase small mb-3 d-flex align-items-center gap-2">
-                            <i class="bi bi-person-check-fill"></i> Allotment Details
-                        </h6>
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Auction Date</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.auctionDate || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Allotment Date</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.allotmentDate || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Allottee Name</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.alloteeName || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Allotment Amount</p>
-                                <p class="mb-0 fw-medium text-dark">{{ plotDetail?.allotmentAmount || '-' }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Allottee Email</p>
-                                <p class="mb-0 fw-medium">
-                                    <a *ngIf="plotDetail?.alloteeEmail; else noEmail"
-                                        href="mailto:{{ plotDetail?.alloteeEmail }}"
-                                        class="text-decoration-none text-success">
-                                        <i class="bi bi-envelope me-1"></i>{{ plotDetail?.alloteeEmail }}
-                                    </a>
-                                    <ng-template #noEmail><span class="text-dark">-</span></ng-template>
-                                </p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="small text-muted fw-semibold text-uppercase mb-1">Allottee Phone</p>
-                                <p class="mb-0 fw-medium">
-                                    <a *ngIf="plotDetail?.alloteePhone; else noPhone"
-                                        href="tel:{{ plotDetail?.alloteePhone }}"
-                                        class="text-decoration-none text-success">
-                                        <i class="bi bi-telephone me-1"></i>{{ plotDetail?.alloteePhone }}
-                                    </a>
-                                    <ng-template #noPhone><span class="text-dark">-</span></ng-template>
-                                </p>
-                            </div>
+                    <!-- Due Installments -->
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Due Installments : (Rate of Interest({{ getRateOfInterest() }}%))
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Installment No.</th>
+                                        <th>Due Date</th>
+                                        <th class="text-end">Due Amount(Rs.)</th>
+                                        <th class="text-end">Interest(Rs.)</th>
+                                        <th class="text-end">Total Due Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.dueInstallments.length">
+                                        <td colspan="5" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let installment of balanceData.dueInstallments">
+                                        <td>{{ installment.installmentNo }}</td>
+                                        <td>{{ installment.dueDate }}</td>
+                                        <td class="text-end">₹{{ installment.dueAmount | number }}</td>
+                                        <td class="text-end">₹{{ installment.interest | number }}</td>
+                                        <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.dueInstallments.length">
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'dueAmount') | number:'1.2-2' }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'interest') | number:'1.2-2' }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'totalDueAmount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Installments Amount Received :
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft No</th>
+                                        <th>Draft/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Draft/RTGS Bank</th>
+                                        <th class="text-end">Draft Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.installmentReceipts.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let receipt of balanceData.installmentReceipts">
+                                        <td>{{ receipt.receiptNo }}</td>
+                                        <td>{{ receipt.receiptDate }}</td>
+                                        <td>{{ receipt.draftNo || '-' }}</td>
+                                        <td>{{ receipt.draftRtgsDate }}</td>
+                                        <td>{{ receipt.paymentMode }}</td>
+                                        <td>{{ receipt.draftRtgsBank }}</td>
+                                        <td class="text-end">₹{{ receipt.draftAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.installmentReceipts.length">
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.installmentReceipts, 'draftAmount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-section mb-3" *ngIf="balanceData.futureInstallments.length">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Future Installments:
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Installment No.</th>
+                                        <th>Due Date</th>
+                                        <th class="text-end">Due Amount(Rs.)</th>
+                                        <th class="text-end">Interest(Rs.)</th>
+                                        <th class="text-end">Total Due Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let installment of balanceData.futureInstallments">
+                                        <td>{{ installment.installmentNo }}</td>
+                                        <td>{{ installment.dueDate }}</td>
+                                        <td class="text-end">₹{{ installment.dueAmount | number }}</td>
+                                        <td class="text-end">₹{{ installment.interest | number }}</td>
+                                        <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'interest') | number }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Other Amounts (if any) -->
+                    <div class="table-section mb-3" *ngIf="balanceData.otherAmounts.length">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Other Amount Received (If Any):
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Payment Type</th>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft No</th>
+                                        <th>Draft/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Draft/RTGS Bank</th>
+                                        <th class="text-end">Draft Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let other of balanceData.otherAmounts">
+                                        <td>{{ other.paymentType }}</td>
+                                        <td>{{ other.receiptNo }}</td>
+                                        <td>{{ other.receiptDate }}</td>
+                                        <td>{{ other.draftNo || '-' }}</td>
+                                        <td>{{ other.draftRtgsDate || '-' }}</td>
+                                        <td>{{ other.paymentMode || '-' }}</td>
+                                        <td>{{ other.draftRtgsBank || '-' }}</td>
+                                        <td class="text-end">₹{{ other.draftAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 
@@ -283,7 +453,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer border-top bg-light">
+            <div class="modal-footer py-2 px-3 border-top bg-light">
                 <button type="button" class="btn btn-outline-secondary fw-semibold"
                     data-bs-dismiss="modal">Close</button>
             </div>
