@@ -32,6 +32,7 @@ namespace Backend.Models.DTOs
     public class PlotWiseConsolidateDetailsDto
     {
         public string? PlotType { get; set; }
+        public int? PlotTypeId { get; set; }
         public string? PlotSize { get; set; }
         public int TotalPlots { get; set; }
         public int TotalSoldPlots { get; set; }
@@ -46,5 +47,24 @@ namespace Backend.Models.DTOs
         public long MandiId { get; set; }
         public string? MandiName { get; set; }
         public int DistrictId { get; set; }
+    }
+
+    public class PlotSoldUnsoldDto
+    {
+        public int SrNo { get; set; }
+
+        public int DistrictId { get; set; }
+
+        public string? DistrictName { get; set; }
+
+        public int BranchId { get; set; }
+
+        public string? MarketCommittee { get; set; }
+
+        public int TotalPlots { get; set; }
+
+        public int SoldPlots { get; set; }
+
+        public int UnsoldPlots { get; set; }
     }
 }

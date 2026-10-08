@@ -934,7 +934,110 @@ namespace Backend.Services.Implementations
                 {
                     response.Id = existingRegistration.Id;
                 }
+                response.InstallmentCalculations = new List<InstallmentCalculationDto>();
 
+                if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
+                {
+                    var schedules = response.InstallmentSchedules.OrderBy(x => x.CalculatedDueDate).ToList();
+                    var receipts = response.Installments.Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1).OrderBy(x => x.ReceiptDate).ToList();
+
+                    int receiptIndex = 0;
+                    decimal extraBalanceAmount = 0m;
+                    DateTime previousReceiptDate = DateTime.MinValue;
+
+                    foreach (var schedule in schedules)
+                    {
+                        if (!schedule.CalculatedDueDate.HasValue)
+                            continue;
+
+                        if (receiptIndex >= receipts.Count)
+                            break;
+
+                        decimal receivedAmount;
+                        DateTime receiptDate;
+
+                        //var receipt = receipts[receiptIndex];
+
+                        //if (!receipt.ReceiptDate.HasValue)
+                        //    continue;
+
+                        DateTime dueDate = schedule.CalculatedDueDate.Value.Date;
+                        decimal? installmentAmount = schedule.TotalEstimatedAmount;
+
+                        if (installmentAmount <= extraBalanceAmount)
+                        {
+                            receiptDate = previousReceiptDate;
+                            receivedAmount = extraBalanceAmount;
+                        }
+                        else
+                        {
+                            if (receiptIndex >= receipts.Count)
+                                break;
+
+                            var receipt = receipts[receiptIndex];
+
+                            if (!receipt.ReceiptDate.HasValue)
+                                continue;
+
+                            var nextreceivedAmount = receipt.DraftAmount ?? 0m;
+                            receivedAmount = nextreceivedAmount + extraBalanceAmount;
+
+                            if (receivedAmount <= 0)
+                                continue;
+
+                            receiptDate = receipt.ReceiptDate.Value.Date;
+
+                            // Save this receipt date because it may
+                            // be required for the next installment
+                            previousReceiptDate = receiptDate;
+                            receiptIndex++;
+                        }
+
+
+                        int delayDays = 0;
+                        int penalInterestRate = 6;
+                        int PenalityRateInPercent = 10;
+
+                        if (receiptDate > dueDate)
+                        {
+                            delayDays = (receiptDate - dueDate).Days;
+                        }
+
+                        // Your calculation here
+                        decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
+                        decimal penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+                        decimal totalPenalityAmount = penalInterest + penalityAmount;
+                        decimal extraAmount = Convert.ToDecimal(receivedAmount - installmentAmount);
+                        extraBalanceAmount = extraAmount;
+
+                        response.InstallmentCalculations.Add(new InstallmentCalculationDto
+                        {
+                            InstallmentId = schedule.Id,
+
+                            InstallmentNo = schedule.InstallmentNo,
+
+                            DueDate = dueDate,
+
+                            ReceiptDate = receiptDate,
+
+                            InstallmentAmount = Convert.ToDecimal(installmentAmount),
+
+                            ReceivedAmount = Convert.ToDecimal(receivedAmount),
+
+                            DelayDays = delayDays,
+
+                            PenalInterest = Math.Round(penalInterest, 2),
+
+                            PenalityAmount = Math.Round(penalityAmount, 2),
+
+                            TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
+
+                            ExtraAmount = Math.Round(extraAmount, 2)
+                        });
+
+
+                    }
+                }
                 return ApiResponse<PropertyBidderRegistrationDto>.Ok(response, "Registration fetched successfully");
 
             }
@@ -2706,6 +2809,8 @@ namespace Backend.Services.Implementations
                             PenaltyType = row["PenalityTypeId"] != DBNull.Value
                                 ? row["PenalityTypeId"]?.ToString()
                                 : null,
+                            AmountTypeId = row["AmountTypeId"] != DBNull.Value
+                                          ? Convert.ToInt32(row["AmountTypeId"]) : 0,
 
                             Remarks = row["Remarks"] != DBNull.Value
                                 ? row["Remarks"]?.ToString()
@@ -2759,6 +2864,112 @@ namespace Backend.Services.Implementations
                             ? Convert.ToDecimal(row["DraftAmount"])
                             : null;
                 }
+
+                response.InstallmentCalculations = new List<InstallmentCalculationDto>();
+
+                if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
+                {
+                    var schedules = response.InstallmentSchedules.OrderBy(x => x.CalculatedDueDate).ToList();
+                    var receipts = response.Installments.Where(x => x.ReceiptDate.HasValue && x.AmountTypeId !=1).OrderBy(x => x.ReceiptDate).ToList();
+
+                    int receiptIndex = 0;
+                    decimal extraBalanceAmount = 0m;
+                    DateTime previousReceiptDate = DateTime.MinValue;
+
+                    foreach (var schedule in schedules)
+                    {
+                        if (!schedule.CalculatedDueDate.HasValue)
+                            continue;
+
+                        if (receiptIndex >= receipts.Count)
+                            break;
+
+                        decimal receivedAmount;
+                        DateTime receiptDate;
+
+                        //var receipt = receipts[receiptIndex];
+
+                        //if (!receipt.ReceiptDate.HasValue)
+                        //    continue;
+
+                        DateTime dueDate = schedule.CalculatedDueDate.Value.Date;
+                        decimal? installmentAmount = schedule.TotalEstimatedAmount;
+
+                        if(installmentAmount <= extraBalanceAmount)
+                        {
+                            receiptDate = previousReceiptDate;
+                            receivedAmount = extraBalanceAmount;
+                        }
+                        else
+                        {
+                            if (receiptIndex >= receipts.Count)
+                                break;
+
+                            var receipt = receipts[receiptIndex];
+
+                            if (!receipt.ReceiptDate.HasValue)
+                                continue;
+
+                           var nextreceivedAmount = receipt.DraftAmount ?? 0m;
+                            receivedAmount = nextreceivedAmount + extraBalanceAmount;
+
+                            if (receivedAmount <= 0)
+                                continue;
+
+                            receiptDate = receipt.ReceiptDate.Value.Date;
+
+                            // Save this receipt date because it may
+                            // be required for the next installment
+                            previousReceiptDate = receiptDate;
+                            receiptIndex++;
+                        }
+                       
+
+                        int delayDays = 0;
+                        int penalInterestRate = 6;
+                        int PenalityRateInPercent = 10;
+
+                        if (receiptDate > dueDate)
+                        {
+                            delayDays = (receiptDate - dueDate).Days;
+                        }
+
+                        // Your calculation here
+                        decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
+                        decimal penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+                        decimal totalPenalityAmount = penalInterest + penalityAmount;
+                        decimal extraAmount = Convert.ToDecimal(receivedAmount - installmentAmount);
+                         extraBalanceAmount = extraAmount;
+
+                        response.InstallmentCalculations.Add(new InstallmentCalculationDto
+                            {
+                                InstallmentId = schedule.Id,
+                           
+                                InstallmentNo = schedule.InstallmentNo,
+                           
+                                DueDate = dueDate,
+                           
+                                ReceiptDate = receiptDate,
+                           
+                                InstallmentAmount = Convert.ToDecimal(installmentAmount),
+                           
+                                ReceivedAmount = Convert.ToDecimal(receivedAmount),
+                           
+                                DelayDays = delayDays,
+                           
+                                PenalInterest = Math.Round(penalInterest, 2),
+                           
+                                PenalityAmount = Math.Round(penalityAmount, 2),
+                           
+                                TotalPenalityAmount =Math.Round(totalPenalityAmount, 2),
+                           
+                                ExtraAmount = Math.Round(extraAmount, 2)
+                            });
+
+
+                    }
+                }
+
                 return ApiResponse<PropertyBidderRegistrationDto>.Ok(response, "Registration fetched successfully");
 
             }

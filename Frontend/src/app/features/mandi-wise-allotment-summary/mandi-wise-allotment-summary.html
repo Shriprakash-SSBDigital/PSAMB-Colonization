@@ -103,6 +103,7 @@
                                 [class.desc]="sortKey === 'name' && !sortAsc"></i>
                         </th>
                         <th scope="col">District</th>
+                        <th scope="col">Market Committee</th>
                         <th scope="col">Mandi</th>
                         <th scope="col" class="sortable" (click)="sortBy('plotType')">
                             Plot Type <i class="sort-mark" [class.on]="sortKey === 'plotType'"
@@ -135,6 +136,8 @@
                             <td class="fw-semibold text-portal">{{ row.alloteeCode }}</td>
                             <td class="text-secondary text-nowrap">{{ row.name }}</td>
                             <td class="text-secondary">{{ row.district }}</td>
+                            <td class="text-secondary">{{ row.branchName }}</td>
+
                             <td class="text-secondary">{{ row.mandi }}</td>
                             <td>
                                 <span class="chip" [class.chip-commercial]="row.plotType === 'Commercial'">{{
