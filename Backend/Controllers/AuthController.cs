@@ -85,6 +85,7 @@ namespace Backend.Controllers
             return Ok(ApiResponse<UserProfileWithMenuResponse>.Ok(result));
         }
 
+
         [HttpPut("UpdateProfile")]
         [Authorize]
         public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateProfile(
