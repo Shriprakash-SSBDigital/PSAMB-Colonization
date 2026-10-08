@@ -1,14 +1,23 @@
 import { Component, ChangeDetectorRef, ViewChild, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Observable, delay, finalize, of } from 'rxjs';
+import { finalize } from 'rxjs';
+import { ReportService } from '../../core/service/ReportService/report.service';
+import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
+
+export interface LookupItem {
+  id: number;
+  name: string;
+}
 
 export interface PlotRow {
+  srNo?: number;
+  districtId?: number;
   district: string;
+  branchId?: number;
   mcName: string;
   totalPlots: number;
   soldPlots: number;
@@ -30,7 +39,8 @@ export interface PlotRow {
 })
 export class PlotSoldUnsoldReport implements OnInit {
   private cdr = inject(ChangeDetectorRef);
-  private route = inject(ActivatedRoute);
+  private reportService = inject(ReportService);
+  private propertyService = inject(Propertybidderregn);
 
   displayedColumns: string[] = [
     'index',
@@ -43,7 +53,6 @@ export class PlotSoldUnsoldReport implements OnInit {
   dataSource = new MatTableDataSource<PlotRow>([]);
   allRows: PlotRow[] = [];
   loading = false;
-  reportDate = '';
 
   pageIndex = 0;
   pageSize = 10;
@@ -51,8 +60,11 @@ export class PlotSoldUnsoldReport implements OnInit {
   districtCtrl = new FormControl('', { nonNullable: true });
   mcCtrl = new FormControl('', { nonNullable: true });
 
-  allDistricts: string[] = [];
-  allCommittees: string[] = [];
+  districts: LookupItem[] = [];
+  committees: LookupItem[] = [];
+
+  isLoadingDistricts = false;
+  isLoadingCommittees = false;
 
   @ViewChild(MatPaginator) set paginator(p: MatPaginator | undefined) {
     if (p) {
@@ -65,19 +77,19 @@ export class PlotSoldUnsoldReport implements OnInit {
   }
 
   get filtered(): PlotRow[] {
-    return this.dataSource.filteredData;
+    return this.dataSource.data;
   }
 
   get totalPlots(): number {
-    return this.filtered.reduce((s, r) => s + r.totalPlots, 0);
+    return this.allRows.reduce((s, r) => s + (r.totalPlots || 0), 0);
   }
 
   get totalSold(): number {
-    return this.filtered.reduce((s, r) => s + r.soldPlots, 0);
+    return this.allRows.reduce((s, r) => s + (r.soldPlots || 0), 0);
   }
 
   get totalUnsold(): number {
-    return this.filtered.reduce((s, r) => s + r.unsoldPlots, 0);
+    return this.allRows.reduce((s, r) => s + (r.unsoldPlots || 0), 0);
   }
 
   percent(part: number, total: number): number {
@@ -89,23 +101,65 @@ export class PlotSoldUnsoldReport implements OnInit {
   }
 
   ngOnInit(): void {
-    this.reportDate = this.route.snapshot.queryParamMap.get('date') ?? '';
-
-    this.dataSource.filterPredicate = (row: PlotRow) => {
-      const selectedDist = this.districtCtrl.value.trim().toLowerCase();
-      const selectedMc = this.mcCtrl.value.trim().toLowerCase();
-
-      const matchDist = !selectedDist || row.district.toLowerCase() === selectedDist;
-      const matchMc = !selectedMc || row.mcName.toLowerCase() === selectedMc;
-      return matchDist && matchMc;
-    };
-
-    this.load();
+    this.loadDistricts();
+    this.loadData();
   }
 
-  load(): void {
+  loadDistricts(): void {
+    this.isLoadingDistricts = true;
+    this.cdr.detectChanges();
+    this.propertyService.getPropertyDistricts().subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.districts = Array.isArray(list)
+          ? list.map((d: any) => ({
+              id: Number(d.districtId ?? d.DistrictId ?? d.id),
+              name: d.districtName ?? d.DistrictName ?? d.name ?? '',
+            }))
+          : [];
+        this.isLoadingDistricts = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching property districts:', err);
+        this.districts = [];
+        this.isLoadingDistricts = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadMarketCommittees(districtId: number): void {
+    this.isLoadingCommittees = true;
+    this.cdr.detectChanges();
+    this.propertyService.getPropertyBranches(districtId).subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.committees = Array.isArray(list)
+          ? list.map((c: any) => ({
+              id: Number(c.branchId ?? c.BranchId ?? c.marketCommitteeId ?? c.MarketCommitteeId ?? c.id),
+              name: c.branchName ?? c.BranchName ?? c.marketCommitteeName ?? c.MarketCommitteeName ?? c.name ?? '',
+            }))
+          : [];
+        this.isLoadingCommittees = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching market committees:', err);
+        this.committees = [];
+        this.isLoadingCommittees = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadData(): void {
     this.loading = true;
-    this.fetchReport(this.reportDate)
+    const districtId = Number(this.districtCtrl.value) || 0;
+    const branchId = Number(this.mcCtrl.value) || 0;
+
+    this.reportService
+      .getPlotSoldUnsoldDetails(districtId, branchId)
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -113,102 +167,125 @@ export class PlotSoldUnsoldReport implements OnInit {
         }),
       )
       .subscribe({
-        next: (res) => {
-          this.allRows = res || [];
+        next: (res: any) => {
+          const rawList = res?.data ?? (Array.isArray(res) ? res : []);
+          this.allRows = Array.isArray(rawList)
+            ? rawList.map((item: any) => ({
+                srNo: item.srNo ?? item.SrNo ?? 0,
+                districtId: item.districtId ?? item.DistrictId ?? 0,
+                district: item.districtName ?? item.DistrictName ?? item.district ?? '',
+                branchId: item.branchId ?? item.BranchId ?? 0,
+                mcName: item.marketCommittee ?? item.MarketCommittee ?? item.mcName ?? '',
+                totalPlots: Number(item.totalPlots ?? item.TotalPlots ?? 0),
+                soldPlots: Number(item.soldPlots ?? item.SoldPlots ?? 0),
+                unsoldPlots: Number(item.unsoldPlots ?? item.UnsoldPlots ?? 0),
+              }))
+            : [];
           this.dataSource.data = this.allRows;
-          this.populateDropdowns();
-          this.applyFilters();
+          this.pageIndex = 0;
+          this.cdr.detectChanges();
         },
-        error: () => {
+        error: (err: any) => {
+          console.error('Error fetching plot sold unsold details:', err);
           this.allRows = [];
           this.dataSource.data = [];
+          this.pageIndex = 0;
+          this.cdr.detectChanges();
         },
       });
   }
 
-  populateDropdowns(): void {
-    this.allDistricts = Array.from(
-      new Set(this.allRows.map((r) => r.district).filter(Boolean)),
-    ).sort();
-    this.updateCommitteesList();
-  }
-
-  updateCommitteesList(): void {
-    const selectedDist = this.districtCtrl.value;
-    const rows = selectedDist
-      ? this.allRows.filter((r) => r.district === selectedDist)
-      : this.allRows;
-    this.allCommittees = Array.from(new Set(rows.map((r) => r.mcName).filter(Boolean))).sort();
-
-    if (this.mcCtrl.value && !this.allCommittees.includes(this.mcCtrl.value)) {
-      this.mcCtrl.setValue('');
-    }
-  }
-
   onDistrictChange(): void {
-    this.updateCommitteesList();
-    this.applyFilters();
+    const districtId = Number(this.districtCtrl.value) || 0;
+    this.mcCtrl.setValue('');
+    this.committees = [];
+
+    if (districtId > 0) {
+      this.loadMarketCommittees(districtId);
+    }
+    this.loadData();
   }
 
   onMcChange(): void {
-    this.applyFilters();
+    this.loadData();
   }
 
   clearFilters(): void {
     this.districtCtrl.setValue('');
     this.mcCtrl.setValue('');
-    this.updateCommitteesList();
-    this.applyFilters();
-  }
-
-  applyFilters(): void {
-    const filterKey = `${this.districtCtrl.value}|${this.mcCtrl.value}`;
-    this.dataSource.filter = filterKey;
-    this.pageIndex = 0;
-    this.cdr.detectChanges();
+    this.committees = [];
+    this.loadData();
   }
 
   exportExcel(): void {
-    if (!this.filtered.length) return;
+    if (!this.allRows.length) return;
+
+    const totalPlots = this.totalPlots;
+    const totalSold = this.totalSold;
+    const totalUnsold = this.totalUnsold;
+
+    let tableRows = '';
+    this.allRows.forEach((r, idx) => {
+      tableRows += `
+        <tr>
+          <td style="border: 1px solid black; text-align: center;">${idx + 1}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.district || ''}</td>
+          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.mcName || ''}</td>
+          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.totalPlots ?? 0}</td>
+          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.soldPlots ?? 0}</td>
+          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.unsoldPlots ?? 0}</td>
+        </tr>`;
+    });
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style>
+          table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+          th { border: 1px solid black; font-weight: bold; background-color: #d1e7dd; padding: 6px 10px; }
+          td { padding: 6px 10px; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <th colspan="6" style="font-size: 14pt; text-align: center; height: 30px;">Plot Sold/Unsold Details</th>
+          </tr>
+          <tr>
+            <th style="border: 1px solid black; text-align: center;">Sr. No</th>
+            <th style="border: 1px solid black; text-align: left;">District</th>
+            <th style="border: 1px solid black; text-align: left;">Market Committee</th>
+            <th style="border: 1px solid black; text-align: right;">Total Plots</th>
+            <th style="border: 1px solid black; text-align: right;">Sold Plots</th>
+            <th style="border: 1px solid black; text-align: right;">Unsold Plots</th>
+          </tr>
+          ${tableRows}
+          <tr style="font-weight: bold; background-color: #f8f9fa;">
+            <td style="border: 1px solid black; text-align: center;" colspan="3">Total</td>
+            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalPlots}</td>
+            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalSold}</td>
+            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalUnsold}</td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `PlotSoldUnsoldDetails_${new Date().toISOString().slice(0, 10)}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
     this.cdr.detectChanges();
-  }
-
-  private fetchReport(date: string): Observable<PlotRow[]> {
-    const mock: PlotRow[] = [
-      {
-        district: 'AMRITSAR',
-        mcName: 'AMRITSAR-I',
-        totalPlots: 200,
-        soldPlots: 106,
-        unsoldPlots: 94,
-      },
-      {
-        district: 'AMRITSAR',
-        mcName: 'AMRITSAR-II',
-        totalPlots: 46,
-        soldPlots: 35,
-        unsoldPlots: 11,
-      },
-      { district: 'AMRITSAR', mcName: 'MAJITHA', totalPlots: 116, soldPlots: 82, unsoldPlots: 34 },
-      { district: 'AMRITSAR', mcName: 'RAYYA', totalPlots: 685, soldPlots: 551, unsoldPlots: 134 },
-      { district: 'AMRITSAR', mcName: 'AJNALA', totalPlots: 331, soldPlots: 209, unsoldPlots: 122 },
-      { district: 'AMRITSAR', mcName: 'ATTARI', totalPlots: 1, soldPlots: 1, unsoldPlots: 0 },
-      {
-        district: 'JALANDHAR',
-        mcName: 'JALANDHAR CITY',
-        totalPlots: 160,
-        soldPlots: 98,
-        unsoldPlots: 62,
-      },
-      { district: 'JALANDHAR', mcName: 'NAKODAR', totalPlots: 46, soldPlots: 0, unsoldPlots: 46 },
-      { district: 'LUDHIANA', mcName: 'KHANNA', totalPlots: 317, soldPlots: 121, unsoldPlots: 196 },
-      { district: 'PATIALA', mcName: 'NABHA', totalPlots: 1, soldPlots: 1, unsoldPlots: 0 },
-    ];
-    return of(mock).pipe(delay(400));
   }
 }

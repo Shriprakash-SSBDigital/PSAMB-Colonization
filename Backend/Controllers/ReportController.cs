@@ -1,3 +1,4 @@
+using Backend.Services.Implementations;
 using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,12 @@ namespace Backend.Controllers
             return Ok(response);
         }
 
-    
+        [HttpGet("GetPlotSoldUnsoldDetails")]
+        public async Task<IActionResult> GetPlotSoldUnsoldDetails(int districtId = 0,int branchId = 0)
+        {
+            var response = await _service.GetPlotSoldUnsoldDetailsAsync(districtId,branchId);
+
+            return Ok(response);
+        }
     }
 }
