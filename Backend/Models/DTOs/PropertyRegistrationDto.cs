@@ -137,6 +137,7 @@ namespace Backend.Models.Dtos
 
         public List<InstallmentDetailsDto>? Installments { get; set; }
         public List<InstallmentScheduleDto>? InstallmentSchedules { get; set; }
+        public List<InstallmentCalculationDto> InstallmentCalculations { get; set; }
         public string PlotStatus { get; set; } = string.Empty;
         public int? PropertyCategoryId { get; set; }
         public long? CreatedBy { get; set; }
@@ -192,6 +193,7 @@ namespace Backend.Models.Dtos
         public decimal? OtherAmount { get; set; }
         public decimal? PenaltyAmount { get; set; }
         public string? PenaltyType { get; set; }
+        public int? AmountTypeId { get; set; }
         public string? Remarks { get; set; }
         public int? ApplicantId { get; set; }
         public int? PropertyId { get; set; }
@@ -260,5 +262,24 @@ namespace Backend.Models.Dtos
         public string? PanDocPath { get; set; }
         public string? AddrDocPath { get; set; }
         public string? PhotoPath { get; set; }
+    }
+
+    public class InstallmentCalculationDto
+    {
+        public int InstallmentId { get; set; }
+        public string? InstallmentNo { get; set; }
+
+        public DateTime? DueDate { get; set; }
+        public decimal InstallmentAmount { get; set; }
+        public DateTime? ReceiptDate { get; set; }
+        public decimal ReceivedAmount { get; set; }
+
+        public int DelayDays { get; set; }
+
+        public decimal PenalInterest { get; set; }
+        public decimal PenalityAmount { get; set; }
+        public decimal TotalPenalityAmount { get; set; }
+
+        public decimal ExtraAmount { get; set; }
     }
 }
