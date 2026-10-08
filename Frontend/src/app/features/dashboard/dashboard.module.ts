@@ -95,7 +95,7 @@ import { RoleGuard } from '../../core/guards/role-guard';
           {
             path: 'user-verification',
             canActivate: [RoleGuard],
-            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director','User'] },
             loadChildren: () =>
               import('../verification-view/verification-view.module')
                 .then((m) => m.VerificationViewModule),
@@ -159,7 +159,7 @@ import { RoleGuard } from '../../core/guards/role-guard';
           {
             path: 'role-management',
             canActivate: [RoleGuard],
-            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director'] },
+            data: { roles: ['Clerk', 'Senior Assistant', 'Superintendent', 'Deputy Director', 'Director','Admin'] },
             loadComponent: () =>
               import('../admin-pages/role-management/role-management')
                 .then((m) => m.RoleManagement),

@@ -67,6 +67,20 @@ export interface OtherAmountDetail {
   draftAmount: number;
 }
 
+export interface InterstAndPanalityDetail {
+  installmentId: number;
+  installmentNo: number;
+  dueDate: string;
+  installmentAmount: number;
+  receiptDate: string;
+  receivedAmount: number;
+  delayDays: number;
+  penalInterest: number;
+  penaltyAmount: number;
+  totalPenaltyAmount: number;
+  extraAmount: number;
+}
+
 export interface PropertyBalanceSummary {
   rebate: number;
   totalPaymentReceivedTillDate: number;
@@ -83,5 +97,6 @@ export interface PropertyBalanceResponse {
   installmentReceipts: InstallmentReceipt[];
   futureInstallments: InstallmentDetail[];
   otherAmounts: OtherAmountDetail[];
+  interestAndPenaltyDetails: InterstAndPanalityDetail[];
   summary: PropertyBalanceSummary;
 }

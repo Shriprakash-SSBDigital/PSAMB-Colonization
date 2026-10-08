@@ -427,7 +427,7 @@ export class VerificationView implements OnInit {
 
   goBack(): void {
     if (this.isUserView) {
-      this.router.navigate(['/user-registration-status']);
+      this.router.navigate(['/application-status']);
     } else {
       this.router.navigate(['/property-ownership-verification']);
     }

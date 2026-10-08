@@ -159,9 +159,12 @@
           @if (isInvalid('plotSize')) { <div class="invalid-feedback">Plot size is required.</div> }
         </div>
 
-        <div class="col-md-6 col-xl-3 d-flex align-items-end">
+        <div class="col-md-6 col-xl-3">
+          <label class="form-label small text-dark fw-semibold text-uppercase invisible d-none d-md-block" aria-hidden="true">&nbsp;</label>
+          <div>
           <button type="submit" class="btn bg-success text-white rounded-3 w-50" [disabled]="isUser">Submit
           </button>
+        </div>
         </div>
       </div>
     </form>
@@ -423,6 +426,7 @@
             </div>
         </div>
 
+        @if (!isUser) {
         <!-- Interest,Penalty calculation -->
 
         <div class="table-section mb-4">
@@ -447,29 +451,29 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngIf="!balanceData.otherAmounts.length">
-                            <td colspan="8" class="text-center text-muted">No records found</td>
+                        <tr *ngIf="!balanceData.interestAndPenaltyDetails.length">
+                            <td colspan="11" class="text-center text-muted">No records found</td>
                         </tr>
-                        <tr *ngFor="let other of balanceData.otherAmounts">
-                            <td>{{ other.paymentType }}</td>
-                            <td>{{ other.receiptNo }}</td>
-                            <td>{{ other.receiptDate }}</td>
-                            <td>{{ other.draftNo || '-' }}</td>
-                            <td>{{ other.draftRtgsDate || '-' }}</td>
-                            <td>{{ other.paymentMode  || '-' }}</td>
-                            <td>{{ other.draftRtgsBank || '-' }}</td>
-                            <td>{{ other.draftRtgsBank || '-' }}</td>
-                            <td>{{ other.draftRtgsBank || '-' }}</td>
-                            <td>{{ other.draftRtgsBank || '-' }}</td>
-                            <td class="text-end">₹{{ other.draftAmount | number }}</td>
+                        <tr *ngFor="let interestAndPenalty of balanceData.interestAndPenaltyDetails">
+                            <td>{{ interestAndPenalty.installmentId }}</td>
+                            <td>{{ interestAndPenalty.installmentNo }}</td>
+                            <td>{{ interestAndPenalty.dueDate }}</td>
+                            <td>{{ interestAndPenalty.installmentAmount }}</td>
+                            <td>{{ interestAndPenalty.receiptDate }}</td>
+                            <td>{{ interestAndPenalty.receivedAmount }}</td>
+                            <td>{{ interestAndPenalty.delayDays }}</td>
+                            <td>{{ interestAndPenalty.penalInterest }}</td>
+                            <td>{{ interestAndPenalty.penaltyAmount }}</td>
+                            <td>{{ interestAndPenalty.totalPenaltyAmount }}</td>
+                            <td class="text-end">₹{{ interestAndPenalty.extraAmount | number }}</td>
                         </tr>
                     </tbody>
-                    <!-- <tfoot>
+                    <tfoot>
                         <tr>
-                            <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}</td>
+                            <td colspan="10" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'extraAmount') | number:'1.2-2' }}</td>
                         </tr>
-                    </tfoot> -->
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -503,5 +507,6 @@
                 <span class="fw-semibold">₹{{ balanceData.summary.totalRecoverableAmount | number }}</span>
             </p>
         </div>
+        }
     </div>
 </section>

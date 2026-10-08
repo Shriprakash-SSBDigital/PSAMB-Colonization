@@ -247,6 +247,11 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       installmentReceipts: Array.isArray(d.installmentReceipts) && d.installmentReceipts.length ? d.installmentReceipts : installmentReceipts,
       futureInstallments: Array.isArray(d.futureInstallments) ? d.futureInstallments : [],
       otherAmounts: Array.isArray(d.otherAmounts) ? d.otherAmounts : [],
+      interestAndPenaltyDetails: Array.isArray(d.interestAndPenaltyDetails)
+        ? d.interestAndPenaltyDetails
+        : Array.isArray(d.installmentCalculations)
+          ? d.installmentCalculations
+          : [],
       summary: d.summary ? d.summary : {
         rebate: 0,
         totalPaymentReceivedTillDate: totalReceived,

@@ -608,6 +608,33 @@ export class PropertyBalanceCalculate implements OnInit {
     return Number.isFinite(num) ? num : 0;
   }
 
+  private mapInterestAndPenaltyDetails(property: any): PropertyBalanceResponse['interestAndPenaltyDetails'] {
+    const rows = Array.isArray(property?.interestAndPenaltyDetails)
+      ? property.interestAndPenaltyDetails
+      : Array.isArray(property?.installmentCalculations)
+        ? property.installmentCalculations
+        : [];
+
+    return rows.map((item: any) => ({
+      installmentId: this.coerceNumber(item?.installmentId ?? item?.InstallmentId),
+      installmentNo: this.coerceNumber(item?.installmentNo ?? item?.InstallmentNo),
+      dueDate: this.formatDate(item?.dueDate ?? item?.DueDate),
+      installmentAmount: this.coerceNumber(item?.installmentAmount ?? item?.InstallmentAmount),
+      receiptDate: this.formatDate(item?.receiptDate ?? item?.ReceiptDate),
+      receivedAmount: this.coerceNumber(item?.receivedAmount ?? item?.ReceivedAmount),
+      delayDays: this.coerceNumber(item?.delayDays ?? item?.DelayDays),
+      penalInterest: this.coerceNumber(item?.penalInterest ?? item?.PenalInterest),
+      penaltyAmount: this.coerceNumber(
+        item?.penaltyAmount ?? item?.PenaltyAmount ?? item?.penalityAmount ?? item?.PenalityAmount
+      ),
+      totalPenaltyAmount: this.coerceNumber(
+        item?.totalPenaltyAmount ?? item?.TotalPenaltyAmount ??
+        item?.totalPenalityAmount ?? item?.TotalPenalityAmount
+      ),
+      extraAmount: this.coerceNumber(item?.extraAmount ?? item?.ExtraAmount)
+    }));
+  }
+
   // private getMandiName(property: any): string {
   //   const responseMandiName = property?.mandiName ?? property?.MandiName;
   //   if (typeof responseMandiName === 'string' && responseMandiName.trim()) {
@@ -643,6 +670,7 @@ export class PropertyBalanceCalculate implements OnInit {
         installmentReceipts: [],
         futureInstallments: [],
         otherAmounts: [],
+        interestAndPenaltyDetails: [],
         summary: {
           rebate: 0,
           totalPaymentReceivedTillDate: 0,
@@ -746,6 +774,7 @@ export class PropertyBalanceCalculate implements OnInit {
       installmentReceipts,
       futureInstallments: Array.isArray(d.futureInstallments) ? d.futureInstallments : [],
       otherAmounts: Array.isArray(d.otherAmounts) ? d.otherAmounts : [],
+      interestAndPenaltyDetails: this.mapInterestAndPenaltyDetails(d),
       summary: {
         rebate: 0,
         totalPaymentReceivedTillDate: totalReceived,
