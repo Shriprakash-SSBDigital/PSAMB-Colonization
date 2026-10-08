@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
  
 interface PlotOption {
   plotNo: string;
@@ -53,13 +55,17 @@ interface InstallmentRow {
 @Component({
   selector: 'app-online-payment-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './online-payment-detail.html',
   styleUrl: './online-payment-detail.scss',
 })
-export class OnlinePaymentDetail implements OnInit {
+export class OnlinePaymentDetail implements OnInit, AfterViewInit {
  
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private confirmationService: ConfirmationService
+  ) {}
  
   filterForm!: FormGroup;
   plotOptions: PlotOption[] = [
@@ -94,6 +100,23 @@ export class OnlinePaymentDetail implements OnInit {
  
     this.filterForm.get('plotNo')!.valueChanges.subscribe((plotNo: string | null) => {
       this.onPlotSelected(plotNo);
+    });
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.showUnderConstructionDialog();
+    }, 100);
+  }
+
+  showUnderConstructionDialog(): void {
+    this.confirmationService.confirm({
+      header: 'Page Under Construction',
+      message: 'Online Payment Detail page is currently under construction and not yet fully completed.',
+      icon: 'fa-solid fa-triangle-exclamation text-warning fs-3 me-2',
+      acceptLabel: 'OK',
+      rejectVisible: false,
+      acceptButtonStyleClass: 'btn btn-success px-4',
     });
   }
  
@@ -147,12 +170,7 @@ export class OnlinePaymentDetail implements OnInit {
       this.paymentTypeControl.markAsTouched();
       return;
     }
-    // Hook up to your payment gateway service here
-    console.log('Initiating payment', {
-      plotNo: this.plotNoControl.value,
-      paymentType: this.paymentTypeControl.value,
-      amount: this.totalAmountControl.value
-    });
+    this.showUnderConstructionDialog();
   }
  
   get totalPaid(): number {
