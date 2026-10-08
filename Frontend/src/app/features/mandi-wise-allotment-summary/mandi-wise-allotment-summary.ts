@@ -26,6 +26,7 @@ export interface AllotmentRow {
   allotmentDate: string;
   allotmentNo: string;
   allotmentPrice: number;
+  branchName: string;
 }
 
 type SortKey = keyof AllotmentRow;
@@ -83,9 +84,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
         const list = res?.data || res || [];
         this.districts = Array.isArray(list)
           ? list.map((d: any) => ({
-              id: Number(d.districtId ?? d.DistrictId ?? d.id),
-              name: d.districtName ?? d.DistrictName ?? d.name ?? '',
-            }))
+            id: Number(d.districtId ?? d.DistrictId ?? d.id),
+            name: d.districtName ?? d.DistrictName ?? d.name ?? '',
+          }))
           : [];
         this.isLoadingDistricts = false;
         this.cdr.detectChanges();
@@ -109,9 +110,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
         const list = res?.data || res || [];
         this.committees = Array.isArray(list)
           ? list.map((c: any) => ({
-              id: Number(c.branchId ?? c.BranchId ?? c.marketCommitteeId ?? c.MarketCommitteeId ?? c.id),
-              name: c.branchName ?? c.BranchName ?? c.marketCommitteeName ?? c.MarketCommitteeName ?? c.name ?? '',
-            }))
+            id: Number(c.branchId ?? c.BranchId ?? c.marketCommitteeId ?? c.MarketCommitteeId ?? c.id),
+            name: c.branchName ?? c.BranchName ?? c.marketCommitteeName ?? c.MarketCommitteeName ?? c.name ?? '',
+          }))
           : [];
         this.isLoadingCommittees = false;
         branchCtrl?.enable({ emitEvent: false });
@@ -137,9 +138,9 @@ export class MandiWiseAllotmentSummary implements OnInit {
         const list = res?.data || res || [];
         this.mandis = Array.isArray(list)
           ? list.map((m: any) => ({
-              id: Number(m.mandiId ?? m.MandiId ?? m.id),
-              name: m.mandiName ?? m.MandiName ?? m.name ?? '',
-            }))
+            id: Number(m.mandiId ?? m.MandiId ?? m.id),
+            name: m.mandiName ?? m.MandiName ?? m.name ?? '',
+          }))
           : [];
         this.isLoadingMandis = false;
         mandiCtrl?.enable({ emitEvent: false });
@@ -270,6 +271,7 @@ export class MandiWiseAllotmentSummary implements OnInit {
       alloteeCode: d.allotteeCode ?? d.AllotteeCode ?? d.alloteeCode ?? d.AlloteeCode ?? '-',
       name: d.allotteeName ?? d.AllotteeName ?? d.name ?? d.Name ?? '-',
       district: d.districtName ?? d.DistrictName ?? d.district ?? d.District ?? '-',
+      branchName: d.branchName ?? d.BranchName ?? d.branch ?? d.Branch ?? '-',
       mandi: d.mandiName ?? d.MandiName ?? d.mandi ?? d.Mandi ?? '-',
       plotType: d.plotType ?? d.PlotType ?? '-',
       plotNo: d.plotNo != null ? String(d.plotNo) : (d.PlotNo != null ? String(d.PlotNo) : '-'),

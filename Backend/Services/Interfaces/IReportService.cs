@@ -8,6 +8,6 @@ namespace Backend.Services.Interfaces
         Task<ApiResponse<List<ReportDto>>> GetMandiWiseAllotmentSummaryAsync(int districtId, int branchId, int mandiId);
         Task<ApiResponse<List<MandiForPropertyReportDto>>> GetMandisForPropertyReportAsync();
         Task<ApiResponse<List<PlotWiseConsolidateDetailsDto>>> GetPlotWiseConsolidateDetailsAsync(long mandiId);
-    }
+        Task<ApiResponse<List<PlotSoldUnsoldDto>>> GetPlotSoldUnsoldDetailsAsync(int districtId = 0, int branchId = 0); }
 }
 
