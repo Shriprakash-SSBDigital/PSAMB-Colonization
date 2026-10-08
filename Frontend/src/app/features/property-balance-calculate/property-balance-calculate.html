@@ -423,6 +423,57 @@
             </div>
         </div>
 
+        <!-- Interest,Penalty calculation -->
+
+        <div class="table-section mb-4">
+            <div class="table-section-header rounded-top-2 bg-success text-white">
+                Details of Interest & Penalty Calculation:
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Installment ID</th>
+                            <th>Installment No</th>
+                            <th>Due Date</th>
+                            <th>Installment Amount</th>
+                            <th>Receipt Date</th>
+                            <th>Received Amount</th>
+                            <th>Delay Days</th>
+                            <th>Penal Interest</th>
+                            <th>Penalty Amount</th>
+                            <th>Total Penalty Amount</th>
+                            <th class="text-end">Extra Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngIf="!balanceData.otherAmounts.length">
+                            <td colspan="8" class="text-center text-muted">No records found</td>
+                        </tr>
+                        <tr *ngFor="let other of balanceData.otherAmounts">
+                            <td>{{ other.paymentType }}</td>
+                            <td>{{ other.receiptNo }}</td>
+                            <td>{{ other.receiptDate }}</td>
+                            <td>{{ other.draftNo || '-' }}</td>
+                            <td>{{ other.draftRtgsDate || '-' }}</td>
+                            <td>{{ other.paymentMode  || '-' }}</td>
+                            <td>{{ other.draftRtgsBank || '-' }}</td>
+                            <td>{{ other.draftRtgsBank || '-' }}</td>
+                            <td>{{ other.draftRtgsBank || '-' }}</td>
+                            <td>{{ other.draftRtgsBank || '-' }}</td>
+                            <td class="text-end">₹{{ other.draftAmount | number }}</td>
+                        </tr>
+                    </tbody>
+                    <!-- <tfoot>
+                        <tr>
+                            <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}</td>
+                        </tr>
+                    </tfoot> -->
+                </table>
+            </div>
+        </div>
+
         <!-- Summary -->
         <div class="summary-block">
             <p class="mb-2">
