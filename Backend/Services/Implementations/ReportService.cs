@@ -5,6 +5,7 @@ using Backend.Models.DTOs;
 using Backend.Services.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace Backend.Services.Implementations
@@ -326,6 +327,129 @@ namespace Backend.Services.Implementations
             {
                 return ApiResponse<List<PlotSoldUnsoldDto>>.Fail(
                     $"Error fetching plot details: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>>  GetDigitizationPropertyDayWiseCountAsync(    DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                if (fromDate.Date > toDate.Date)
+                {
+                    return ApiResponse<List<DigitizationPropertyDayWiseDto>>
+                        .Fail("From Date cannot be greater than To Date.");
+                }
+
+                var result = new List<DigitizationPropertyDayWiseDto>();
+
+                await using var connection = _context.Database.GetDbConnection();
+
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                await using var command = connection.CreateCommand();
+
+                command.CommandText = "SP_GetDigitizationPropertyDayWiseCount";
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new SqlParameter("@FromDate", fromDate));
+                command.Parameters.Add(new SqlParameter("@ToDate", toDate));
+
+                await using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new DigitizationPropertyDayWiseDto
+                    {
+                        CreatedDate = Convert.ToDateTime(
+                            reader["CreatedDate"]),
+
+                        Count = Convert.ToInt32(reader["Count"])
+                    });
+                }
+
+                return ApiResponse<List<DigitizationPropertyDayWiseDto>>
+                    .Ok(result, "Day-wise property count fetched successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<DigitizationPropertyDayWiseDto>>
+                    .Fail($"Error fetching day-wise property count: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDetailsDto>>> GetDigitizationPropertyDayWiseCountDetailsAsync(DateTime fromDate)
+        {
+            try
+            {
+                var result = new List<DigitizationPropertyDayWiseDetailsDto>();
+
+                await using var connection = _context.Database.GetDbConnection();
+
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                // 1. Inspect definition and parameters of the stored procedure
+                string? spDef = null;
+                var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    await using var checkCmd = connection.CreateCommand();
+                    checkCmd.CommandText = @"
+                        SELECT OBJECT_DEFINITION(OBJECT_ID('SP_GetDigitizationPropertyDayWiseCountDetails')) AS SpDef;
+                        SELECT PARAMETER_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE SPECIFIC_NAME = 'SP_GetDigitizationPropertyDayWiseCountDetails';
+                    ";
+                    await using var checkReader = await checkCmd.ExecuteReaderAsync();
+                    if (await checkReader.ReadAsync())
+                    {
+                        spDef = checkReader[0] as string;
+                    }
+                    if (await checkReader.NextResultAsync())
+                    {
+                        while (await checkReader.ReadAsync())
+                        {
+                            paramNames.Add(checkReader.GetString(0));
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(spDef))
+                    {
+                        try { await File.WriteAllTextAsync(@"d:\Latest_Col_PSAMB\sp_debug.txt", spDef); } catch { }
+                    }
+                }
+                catch { }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SP_GetDigitizationPropertyDayWiseCountDetails";
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 120;
+
+                command.Parameters.Add(new SqlParameter("@FromDate", fromDate.Date));
+
+                if (paramNames.Contains("@ToDate"))
+                {
+                    command.Parameters.Add(new SqlParameter("@ToDate", fromDate.Date.AddDays(1).AddSeconds(-1)));
+                }
+
+                await using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new DigitizationPropertyDayWiseDetailsDto
+                    {
+                        PropertyCode = reader["PropertyCode"] == DBNull.Value
+                            ? null
+                            : Convert.ToString(reader["PropertyCode"])
+                    });
+                }
+
+                return ApiResponse<List<DigitizationPropertyDayWiseDetailsDto>>
+                    .Ok(result, "Property details fetched successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<DigitizationPropertyDayWiseDetailsDto>>
+                    .Fail($"Error fetching property details: {ex.Message}");
             }
         }
     }

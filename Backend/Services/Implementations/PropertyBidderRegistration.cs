@@ -3008,7 +3008,7 @@ namespace Backend.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<PropertyBidderRegistrationDto>> GetBiderPropertyDetailsByMandiPlotAsync(int mandiId, int plotTypeId, string plotNo, string plotSize, bool isSold = true)
+        public async Task<ApiResponse<PropertyBidderRegistrationDto>> GetBiderPropertyDetailsByMandiPlotAsync(int mandiId, int plotTypeId, string plotNo, string plotSize)
         {
             try
             {
@@ -3035,7 +3035,6 @@ namespace Backend.Services.Implementations
                 command.Parameters.AddWithValue("@PlotTypeId", plotTypeId);
                 command.Parameters.AddWithValue("@PlotNo", plotNo);
                 command.Parameters.AddWithValue("@PlotSize", plotSize);
-                command.Parameters.AddWithValue("@IsPropertySold", isSold);
 
                 // ==========================================
                 // EXECUTE STORED PROCEDURE USING DATASET
