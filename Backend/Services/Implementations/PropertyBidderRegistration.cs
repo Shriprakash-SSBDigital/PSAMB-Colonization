@@ -878,7 +878,8 @@ namespace Backend.Services.Implementations
                                 ? row["Remarks"]?.ToString()
                                 : null,
 
-
+                            AmountTypeId = row["AmountTypeId"] != DBNull.Value
+                                          ? Convert.ToInt32(row["AmountTypeId"]) : 0,
                             //IsVerified = row["IsVerified"] != DBNull.Value
                             //    ? Convert.ToBoolean(row["IsVerified"])
                             //    : null
@@ -998,6 +999,14 @@ namespace Backend.Services.Implementations
                         int penalInterestRate = 6;
                         int PenalityRateInPercent = 10;
 
+                        if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year > 1992)
+                        {
+                            penalInterestRate = 12;
+                        }
+                        {
+                            penalInterestRate = 6;
+                        }
+
                         if (receiptDate > dueDate)
                         {
                             delayDays = (receiptDate - dueDate).Days;
@@ -1027,7 +1036,7 @@ namespace Backend.Services.Implementations
                             DelayDays = delayDays,
 
                             PenalInterest = Math.Round(penalInterest, 2),
-
+                            PenaltyRateInPercent= PenalityRateInPercent,
                             PenalityAmount = Math.Round(penalityAmount, 2),
 
                             TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
@@ -2924,10 +2933,18 @@ namespace Backend.Services.Implementations
                             receiptIndex++;
                         }
                        
-
+                         
                         int delayDays = 0;
-                        int penalInterestRate = 6;
+                        int penalInterestRate = 12;
                         int PenalityRateInPercent = 10;
+
+                        if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year > 1992)
+                        {
+                            penalInterestRate = 12;
+                        }
+                        {
+                            penalInterestRate = 6;
+                        }
 
                         if (receiptDate > dueDate)
                         {
@@ -2958,7 +2975,7 @@ namespace Backend.Services.Implementations
                                 DelayDays = delayDays,
                            
                                 PenalInterest = Math.Round(penalInterest, 2),
-                           
+                                PenaltyRateInPercent = PenalityRateInPercent,
                                 PenalityAmount = Math.Round(penalityAmount, 2),
                            
                                 TotalPenalityAmount =Math.Round(totalPenalityAmount, 2),
