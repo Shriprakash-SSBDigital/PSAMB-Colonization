@@ -306,6 +306,18 @@
     padding: 90px 28px 30px;
     gap: 18px;
     overflow-y: auto;
+    overflow-x: hidden;
+    /* Hide scrollbar in Firefox */
+    scrollbar-width: none;
+    /* Hide scrollbar in Microsoft browsers */
+    -ms-overflow-style: none;
+    /* Hide scrollbar in Chrome, Edge and Safari */
+    -webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    
     box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
 
     transform: translateX(-100%);

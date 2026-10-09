@@ -12,9 +12,9 @@
           @for (subMenu of menu.subMenus; track subMenu.subMenuId) {
             <li class="nav-item mt-1">
               <a [routerLink]="subMenu.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link d-flex align-items-center gap-2">
-                @if (subMenu.icon) {
+                <!-- @if (subMenu.icon) {
                   <i [class]="'fas fa-' + subMenu.icon"></i>
-                }
+                } -->
                 <span>{{ subMenu.subMenuName }}</span>
               </a>
             </li>

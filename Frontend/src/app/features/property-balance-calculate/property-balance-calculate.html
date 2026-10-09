@@ -440,11 +440,11 @@
                             <th>Installment ID</th>
                             <th>Installment No</th>
                             <th>Due Date</th>
-                            <th>Installment Amount</th>
                             <th>Receipt Date</th>
-                            <th>Received Amount</th>
                             <th>Delay Days</th>
                             <th>Penal Interest</th>
+                            <th>Installment Amount</th>
+                            <th>Received Amount</th>
                             <th>Penalty Amount</th>
                             <th>Total Penalty Amount</th>
                             <th class="text-end">Extra Amount</th>
@@ -458,11 +458,11 @@
                             <td>{{ interestAndPenalty.installmentId }}</td>
                             <td>{{ interestAndPenalty.installmentNo }}</td>
                             <td>{{ interestAndPenalty.dueDate }}</td>
-                            <td>{{ interestAndPenalty.installmentAmount }}</td>
                             <td>{{ interestAndPenalty.receiptDate }}</td>
-                            <td>{{ interestAndPenalty.receivedAmount }}</td>
                             <td>{{ interestAndPenalty.delayDays }}</td>
                             <td>{{ interestAndPenalty.penalInterest }}</td>
+                            <td>{{ interestAndPenalty.installmentAmount }}</td>
+                            <td>{{ interestAndPenalty.receivedAmount }}</td>
                             <td>{{ interestAndPenalty.penaltyAmount }}</td>
                             <td>{{ interestAndPenalty.totalPenaltyAmount }}</td>
                             <td class="text-end">₹{{ interestAndPenalty.extraAmount | number }}</td>
@@ -470,7 +470,11 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="10" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'installmentAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'receivedAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'penaltyAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2' }}</td>
                             <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'extraAmount') | number:'1.2-2' }}</td>
                         </tr>
                     </tfoot>
