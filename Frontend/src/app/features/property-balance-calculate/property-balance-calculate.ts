@@ -1,4 +1,5 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, registerLocaleData } from '@angular/common';
+import localeEnIn from '@angular/common/locales/en-IN';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -7,6 +8,7 @@ import { MenuService } from '../../core/service/MenuService/menu.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { Userservice } from '../../core/service/UserService/userservice';
+registerLocaleData(localeEnIn);
 
 @Component({
   selector: 'app-property-balance-calculate',
@@ -634,6 +636,26 @@ export class PropertyBalanceCalculate implements OnInit {
       extraAmount: this.coerceNumber(item?.extraAmount ?? item?.ExtraAmount)
     }));
   }
+  private mapInstallmentRows(rows: any[]): PropertyBalanceResponse['dueInstallments'] {
+    return rows.map((item: any, index: number) => {
+      const dueAmount = this.coerceNumber(
+        item?.basePrincipal ?? item?.baseAmount ?? item?.dueAmount ?? item?.principalAmount
+      );
+      const interest = this.coerceNumber(
+        item?.interest ?? item?.interestAmount ?? item?.accumulatedInterest
+      );
+
+      return {
+        installmentNo: item?.installmentNo ?? item?.installmentLabel ?? `Installment ${index + 1}`,
+        dueDate: this.formatDate(item?.calculatedDueDate ?? item?.dueDate ?? item?.due_date),
+        dueAmount,
+        interest,
+        totalDueAmount: this.coerceNumber(
+          item?.totalEstimatedAmount ?? item?.totalDueAmount ?? item?.totalWithInterest ?? dueAmount + interest
+        )
+      };
+    });
+  }
 
   // private getMandiName(property: any): string {
   //   const responseMandiName = property?.mandiName ?? property?.MandiName;
@@ -705,17 +727,10 @@ export class PropertyBalanceCalculate implements OnInit {
         )
         : [];
 
-    const dueInstallments = scheduleRows.map((item: any, index: number) => ({
-      installmentNo: item.installmentNo ?? item.installmentLabel ?? `Installment ${index + 1}`,
-      dueDate: this.formatDate(item.calculatedDueDate ?? item.dueDate ?? item.due_date),
-      dueAmount: this.coerceNumber(item.basePrincipal ?? item.baseAmount ?? item.dueAmount ?? item.principalAmount ?? 0),
-      interest: this.coerceNumber(item.interest ?? item.interestAmount ?? item.accumulatedInterest ?? 0),
-      totalDueAmount: this.coerceNumber(
-        item.totalEstimatedAmount ?? item.totalDueAmount ?? item.totalWithInterest ??
-        (this.coerceNumber(item.basePrincipal ?? item.baseAmount ?? item.dueAmount ?? item.principalAmount ?? 0) +
-          this.coerceNumber(item.interest ?? item.interestAmount ?? item.accumulatedInterest ?? 0))
-      )
-    }));
+    const dueInstallments = this.mapInstallmentRows(scheduleRows);
+    const futureInstallments = this.mapInstallmentRows(
+      Array.isArray(d.futureInstallments) ? d.futureInstallments : []
+    );
 
     const plotTypeObj = this.plotTypes.find((t: any) =>
       String(t.plotTypeId ?? t.id) === String(d.plotTypeId)
@@ -752,6 +767,11 @@ export class PropertyBalanceCalculate implements OnInit {
     );
     const finalBidPrice = Number(d.finalBidPrice) || 0;
     const totalBalance = Math.max(finalBidPrice - totalReceived, 0);
+    const interestAndPenaltyDetails = this.mapInterestAndPenaltyDetails(d);
+    const penalInterest = this.getTotal(interestAndPenaltyDetails, 'penalInterest');
+    const totalPenaltyAmount = this.getTotal(interestAndPenaltyDetails, 'totalPenaltyAmount');
+    const totalDueAmount = this.getTotal(dueInstallments, 'totalDueAmount') +
+      this.getTotal(futureInstallments, 'totalDueAmount');
 
     return {
       propertyInfo: {
@@ -772,16 +792,16 @@ export class PropertyBalanceCalculate implements OnInit {
       initialDeposits: initialDeposit ? [initialDeposit] : [],
       dueInstallments,
       installmentReceipts,
-      futureInstallments: Array.isArray(d.futureInstallments) ? d.futureInstallments : [],
+      futureInstallments,
       otherAmounts: Array.isArray(d.otherAmounts) ? d.otherAmounts : [],
-      interestAndPenaltyDetails: this.mapInterestAndPenaltyDetails(d),
+      interestAndPenaltyDetails,
       summary: {
         rebate: 0,
         totalPaymentReceivedTillDate: totalReceived,
         totalBalanceFromSaleOfPlot: totalBalance,
-        interestOnLateInstallments: 0,
-        penaltyOnLateInstallments: 0,
-        totalRecoverableAmount: totalBalance
+        interestOnLateInstallments: penalInterest,
+        penaltyOnLateInstallments: totalPenaltyAmount,
+        totalRecoverableAmount: totalDueAmount + penalInterest + totalPenaltyAmount
       }
     };
   }

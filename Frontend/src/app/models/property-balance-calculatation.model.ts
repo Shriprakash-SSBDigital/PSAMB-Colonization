@@ -69,7 +69,7 @@ export interface OtherAmountDetail {
 
 export interface InterstAndPanalityDetail {
   installmentId: number;
-  installmentNo: number;
+  installmentNo: string;
   dueDate: string;
   installmentAmount: number;
   receiptDate: string;
