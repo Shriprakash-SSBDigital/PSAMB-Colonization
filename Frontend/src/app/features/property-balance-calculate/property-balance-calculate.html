@@ -159,9 +159,12 @@
           @if (isInvalid('plotSize')) { <div class="invalid-feedback">Plot size is required.</div> }
         </div>
 
-        <div class="col-md-6 col-xl-3 d-flex align-items-end">
+        <div class="col-md-6 col-xl-3">
+          <label class="form-label small text-dark fw-semibold text-uppercase invisible d-none d-md-block" aria-hidden="true">&nbsp;</label>
+          <div>
           <button type="submit" class="btn bg-success text-white rounded-3 w-50" [disabled]="isUser">Submit
           </button>
+        </div>
         </div>
       </div>
     </form>
@@ -423,8 +426,64 @@
             </div>
         </div>
 
+        @if (!isUser) {
+        <!-- Interest,Penalty calculation -->
+
+        <div class="table-section mb-4">
+            <div class="table-section-header rounded-top-2 bg-success text-white">
+                Details of Interest & Penalty Calculation:
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Installment ID</th>
+                            <th>Installment No</th>
+                            <th>Due Date</th>
+                            <th>Receipt Date</th>
+                            <th>Delay Days</th>
+                            <th>Penal Interest</th>
+                            <th>Installment Amount</th>
+                            <th>Received Amount</th>
+                            <th>Penalty Amount</th>
+                            <th>Total Penalty Amount</th>
+                            <th class="text-end">Extra Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngIf="!balanceData.interestAndPenaltyDetails.length">
+                            <td colspan="11" class="text-center text-muted">No records found</td>
+                        </tr>
+                        <tr *ngFor="let interestAndPenalty of balanceData.interestAndPenaltyDetails">
+                            <td>{{ interestAndPenalty.installmentId }}</td>
+                            <td>{{ interestAndPenalty.installmentNo }}</td>
+                            <td>{{ interestAndPenalty.dueDate }}</td>
+                            <td>{{ interestAndPenalty.receiptDate }}</td>
+                            <td>{{ interestAndPenalty.delayDays }}</td>
+                            <td>{{ interestAndPenalty.penalInterest }}</td>
+                            <td>{{ interestAndPenalty.installmentAmount }}</td>
+                            <td>{{ interestAndPenalty.receivedAmount }}</td>
+                            <td>{{ interestAndPenalty.penaltyAmount }}</td>
+                            <td>{{ interestAndPenalty.totalPenaltyAmount }}</td>
+                            <td class="text-end">₹{{ interestAndPenalty.extraAmount | number }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'installmentAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'receivedAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'penaltyAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'extraAmount') | number:'1.2-2' }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
         <!-- Summary -->
-        <!-- <div class="summary-block">
+        <div class="summary-block">
             <p class="mb-2">
                 Rebate(If Any) (In ₹):
                 <span class="fw-semibold">₹{{ balanceData.summary.rebate | number }}</span>
@@ -451,6 +510,7 @@
                 installments) (In ₹):
                 <span class="fw-semibold">₹{{ balanceData.summary.totalRecoverableAmount | number }}</span>
             </p>
-        </div> -->
+        </div>
+        }
     </div>
 </section>

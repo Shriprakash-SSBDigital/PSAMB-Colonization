@@ -14,6 +14,24 @@ export interface PlotWiseConsolidateDetail {
   unsoldPlots: string;
 }
 
+export interface PlotDetail {
+  propertyCode: string;
+  district: string;
+  marketCommittee: string;
+  mandi: string;
+  plotNo: string;
+  plotType: string;
+  plotSize: string;
+  plan: string;
+  mandiCategory: string;
+  auctionDate: string;
+  alloteeName: string;
+  allotmentAmount: string;
+  allotmentDate: string;
+  alloteeEmail: string;
+  alloteePhone: string;
+}
+
 export interface MandiForPropertyReport {
   mandiId: number;
   mandiName: string;
