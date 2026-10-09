@@ -67,4 +67,17 @@ namespace Backend.Models.DTOs
 
         public int UnsoldPlots { get; set; }
     }
+
+
+    public class DigitizationPropertyDayWiseDto
+    {
+        public DateTime CreatedDate { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class DigitizationPropertyDayWiseDetailsDto
+    {
+        public string? PropertyCode { get; set; }
+    }
+
 }

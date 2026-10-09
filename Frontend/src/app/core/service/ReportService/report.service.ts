@@ -49,6 +49,15 @@ export interface PlotSoldUnsoldDetail {
   unsoldPlots: number;
 }
 
+export interface DigitizationPropertyDayWiseDto {
+  createdDate: string;
+  count: number;
+}
+
+export interface DigitizationPropertyDayWiseDetailsDto {
+  propertyCode: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -82,4 +91,26 @@ export class ReportService {
 
     return this.http.get<any>(`${this.baseUrl}/Report/GetPlotSoldUnsoldDetails`, { params });
   }
+
+  getDigitizationPropertyDayWiseCountAsync(fromDate: string, toDate: string): Observable<any> {
+    const params = new HttpParams()
+      .set('fromDate', fromDate)
+      .set('toDate', toDate);
+    return this.http.get<any>(`${this.baseUrl}/Report/GetDigitizationPropertyDayWiseCountAsync`, { params });
+  }
+
+  getDigitizationPropertyDayWiseCount(fromDate: string, toDate: string): Observable<any> {
+    return this.getDigitizationPropertyDayWiseCountAsync(fromDate, toDate);
+  }
+
+  getDigitizationPropertyDayWiseCountDetailsAsync(fromDate: string): Observable<any> {
+    const params = new HttpParams()
+      .set('fromDate', fromDate);
+    return this.http.get<any>(`${this.baseUrl}/Report/GetDigitizationPropertyDayWiseCountDetailsAsync`, { params });
+  }
+
+  getDigitizationPropertyDayWiseCountDetails(fromDate: string): Observable<any> {
+    return this.getDigitizationPropertyDayWiseCountDetailsAsync(fromDate);
+  }
 }
+

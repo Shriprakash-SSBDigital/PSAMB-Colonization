@@ -91,9 +91,9 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetPropertyEAuctionDetailsByPropertyCodeAsync/{propertyCode}")]
-        public async Task <IActionResult> GetPropertyEAuctionDetailsByPropertyCodeAsync(string propertyCode, [FromQuery] bool isSold = false, [FromQuery] bool isPropertySold = false)
+        public async Task <IActionResult> GetPropertyEAuctionDetailsByPropertyCodeAsync(string propertyCode, [FromQuery] bool isSold = false)
         {
-            var response = await _service.GetPropertyEAuctionDetailsByPropertyCodeAsync(propertyCode, isSold || isPropertySold);
+            var response = await _service.GetPropertyEAuctionDetailsByPropertyCodeAsync(propertyCode, isSold);
             //if (!response.Success)
             //{
             //    if (response.Message == "no record found")
@@ -202,17 +202,17 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetPropertyDetailsByMandiPlot")]
-        public async Task<IActionResult> GetPropertyDetailsByMandiPlot(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, [FromQuery] bool isSold = false, [FromQuery] bool isPropertySold = false)
+        public async Task<IActionResult> GetPropertyDetailsByMandiPlot(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, [FromQuery] bool isSold = false)
         {
-            var response = await _service.GetPropertyDetailsByMandiPlot(MandiId, PlotTypeId, PlotNo, PlotSize, isSold || isPropertySold);
+            var response = await _service.GetPropertyDetailsByMandiPlot(MandiId, PlotTypeId, PlotNo, PlotSize, isSold);
 
             return Ok(response);
         }
 
         [HttpGet("GetBiderPropertyDetailsByMandiPlotAsync")]
-        public async Task<IActionResult> GetBiderPropertyDetailsByMandiPlotAsync(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, [FromQuery] bool isSold = true, [FromQuery] bool isPropertySold = true)
+        public async Task<IActionResult> GetBiderPropertyDetailsByMandiPlotAsync(int MandiId, int PlotTypeId, string PlotNo, string PlotSize)
         {
-            var response = await _service.GetBiderPropertyDetailsByMandiPlotAsync(MandiId, PlotTypeId, PlotNo, PlotSize, isSold || isPropertySold);
+            var response = await _service.GetBiderPropertyDetailsByMandiPlotAsync(MandiId, PlotTypeId, PlotNo, PlotSize);
 
             return Ok(response);
         }
