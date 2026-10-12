@@ -200,7 +200,7 @@
                 </p>
                 <p class="mb-0 mt-2">
                     <span class="fw-semibold">Allotment Amount(Rs.) :</span>
-                    ₹{{ balanceData.propertyInfo.finalBidPrice | number }}
+                    ₹{{ balanceData.propertyInfo.finalBidPrice | number:'1.2-2':'en-IN' }}
                 </p>
             </div>
             <div class="col-md-6">
@@ -247,14 +247,14 @@
                             <td>{{ deposit.draftChequeRtgsDate }}</td>
                             <td>{{ deposit.paymentMode }}</td>
                             <td>{{ deposit.bank }}</td>
-                            <td class="text-end">₹{{ deposit.amount | number }}</td>
+                            <td class="text-end">₹{{ deposit.amount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
                             <td class="text-end fw-semibold">
-                ₹{{ getTotal(balanceData.initialDeposits, 'amount') | number:'1.2-2' }}
+                ₹{{ getTotal(balanceData.initialDeposits, 'amount') | number:'1.2-2':'en-IN' }}
               </td>
                         </tr>
                     </tfoot>
@@ -285,17 +285,17 @@
                         <tr *ngFor="let installment of balanceData.dueInstallments">
                             <td>{{ installment.installmentNo }}</td>
                             <td>{{ installment.dueDate }}</td>
-                            <td class="text-end">₹{{ installment.dueAmount | number }}</td>
-                            <td class="text-end">₹{{ installment.interest | number }}</td>
-                            <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                            <td class="text-end">₹{{ installment.dueAmount | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end">₹{{ installment.interest | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end">₹{{ installment.totalDueAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'dueAmount') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'interest') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'totalDueAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'dueAmount') | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'interest') | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'totalDueAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -331,13 +331,13 @@
                             <td>{{ receipt.draftRtgsDate }}</td>
                             <td>{{ receipt.paymentMode }}</td>
                             <td>{{ receipt.draftRtgsBank }}</td>
-                            <td class="text-end">₹{{ receipt.draftAmount | number }}</td>
+                            <td class="text-end">₹{{ receipt.draftAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.installmentReceipts, 'draftAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.installmentReceipts, 'draftAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -365,17 +365,17 @@
                         <tr *ngFor="let installment of balanceData.futureInstallments">
                             <td>{{ installment.installmentNo }}</td>
                             <td>{{ installment.dueDate }}</td>
-                            <td class="text-end">₹{{ installment.dueAmount | number }}</td>
-                            <td class="text-end">₹{{ installment.interest | number }}</td>
-                            <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                            <td class="text-end">₹{{ installment.dueAmount | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end">₹{{ installment.interest | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end">₹{{ installment.totalDueAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number }}</td>
-              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'interest') | number }}</td>
-              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number:'1.2-2':'en-IN' }}</td>
+              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'interest') | number:'1.2-2':'en-IN' }}</td>
+              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -413,13 +413,13 @@
                             <td>{{ other.draftRtgsDate || '-' }}</td>
                             <td>{{ other.paymentMode  || '-' }}</td>
                             <td>{{ other.draftRtgsBank || '-' }}</td>
-                            <td class="text-end">₹{{ other.draftAmount | number }}</td>
+                            <td class="text-end">₹{{ other.draftAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -440,11 +440,11 @@
                             <th>Installment ID</th>
                             <th>Installment No</th>
                             <th>Due Date</th>
+                            <th>Installment Amount</th>
                             <th>Receipt Date</th>
+                            <th>Received Amount</th>
                             <th>Delay Days</th>
                             <th>Penal Interest</th>
-                            <th>Installment Amount</th>
-                            <th>Received Amount</th>
                             <th>Penalty Amount</th>
                             <th>Total Penalty Amount</th>
                             <th class="text-end">Extra Amount</th>
@@ -458,24 +458,25 @@
                             <td>{{ interestAndPenalty.installmentId }}</td>
                             <td>{{ interestAndPenalty.installmentNo }}</td>
                             <td>{{ interestAndPenalty.dueDate }}</td>
-                            <td>{{ interestAndPenalty.receiptDate }}</td>
-                            <td>{{ interestAndPenalty.delayDays }}</td>
-                            <td>{{ interestAndPenalty.penalInterest }}</td>
                             <td>{{ interestAndPenalty.installmentAmount }}</td>
+                            <td>{{ interestAndPenalty.receiptDate }}</td>
                             <td>{{ interestAndPenalty.receivedAmount }}</td>
-                            <td>{{ interestAndPenalty.penaltyAmount }}</td>
-                            <td>{{ interestAndPenalty.totalPenaltyAmount }}</td>
-                            <td class="text-end">₹{{ interestAndPenalty.extraAmount | number }}</td>
+                            <td>{{ interestAndPenalty.delayDays }}</td>
+                            <td>₹{{ interestAndPenalty.penalInterest | number:'1.2-2':'en-IN' }}</td>
+                            <td>₹{{ interestAndPenalty.penaltyAmount | number:'1.2-2':'en-IN' }}</td>
+                            <td>₹{{ interestAndPenalty.totalPenaltyAmount | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end">₹{{ interestAndPenalty.extraAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'installmentAmount') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'receivedAmount') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'penaltyAmount') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2' }}</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'extraAmount') | number:'1.2-2' }}</td>
+                            <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                            <!-- <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'installmentAmount') | number:'1.2-2' }}</td>
+                            <td colspan="2" class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'receivedAmount') | number:'1.2-2' }}</td> -->
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'penalInterest') | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'penaltyAmount') | number:'1.2-2':'en-IN' }}</td>
+                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2':'en-IN' }}</td>
+                            <!-- <td class="text-end fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'extraAmount') | number:'1.2-2' }}</td> -->
                         </tr>
                     </tfoot>
                 </table>
@@ -486,29 +487,29 @@
         <div class="summary-block">
             <p class="mb-2">
                 Rebate(If Any) (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.rebate | number }}</span>
+                <span class="fw-semibold">₹{{ balanceData.summary.rebate | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-2">
                 Total Payment received till date (Including 25% of Initial Deposit) (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.totalPaymentReceivedTillDate | number: '1.2-2'
+                <span class="fw-semibold">₹{{ balanceData.summary.totalPaymentReceivedTillDate | number: '1.2-2':'en-IN'
                     }}</span>
             </p>
             <p class="mb-2">
                 Total Balance from Sale of plot (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.totalBalanceFromSaleOfPlot | number }}</span>
+                <span class="fw-semibold">₹{{ balanceData.summary.totalBalanceFromSaleOfPlot | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-2">
                 Amount of interest on late installments (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.interestOnLateInstallments | number }}</span>
+                <span class="fw-semibold">₹{{ balanceData.summary.interestOnLateInstallments | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-2">
                 Amount of penalty on late installments:
-                <span class="fw-semibold">₹{{ balanceData.summary.penaltyOnLateInstallments | number }}</span>
+                <span class="fw-semibold">₹{{ balanceData.summary.penaltyOnLateInstallments | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-0">
                 Total amount of recoverable installments &amp; interests on installments (Including future
                 installments) (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.totalRecoverableAmount | number }}</span>
+                <span class="fw-semibold">₹{{ balanceData.summary.totalRecoverableAmount | number:'1.2-2':'en-IN' }}</span>
             </p>
         </div>
         }
