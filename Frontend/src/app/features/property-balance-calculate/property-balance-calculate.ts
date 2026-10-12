@@ -551,6 +551,10 @@ export class PropertyBalanceCalculate implements OnInit {
       return;
     }
 
+    if (!this.isUser) {
+      this.balanceForm.patchValue({ allotteeCode: '' });
+    }
+
     this.isCalculating = true;
     this.balanceData = null;
     this.propertyDetails = null;
@@ -619,12 +623,15 @@ export class PropertyBalanceCalculate implements OnInit {
 
     return rows.map((item: any) => ({
       installmentId: this.coerceNumber(item?.installmentId ?? item?.InstallmentId),
-      installmentNo: this.coerceNumber(item?.installmentNo ?? item?.InstallmentNo),
+      installmentNo: String(item?.installmentNo ?? item?.InstallmentNo ?? ''),
       dueDate: this.formatDate(item?.dueDate ?? item?.DueDate),
       installmentAmount: this.coerceNumber(item?.installmentAmount ?? item?.InstallmentAmount),
       receiptDate: this.formatDate(item?.receiptDate ?? item?.ReceiptDate),
       receivedAmount: this.coerceNumber(item?.receivedAmount ?? item?.ReceivedAmount),
       delayDays: this.coerceNumber(item?.delayDays ?? item?.DelayDays),
+      penaltyRateInPercent: this.coerceNumber(
+        item?.penaltyRateInPercent ?? item?.PenaltyRateInPercent
+      ),
       penalInterest: this.coerceNumber(item?.penalInterest ?? item?.PenalInterest),
       penaltyAmount: this.coerceNumber(
         item?.penaltyAmount ?? item?.PenaltyAmount ?? item?.penalityAmount ?? item?.PenalityAmount
@@ -840,5 +847,15 @@ export class PropertyBalanceCalculate implements OnInit {
     }
 
     return year < 1992 ? 6 : 12;
+  }
+
+  // Total Pending Installments = Due Installments Total Due Amount − Interest & Penalty Installment Amount total
+  getTotalPendingInstallmentsAmount(): number {
+    if (!this.balanceData) {
+      return 0;
+    }
+    const dueInstallmentsTotalDue = this.getTotal(this.balanceData.dueInstallments, 'totalDueAmount');
+    const penaltyInstallmentTotal = this.getTotal(this.balanceData.interestAndPenaltyDetails, 'installmentAmount');
+    return Math.max(dueInstallmentsTotalDue - penaltyInstallmentTotal, 0);
   }
 }

@@ -77,6 +77,7 @@ export interface InterstAndPanalityDetail {
   delayDays: number;
   penalInterest: number;
   penaltyAmount: number;
+  penaltyRateInPercent: number;
   totalPenaltyAmount: number;
   extraAmount: number;
 }
