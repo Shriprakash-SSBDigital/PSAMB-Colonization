@@ -998,6 +998,7 @@ namespace Backend.Services.Implementations
                         int delayDays = 0;
                         int penalInterestRate = 6;
                         int PenalityRateInPercent = 10;
+                        decimal penalityAmount = 0;
 
                         if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year > 1992)
                         {
@@ -1014,7 +1015,13 @@ namespace Backend.Services.Implementations
 
                         // Your calculation here
                         decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
-                        decimal penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+                        if (delayDays > 0)
+                        {
+                            penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+                        }
+                        
                         decimal totalPenalityAmount = penalInterest + penalityAmount;
                         decimal extraAmount = Convert.ToDecimal(receivedAmount - installmentAmount);
                         extraBalanceAmount = extraAmount;
@@ -2937,6 +2944,7 @@ namespace Backend.Services.Implementations
                         int delayDays = 0;
                         int penalInterestRate = 12;
                         int PenalityRateInPercent = 10;
+                        decimal penalityAmount = 0;
 
                         if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year > 1992)
                         {
@@ -2953,7 +2961,12 @@ namespace Backend.Services.Implementations
 
                         // Your calculation here
                         decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
-                        decimal penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+                        if (delayDays > 0)
+                        {
+                            penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+                        }
                         decimal totalPenalityAmount = penalInterest + penalityAmount;
                         decimal extraAmount = Convert.ToDecimal(receivedAmount - installmentAmount);
                          extraBalanceAmount = extraAmount;
