@@ -801,7 +801,7 @@ export class PropertyBalanceCalculate implements OnInit {
         totalBalanceFromSaleOfPlot: totalBalance,
         interestOnLateInstallments: penalInterest,
         penaltyOnLateInstallments: totalPenaltyAmount,
-        totalRecoverableAmount: totalDueAmount + penalInterest + totalPenaltyAmount
+        totalRecoverableAmount: totalDueAmount + totalPenaltyAmount
       }
     };
   }
