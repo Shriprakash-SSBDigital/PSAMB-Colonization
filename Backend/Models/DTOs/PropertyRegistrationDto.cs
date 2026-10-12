@@ -275,6 +275,7 @@ namespace Backend.Models.Dtos
         public decimal ReceivedAmount { get; set; }
 
         public int DelayDays { get; set; }
+        public int PenaltyRateInPercent { get; set; }
 
         public decimal PenalInterest { get; set; }
         public decimal PenalityAmount { get; set; }

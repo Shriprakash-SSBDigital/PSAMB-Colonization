@@ -47,5 +47,21 @@ namespace Backend.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("GetDigitizationPropertyDayWiseCountAsync")]
+        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountAsync([FromQuery] DateTime fromDate,  [FromQuery] DateTime toDate)
+        {
+            var response = await _service.GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetDigitizationPropertyDayWiseCountDetailsAsync")]
+        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountDetailsAsync([FromQuery] DateTime fromDate)
+        {
+            var response = await _service.GetDigitizationPropertyDayWiseCountDetailsAsync( fromDate);
+
+            return Ok(response);
+        }
     }
 }
