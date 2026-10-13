@@ -288,7 +288,7 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       return 0;
     }
 
-    return year < 1992 ? 6 : 12;
+    return (year <= 1992) ? 6 : 12;
   }
 
   printReport(): void {

@@ -846,7 +846,7 @@ export class PropertyBalanceCalculate implements OnInit {
       return 0;
     }
 
-    return year < 1992 ? 6 : 12;
+    return (year <= 1992) ? 6 : 12;
   }
 
   // Total Pending Installments = Due Installments Total Due Amount − Interest & Penalty Installment Amount total

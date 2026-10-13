@@ -747,7 +747,7 @@ export class DeoVerification implements OnInit, OnChanges {
 
     // 4. Determine interest rate based on the allotment transaction year
     //    < 1992 -> 6%, >= 1992 -> 12%
-    const rateOfInterest = dateIsValid ? (baseYear < 1992 ? 6 : 12) : 0;
+    const rateOfInterest = dateIsValid ? (baseYear <= 1992 ? 6 : 12) : 0;
 
     // 5. Generate the 6-part amortization matrix table
     const generatedMatrix: InstallmentScheduleView[] = [];
