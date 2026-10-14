@@ -1,43 +1,29 @@
-/* ==========================================================================
-   Punjab Colonization Portal - Premium Redesign Stylesheet
-   ========================================================================== */
-
 :host {
-    /* Color Palette Tokens */
     --primary-color: #064e3b;
-    /* Dark Forest Green */
     --primary-gradient: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f766e 100%);
     --primary-hover: #043e2f;
     --primary-light: #ecfdf5;
 
     --secondary-color: #0284c7;
-    /* Trust Blue */
     --secondary-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
 
     --punjab-green: #15803d;
-    /* Gov Punjab Green Accent */
     --punjab-green-light: #f0fdf4;
     --punjab-green-gradient: linear-gradient(135deg, #166534 0%, #15803d 100%);
 
     --danger-color: #e11d48;
-    /* Rose Red */
     --danger-hover: #be123c;
     --danger-light: #fff1f2;
 
     --dark-slate: #0f172a;
-    /* Text color main */
     --light-slate: #f8fafc;
-    /* Card backgrounds */
     --border-color: #cbd5e1;
     --border-focus: #fbbf24;
-
     --text-main: #334155;
     --text-muted: #64748b;
     --success-color: #10b981;
     --error-color: #ef4444;
     --info-color: #3b82f6;
-
-    /* Modern Styling Tokens */
     --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
     --hover-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
     --focus-glow: 0 0 0 4px rgba(251, 191, 36, 0.25);
@@ -377,11 +363,8 @@ color: var(--theme-primary) !important;
     border-radius: var(--border-radius-md);
     box-shadow: 0 20px 50px rgba(2, 44, 34, 0.3);
     max-width: 530px;
-    /* Slightly wider to accommodate side-by-side elements */
     margin: 15px auto;
-    /* Reduced margin to prevent page scroll */
     padding: 24px 32px;
-    /* Reduced vertical & horizontal padding */
     position: relative;
     box-sizing: border-box;
     width: 95%;
@@ -691,7 +674,6 @@ color: var(--theme-primary) !important;
     box-shadow: none;
 }
 
-/* Inline spinner shown inside buttons during API in-flight state */
 .btn-spinner-row {
     display: inline-flex;
     align-items: center;
@@ -714,7 +696,6 @@ color: var(--theme-primary) !important;
 }
 
 
-/* Parallel actions row inside sign-in card */
 .login-actions-row-parallel {
     display: flex;
     gap: 12px;
@@ -987,9 +968,6 @@ color: var(--theme-primary) !important;
     color: #d97706;
 }
 
-/* ==========================================================================
-   REGISTRATION SINGLE PAGE WIZARD STYLING
-   ========================================================================== */
 .signup-wizard-wrapper {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -1320,9 +1298,6 @@ color: var(--theme-primary) !important;
     box-shadow: 0 8px 12px -2px rgba(21, 128, 61, 0.25);
 }
 
-/* ==========================================================================
-   CITIZEN DASHBOARD LAYOUT & CARD STYLING
-   ========================================================================== */
 .dashboard-wrapper-material {
     display: flex;
     flex-direction: column;
@@ -1594,9 +1569,6 @@ color: var(--theme-primary) !important;
     transform: translateX(4px);
 }
 
-/* ==========================================================================
-   OTP MODALS & DIALOGS STYLING
-   ========================================================================== */
 .modal-overlay-custom {
     position: fixed;
     top: 0;
@@ -1977,10 +1949,6 @@ color: var(--theme-primary) !important;
     margin-bottom: 0 !important;
     border: none !important;
 }
-
-/* ==========================================================================
-   RESPONSIVE MEDIA QUERIES
-   ========================================================================== */
 @media (max-width: 992px) {
     .wizard-form-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -2017,10 +1985,6 @@ color: var(--theme-primary) !important;
 }
 
 @media (max-width: 480px) {
-    .auth-card-wrapper-screenshot {
-        padding: 24px 20px;
-    }
-
     .landing-portal-card {
         padding: 36px 20px;
     }
@@ -2049,51 +2013,597 @@ color: var(--theme-primary) !important;
     .wizard-footer-actions button {
         width: 100%;
     }
+}
+/* --- Extra-large monitors: 1920px and above --- */
+@media (min-width: 1920px) {
+    .portal-wrapper.signin-bg {
+        padding: 40px 20px;
+    }
 
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 440px;
+        padding: 22px 28px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.45rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.88rem;
+        padding: 8px 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 11px 18px;
+        font-size: 0.92rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 11px 14px;
+        font-size: 0.82rem;
+        min-height: 48px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 10px 14px;
+        font-size: 0.82rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-label-screenshot {
+        font-size: 0.85rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-chars {
+        font-size: 1.25rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-image-wrapper {
+        height: 42px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-input-field-screenshot {
+        height: 42px;
+        font-size: 0.85rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.82rem;
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-back-to-landing-top {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .portal-wrapper.signin-bg .forgot-link-screenshot {
+        font-size: 0.82rem;
+    }
+}
+
+/* --- Large monitors: 1600–1919px --- */
+@media (min-width: 1600px) and (max-width: 1919px) {
+    .portal-wrapper.signin-bg {
+        padding: 36px 20px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 440px;
+        padding: 22px 28px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.5rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.88rem;
+        padding: 8px 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 11px 18px;
+        font-size: 0.95rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 11px 14px;
+        font-size: 0.82rem;
+        min-height: 50px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 11px 14px;
+        font-size: 0.82rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-chars {
+        font-size: 1.3rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-image-wrapper {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-input-field-screenshot {
+        height: 44px;
+        font-size: 0.85rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.82rem;
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-back-to-landing-top {
+        font-size: 0.8rem;
+        padding: 6px 14px;
+    }
+
+    .portal-wrapper.signin-bg .forgot-link-screenshot {
+        font-size: 0.82rem;
+    }
+}
+
+/* --- Large laptop / desktop: 1400–1599px (Bootstrap xxl) --- */
+@media (min-width: 1400px) and (max-width: 1599px) {
+    .portal-wrapper.signin-bg {
+        padding: 30px 20px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 450px;
+        padding: 22px 28px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.55rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 45px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.9rem;
+        padding: 9px 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 12px 18px;
+        font-size: 0.95rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 12px 14px;
+        font-size: 0.84rem;
+        min-height: 52px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 11px 14px;
+        font-size: 0.84rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-image-wrapper {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-input-field-screenshot {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.84rem;
+        margin-top: 14px;
+        padding-top: 12px;
+    }
+}
+
+/* --- Standard laptop: 1200–1399px (Bootstrap xl) --- */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .portal-wrapper.signin-bg {
+        padding: 24px 20px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 460px;
+        padding: 22px 30px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.6rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 46px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.9rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 12px 18px;
+        font-size: 0.98rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 12px 14px;
+        font-size: 0.84rem;
+        min-height: 52px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 12px 14px;
+        font-size: 0.84rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 11px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.85rem;
+    }
+}
+
+/* --- Small laptop: 992–1199px (Bootstrap lg) --- */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .portal-wrapper.signin-bg {
+        padding: 20px 16px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 470px;
+        padding: 22px 28px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.65rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 46px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 12px 18px;
+        font-size: 0.98rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 12px 14px;
+        font-size: 0.84rem;
+        min-height: 52px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 12px 14px;
+        font-size: 0.84rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 11px;
+    }
+}
+
+/* --- Tablet: 768–991px (Bootstrap md) --- */
+@media (min-width: 768px) and (max-width: 991px) {
+    .portal-wrapper.signin-bg {
+        padding: 20px 16px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 480px;
+        padding: 24px 28px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.65rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 48px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 13px 18px;
+        font-size: 1rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 13px 14px;
+        font-size: 0.85rem;
+        min-height: 54px;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 12px;
+    }
+}
+
+/* --- Small tablet / large mobile landscape: 576–767px (Bootstrap sm) --- */
+@media (min-width: 576px) and (max-width: 767px) {
+    .portal-wrapper.signin-bg {
+        padding: 16px 12px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 460px;
+        padding: 22px 24px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.6rem;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 48px;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 12px 12px;
+        font-size: 0.82rem;
+        min-height: 52px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 11px 12px;
+        font-size: 0.82rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.82rem;
+    }
+}
+/* --- Large mobile: 375–575px (Bootstrap xs) --- */
+@media (min-width: 375px) and (max-width: 575px) {
     .portal-wrapper {
         padding: 10px 10px;
     }
 
-    .auth-card-wrapper-screenshot {
-        padding: 16px 12px;
+    .portal-wrapper.signin-bg {
+        padding: 12px 8px;
     }
 
-    .login-actions-row-parallel {
-        flex-direction: column;
-    }
-
-    .login-actions-row-parallel .btn-login-screenshot,
-    .login-actions-row-parallel .btn-login-mobile-toggle,
-    .login-actions-row-parallel .login-role-btn {
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 100%;
         width: 100%;
-        flex: none;
+        padding: 20px 18px;
+        margin: 10px auto;
+        border-radius: 10px;
     }
 
-    .captcha-row-screenshot {
-        flex-wrap: wrap;
-        gap: 8px;
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.5rem;
     }
 
-    .captcha-image-wrapper {
-        flex: 1 1 auto;
-        min-width: 120px;
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 46px;
     }
 
-    .btn-refresh-captcha {
-        width: auto;
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.88rem;
+        padding: 8px 8px;
     }
 
-    .form-input-box-screenshot {
-        height: 48px;
-    }
-
-    .input-prefix-icon-screenshot {
+    .portal-wrapper.signin-bg .input-prefix-icon-screenshot {
         width: 38px;
         font-size: 1rem;
     }
 
-    .auth-card-header-screenshot h2 {
-        font-size: 1.5rem;
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 12px 14px;
+        font-size: 0.92rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 12px 10px;
+        font-size: 0.8rem;
+        min-height: 50px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 10px 10px;
+        font-size: 0.8rem;
+    }
+
+    .portal-wrapper.signin-bg .login-actions-row-parallel {
+        gap: 8px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-row-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-image-wrapper {
+        height: 42px;
+        padding: 0 12px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-input-field-screenshot {
+        height: 42px;
+        font-size: 0.85rem;
+    }
+
+    .portal-wrapper.signin-bg .captcha-label-screenshot {
+        font-size: 0.85rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 10px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.82rem;
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+
+    .portal-wrapper.signin-bg .btn-back-to-landing-top {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .portal-wrapper.signin-bg .forgot-link-screenshot {
+        font-size: 0.82rem;
+    }
+}
+
+/* --- Small mobile: 320–374px (Bootstrap xs) --- */
+@media (max-width: 374px) {
+    .portal-wrapper {
+        padding: 8px 6px;
+    }
+
+    .portal-wrapper.signin-bg {
+        padding: 10px 6px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-wrapper-screenshot:not(.signup-wide) {
+        max-width: 100%;
+        width: 100%;
+        padding: 16px 12px;
+        margin: 8px auto;
+        border-radius: 8px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot h2 {
+        font-size: 1.35rem;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-header-screenshot {
+        margin-bottom: 10px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot {
+        height: 44px;
+    }
+
+    .portal-wrapper.signin-bg .form-input-box-screenshot input {
+        font-size: 0.85rem;
+        padding: 8px 6px;
+    }
+
+    .portal-wrapper.signin-bg .input-prefix-icon-screenshot {
+        width: 34px;
+        font-size: 0.95rem;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-screenshot {
+        padding: 10px 12px;
+        font-size: 0.88rem;
+        letter-spacing: 0.03em;
+    }
+
+    .portal-wrapper.signin-bg .btn-login-mobile-toggle {
+        padding: 10px 8px;
+        font-size: 0.78rem;
+        min-height: 46px;
+    }
+
+    .portal-wrapper.signin-bg .login-role-btn {
+        padding: 9px 8px;
+        font-size: 0.78rem;
+    }
+
+    .portal-wrapper.signin-bg .login-actions-row-parallel {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .portal-wrapper.signin-bg .login-actions-row-parallel .btn-login-screenshot,
+    .portal-wrapper.signin-bg .login-actions-row-parallel .btn-login-mobile-toggle,
+    .portal-wrapper.signin-bg .login-actions-row-parallel .login-role-btn {
+        width: 100%;
+        flex: none;
+    }
+
+    .portal-wrapper.signin-bg .captcha-row-screenshot {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-image-wrapper {
+        height: 40px;
+        padding: 0 10px;
+        flex: 1 1 auto;
+        min-width: 100px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-chars {
+        font-size: 1.15rem;
+        letter-spacing: 0.12em;
+    }
+
+    .portal-wrapper.signin-bg .captcha-input-field-screenshot {
+        height: 40px;
+        font-size: 0.82rem;
+        padding: 8px;
+    }
+
+    .portal-wrapper.signin-bg .captcha-label-screenshot {
+        font-size: 0.82rem;
+    }
+
+    .portal-wrapper.signin-bg .signin-form-screenshot {
+        gap: 8px;
+    }
+    .portal-wrapper.signin-bg .auth-card-footer {
+        font-size: 0.78rem;
+        margin-top: 10px;
+        padding-top: 8px;
+    }
+
+    .portal-wrapper.signin-bg .auth-card-footer p {
+        line-height: 1.4;
+    }
+
+    .portal-wrapper.signin-bg .btn-back-to-landing-top {
+        font-size: 0.78rem;
+        padding: 5px 10px;
+    }
+
+    .portal-wrapper.signin-bg .forgot-link-screenshot {
+        font-size: 0.8rem;
+    }
+
+    .portal-wrapper.signin-bg .password-toggle-icon {
+        right: 8px;
+        font-size: 0.9rem;
     }
 }
 

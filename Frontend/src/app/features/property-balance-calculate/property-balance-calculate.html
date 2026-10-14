@@ -492,21 +492,27 @@
         <div class="summary-block">
            
             <p class="mb-2">
-                Total Payment received till date (Including 25% of Initial Deposit) (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.totalPaymentReceivedTillDate | number: '1.2-2':'en-IN'
+               Total 25% Amount Received (In ₹):
+                <span class="fw-semibold">₹{{ getTotal(balanceData.initialDeposits, 'amount') | number: '1.2-2':'en-IN'
                     }}</span>
             </p>
             <p class="mb-2">
-                Total Pending Installments Amount (In ₹):
-                <span class="fw-semibold">₹{{ getTotalPendingInstallmentsAmount() | number:'1.2-2':'en-IN' }}</span>
+                Total Installments Amount (In ₹):
+                <span class="fw-semibold">₹{{ getTotal(balanceData.dueInstallments, 'totalDueAmount') | number: '1.2-2':'en-IN'
+                    }}</span>
+            </p>
+            <p class="mb-2">
+                Received Amount Excluding 25% Amount (In ₹):
+                <span class="fw-semibold">₹{{ getTotal(balanceData.installmentReceipts, 'draftAmount') | number: '1.2-2':'en-IN'
+                    }}</span>
             </p>
             <p class="mb-2">
                 Amount of Penalty (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.penaltyOnLateInstallments | number:'1.2-2':'en-IN' }}</span>
+                <span class="fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-0">
-                Total Pending Amounts Including Total Penality &amp; Pending Installments (In ₹):
-                <span class="fw-semibold">₹{{ balanceData.summary.totalRecoverableAmount | number:'1.2-2':'en-IN' }}</span>
+                Total Pending Installments Amount (In ₹):
+                <span class="fw-semibold">₹{{ getTotalPendingInstallmentsAmount() | number:'1.2-2':'en-IN' }}</span>
             </p>
         </div>
         }

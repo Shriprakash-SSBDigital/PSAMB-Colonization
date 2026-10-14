@@ -35,10 +35,7 @@ export class PropertyBalanceCalculate implements OnInit {
   // Role and user-specific allottee codes
   isUser = false;
   allotteeCodes: any[] = [
-    { allotteeCode: 'LJJ97-10252' },
-    { allotteeCode: 'AAV10-22254' },
-    { allotteeCode: 'FFF12-11537' }
-  ];
+    { allotteeCode: '' }, ];
   isLoadingAllotteeCodes = false;
 
   showResults = false;
@@ -161,11 +158,7 @@ export class PropertyBalanceCalculate implements OnInit {
 
   loadUserAllotteeCodes(): void {
     // Temporary options while API is in progress
-    this.allotteeCodes = [
-      { allotteeCode: 'LJJ97-10252' },
-      { allotteeCode: 'AAV10-22254' },
-      { allotteeCode: 'FFF12-11537' }
-    ];
+    this.allotteeCodes = [];
     this.isLoadingAllotteeCodes = false;
     this.cdr.detectChanges();
   }
@@ -746,19 +739,20 @@ export class PropertyBalanceCalculate implements OnInit {
       ? (plotTypeObj.plotType ?? plotTypeObj.plotTypeName ?? plotTypeObj.name ?? '')
       : (d.plotType ?? d.plotTypeName ?? '');
 
-    const initialDeposit = sorted[0]
-      ? {
-        receiptNo: sorted[0].receiptNo ?? '',
-        receiptDate: this.formatDate(sorted[0].receiptDate),
-        draftChequeRtgsNo: sorted[0].draftNo ?? '',
-        draftChequeRtgsDate: this.formatDate(sorted[0].draftDate),
-        paymentMode: sorted[0].paymentMode ?? '-',
-        bank: sorted[0].draftBank ?? '-',
-        amount: Number(sorted[0].draftAmount) || 0
-      }
-      : null;
+   // Filter by amountTypeId: 1 = Initial 25% deposit, others = Installment receipts
+    const initialDepositItems = sorted.filter((item: any) => Number(item.amountTypeId) === 1);
+        const initialDeposits: any[] = initialDepositItems.map((item: any) => ({
+        receiptNo: item.receiptNo ?? '',
+        receiptDate: this.formatDate(item.receiptDate),
+        draftChequeRtgsNo: item.draftNo ?? '',
+        draftChequeRtgsDate: this.formatDate(item.draftDate),
+        paymentMode: item.paymentMode ?? '-',
+        bank: item.draftBank ?? '-',
+        amount: Number(item.draftAmount) || 0
+    }));
 
-    const installmentReceipts = sorted.slice(1).map((r: any) => ({
+      const installmentReceiptItems = sorted.filter((item: any) => Number(item.amountTypeId) !== 1);
+      const installmentReceipts = installmentReceiptItems.map((r: any) => ({
       receiptNo: r.receiptNo ?? '',
       receiptDate: this.formatDate(r.receiptDate),
       draftNo: r.draftNo ?? '',
@@ -796,7 +790,7 @@ export class PropertyBalanceCalculate implements OnInit {
         finalBidPrice: Number(d.finalBidPrice) || 0,
         auctionDate: this.formatDate(d.auctionDate)
       },
-      initialDeposits: initialDeposit ? [initialDeposit] : [],
+      initialDeposits,
       dueInstallments,
       installmentReceipts,
       futureInstallments,
@@ -849,13 +843,13 @@ export class PropertyBalanceCalculate implements OnInit {
     return (year <= 1992) ? 6 : 12;
   }
 
-  // Total Pending Installments = Due Installments Total Due Amount − Interest & Penalty Installment Amount total
+  // Total Pending Installments = Due Installments Total Due Amount − Installments Amount Received total
   getTotalPendingInstallmentsAmount(): number {
     if (!this.balanceData) {
       return 0;
     }
     const dueInstallmentsTotalDue = this.getTotal(this.balanceData.dueInstallments, 'totalDueAmount');
-    const penaltyInstallmentTotal = this.getTotal(this.balanceData.interestAndPenaltyDetails, 'installmentAmount');
-    return Math.max(dueInstallmentsTotalDue - penaltyInstallmentTotal, 0);
+    const installmentReceivedTotal = this.getTotal(this.balanceData.installmentReceipts, 'draftAmount');
+    return dueInstallmentsTotalDue - installmentReceivedTotal;
   }
 }
