@@ -64,16 +64,16 @@ export class HomePage {
   ];
 
   photos: PhotoItem[] = [
-    { id: 1, title: 'Mandi Image', image: 'assets/Mandi1.JPG' },
-    { id: 2, title: 'Mandi Image', image: 'assets/Mandi2.JPG' },
-    { id: 3, title: 'Mandi Image', image: 'assets/Mandi3.JPG' },
-    { id: 4, title: 'Mandi Image', image: 'assets/Mandi4.JPG' },
-    { id: 5, title: 'Mandi Image', image: 'assets/Mandi5.JPG' },
-    { id: 6, title: 'Mandi Image', image: 'assets/Mandi6.JPG' },
-    { id: 7, title: 'Mandi Image', image: 'assets/Mandi7.JPG' },
-    { id: 8, title: 'Mandi Image', image: 'assets/Mandi8.jpg' },
-    { id: 9, title: 'Mandi Image', image: 'assets/Mandi9.jpg' },
-    { id: 10, title: 'Mandi Image', image: 'assets/Mandi10.webp' },
+    { id: 1, title: 'Mandi Image', image: 'assets/Mandi16.JPG' },
+    { id: 2, title: 'Mandi Image', image: 'assets/Mandi17.JPG' },
+    { id: 3, title: 'Mandi Image', image: 'assets/Mandi15.jpg' },
+    { id: 4, title: 'Mandi Image', image: 'assets/Mandi13.jpg' },
+    { id: 5, title: 'Mandi Image', image: 'assets/Mandi18.JPG' },
+    { id: 6, title: 'Mandi Image', image: 'assets/Mandi19.JPG' },
+    { id: 7, title: 'Mandi Image', image: 'assets/Mandi14.jpg' },
+    // { id: 8, title: 'Mandi Image', image: 'assets/Mandi8.jpg' },
+    { id: 9, title: 'Mandi Image', image: 'assets/Mandi12.jpg' },
+    { id: 10, title: 'Mandi Image', image: 'assets/Mandi11.jpg' },
   ];
 
   leadershipShortlist = [

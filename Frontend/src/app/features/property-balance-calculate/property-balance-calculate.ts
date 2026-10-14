@@ -850,6 +850,6 @@ export class PropertyBalanceCalculate implements OnInit {
     }
     const dueInstallmentsTotalDue = this.getTotal(this.balanceData.dueInstallments, 'totalDueAmount');
     const installmentReceivedTotal = this.getTotal(this.balanceData.installmentReceipts, 'draftAmount');
-    return dueInstallmentsTotalDue - installmentReceivedTotal;
+    return installmentReceivedTotal - dueInstallmentsTotalDue;
   }
 }
