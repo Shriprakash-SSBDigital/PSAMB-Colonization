@@ -137,6 +137,7 @@ namespace Backend.Models.Dtos
 
         public List<InstallmentDetailsDto>? Installments { get; set; }
         public List<InstallmentScheduleDto>? InstallmentSchedules { get; set; }
+        public List<InstallmentScheduleDto>? InstallmentNotCompleted { get; set; }
         public List<InstallmentCalculationDto> InstallmentCalculations { get; set; }
         public string PlotStatus { get; set; } = string.Empty;
         public int? PropertyCategoryId { get; set; }
