@@ -15,7 +15,7 @@
             <div class="input-group">
               <input
                 id="allotteeCodeInput"
-                type="text"
+                type="search"
                 class="form-control bg-light rounded-start-3 custom-input-color"
                 placeholder="Enter allottee code"
                 formControlName="allotteeCode" />
@@ -231,7 +231,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Diary No.</th>
-                            <th>Receipt Date</th>
+                            <th>Diary Date</th>
                             <th>Draft/Cheque/RTGS No</th>
                             <th>Draft/Cheque/RTGS Date</th>
                             <th>Payment Mode</th>
@@ -312,7 +312,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Diary No.</th>
-                            <th>Receipt Date</th>
+                            <th>Diary Date</th>
                             <th>Draft No</th>
                             <th>Draft/RTGS Date</th>
                             <th>Payment Mode</th>
@@ -393,7 +393,7 @@
                         <tr>
                             <th>Payment Type</th>
                             <th>Diary No.</th>
-                            <th>Receipt Date</th>
+                            <th>Diary Date</th>
                             <th>Draft No</th>
                             <th>Draft/RTGS Date</th>
                             <th>Payment Mode</th>
@@ -441,7 +441,7 @@
                             <th>Installment No</th>
                             <th>Due Date</th>
                             <th>Installment Amount</th>
-                            <th>Receipt Date</th>
+                            <th>Diary Date</th>
                             <th>Received Amount</th>
                             <th>Delay Days</th>
                             <th>Penal Interest</th>
@@ -458,9 +458,9 @@
                         <tr *ngFor="let interestAndPenalty of balanceData.interestAndPenaltyDetails">
                             <td>{{ interestAndPenalty.installmentId }}</td>
                             <td>{{ interestAndPenalty.installmentNo }}</td>
-                            <td>{{ interestAndPenalty.dueDate }}</td>
+                            <td class="text-nowrap">{{ interestAndPenalty.dueDate }}</td>
                             <td class="text-end">{{ interestAndPenalty.installmentAmount | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
-                            <td>{{ interestAndPenalty.receiptDate }}</td>
+                            <td class="text-nowrap">{{ interestAndPenalty.receiptDate }}</td>
                             <td class="text-end">{{ interestAndPenalty.receivedAmount | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
                             <td class="text-end">{{ interestAndPenalty.delayDays }}</td>
                             <td class="text-end">{{ interestAndPenalty.penalInterest | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
@@ -511,7 +511,7 @@
                 <span class="fw-semibold">₹{{ getTotal(balanceData.interestAndPenaltyDetails, 'totalPenaltyAmount') | number:'1.2-2':'en-IN' }}</span>
             </p>
             <p class="mb-0">
-                Total Pending Installments Amount (In ₹):
+                Total Balance Amount (In ₹):
                 <span class="fw-semibold">₹{{ getTotalPendingInstallmentsAmount() | number:'1.2-2':'en-IN' }}</span>
             </p>
         </div>
