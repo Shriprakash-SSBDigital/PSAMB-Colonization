@@ -6,6 +6,7 @@ import { Subject, takeUntil, finalize } from 'rxjs';
 import { ReportService } from '../../core/service/ReportService/report.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
+import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
 
 export interface PlotSummaryRow {
   plotType: string;
@@ -234,6 +235,9 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
         agencyName: d.agencyName ?? 'Mandi Board',
         mandiName: d.mandiName ?? this.selectedMandiLabel ?? '',
         nameOfAllottee: d.bidderName ?? d.nameOfAllottee ?? d.alloteeName ?? '',
+        fatherOrHusbandName: nameWithoutRelationshipPrefix(
+          d.fatherOrHusbandName ?? d.alloteeFatherName
+        ),
         plotNo: d.plotNo != null ? String(d.plotNo) : (plotNo || ''),
         address: d.address ?? '',
         sizeOfPlot: d.plotSize ?? (row?.plotSize || ''),
@@ -371,7 +375,10 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
             allPlots: row.allPlots ?? row.AllPlots ?? '',
             soldPlots: row.soldPlots ?? row.SoldPlots ?? '',
             unsoldPlots: row.unsoldPlots ?? row.UnsoldPlots ?? '',
-          }));
+            }))
+            .sort((a: PlotSummaryRow, b: PlotSummaryRow) =>
+              a.plotType.localeCompare(b.plotType, undefined, { sensitivity: 'base' })
+            );
 
           if (this.allRows.length === 0 && res?.message) {
             this.errorMessage = res.message;

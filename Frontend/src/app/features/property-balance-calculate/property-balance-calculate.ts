@@ -8,6 +8,7 @@ import { MenuService } from '../../core/service/MenuService/menu.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { Userservice } from '../../core/service/UserService/userservice';
+import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
 registerLocaleData(localeEnIn);
 
 @Component({
@@ -678,6 +679,7 @@ export class PropertyBalanceCalculate implements OnInit {
           agencyName: '',
           mandiName: '',
           nameOfAllottee: '',
+          fatherOrHusbandName: '',
           plotNo: '',
           address: '',
           sizeOfPlot: '',
@@ -781,6 +783,9 @@ export class PropertyBalanceCalculate implements OnInit {
         mandiName: d.mandiName ?? '',
         // mandiName: this.getMandiName(d),
         nameOfAllottee: d.bidderName ?? '',
+        fatherOrHusbandName: nameWithoutRelationshipPrefix(
+          d.fatherOrHusbandName ?? d.alloteeFatherName
+        ),
         plotNo: d.plotNo != null ? String(d.plotNo) : '',
         address: d.address ?? '',
         sizeOfPlot: d.plotSize ?? '',

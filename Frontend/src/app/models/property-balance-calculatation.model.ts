@@ -26,6 +26,7 @@ export interface PropertyInfo {
   // allotmentAmount: number;
   finalBidPrice: number;
   auctionDate: string;
+  fatherOrHusbandName: string;
 }
 
 export interface ReceiptDetail {

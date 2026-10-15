@@ -136,7 +136,7 @@
         </table>
     </div>
 
-    <div class="border-top" *ngIf="!loading && allRows.length">
+    <div class="border-top d-print-none" *ngIf="!loading && allRows.length">
         <mat-paginator [length]="allRows.length" [pageSize]="pageSize" [pageIndex]="pageIndex"
             [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)"></mat-paginator>
     </div>
@@ -197,6 +197,10 @@
                                 {{ balanceData.propertyInfo.nameOfAllottee || '-' }}
                             </p>
                             <p class="mb-2">
+                                <span class="fw-semibold">Allottee's Father/Husband Name :</span>
+                                {{ balanceData.propertyInfo.fatherOrHusbandName || '-' }}
+                            </p>
+                            <p class="mb-2">
                                 <span class="fw-semibold">Auction Date :</span>
                                 {{ balanceData.propertyInfo.auctionDate || '-' }}
                             </p>
@@ -240,13 +244,13 @@
                             <table class="table table-bordered mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Receipt No.</th>
-                                        <th>Receipt Date</th>
+                                        <th>Diary No.</th>
+                                        <th>Diary Date</th>
                                         <th>Draft/Cheque/RTGS No</th>
                                         <th>Draft/Cheque/RTGS Date</th>
                                         <th>Payment Mode</th>
                                         <th>Bank</th>
-                                        <th class="text-end">Amount(Rs.)</th>
+                                        <th class="text-end">Diary Amount(Rs.)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -329,8 +333,8 @@
                             <table class="table table-bordered mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Receipt No.</th>
-                                        <th>Receipt Date</th>
+                                        <th>Diary No.</th>
+                                        <th>Diary Date</th>
                                         <th>Draft No</th>
                                         <th>Draft/RTGS Date</th>
                                         <th>Payment Mode</th>
@@ -416,8 +420,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Payment Type</th>
-                                        <th>Receipt No.</th>
-                                        <th>Receipt Date</th>
+                                        <th>Diary No.</th>
+                                        <th>Diary Date</th>
                                         <th>Draft No</th>
                                         <th>Draft/RTGS Date</th>
                                         <th>Payment Mode</th>
