@@ -38,7 +38,7 @@ interface PhotoItem {
 })
 export class HomePage {
   announcements: Announcement[] = [
-    { id: 1, title: 'Tender Document for Hiring Vehicles', isNew: true, url: 'https://emandikaran-pb.in/files/HiringVehicles.pdf' },
+    // { id: 1, title: 'Tender Document for Hiring Vehicles', isNew: true, url: 'https://emandikaran-pb.in/files/HiringVehicles.pdf' },
     { id: 2, title: 'Notification Regarding Fruit Items', isNew: true, url: 'https://emandikaran-pb.in/files/Notification-Regarding-Fruit-Items.pdf' },
     { id: 3, title: 'Self Declaration/Manual Form for Aayushmaan Scheme', isNew: false, url: 'https://emandikaran-pb.in/files/Ayushman_bharat_self_declaration.pdf' },
     { id: 4, title: 'Instruction Regarding Manpower Contractor.', isNew: false ,url: 'https://emandikaran-pb.in/files/Draft%20Man_power_enlistment_26-27.pdf'},
