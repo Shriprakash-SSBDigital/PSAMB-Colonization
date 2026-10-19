@@ -7,6 +7,9 @@ import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnServi
 import { MandiWiseService } from '../../core/service/Mandi-Wise-Summary-Service/mandi-wise-service';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { MandiOption, PlotSummaryRow } from '../plot-wise-consolidate-details/plot-wise-consolidate-details';
+import { PlotDetailsModal } from '../plot-details-modal/plot-details-modal';
+import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface LookupItem {
   id: number;
@@ -51,7 +54,7 @@ type SortKey = keyof AllotmentRow;
 @Component({
   selector: 'app-mandi-wise-allotment-summary',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule],
+  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule, PlotDetailsModal, MatTooltipModule],
   templateUrl: './mandi-wise-allotment-summary.html',
   styleUrl: './mandi-wise-allotment-summary.scss',
 })
@@ -123,6 +126,7 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
 
   dateRangeError = false;
   plotDetail: any = null;
+  headerTitle: string = 'Plot Details';
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
@@ -260,6 +264,13 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
       return 'All Columns (' + count + ')';
     }
     return `${count} / ${this.columns.length} Columns`;
+  }
+
+  get hasSelectedFilter(): boolean {
+    return ['districtId', 'branchId', 'mandiId', 'fromDate', 'toDate'].some((controlName) => {
+      const value = this.form?.get(controlName)?.value;
+      return value !== null && value !== undefined && value !== '';
+    });
   }
 
   selectDistrict(d: LookupItem | null): void {
@@ -884,6 +895,29 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
       return String(dateVal);
     }
   }
+//export pdf function 
+  exportToPDF(): void {
+    const { districtId, branchId, mandiId, fromDate, toDate } = this.getExportFilters();
+
+    this.mandiWiseService
+      .exportPdfMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate)
+      .subscribe({
+        next: (data: Blob) => {
+          const url = window.URL.createObjectURL(data);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'Mandi_Wise_Allotment_Summary.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        },
+        error: (err: any) => {
+          console.error('Error downloading PDF file:', err);
+          alert('Failed to export PDF file. Please try again.');
+        },
+      });
+  }
 
   onReset(): void {
     this.dateRangeError = false;
@@ -927,6 +961,26 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     return this.sortedRows;
   }
 
+  private getExportFilters(): {
+    districtId: number;
+    branchId: number;
+    mandiId: number;
+    fromDate: string | null;
+    toDate: string | null;
+  } {
+    const districtValue = this.form.get('districtId')?.value;
+    const branchValue = this.form.get('branchId')?.value;
+    const mandiValue = this.form.get('mandiId')?.value;
+
+    return {
+      districtId: districtValue !== null && districtValue !== undefined && districtValue !== '' ? Number(districtValue) : 0,
+      branchId: branchValue !== null && branchValue !== undefined && branchValue !== '' ? Number(branchValue) : 0,
+      mandiId: mandiValue !== null && mandiValue !== undefined && mandiValue !== '' ? Number(mandiValue) : 0,
+      fromDate: this.form.get('fromDate')?.value || null,
+      toDate: this.form.get('toDate')?.value || null,
+    };
+  }
+
   onPageChange(event: PageEvent): void {
     const isPageSizeChanged = this.pageSize !== event.pageSize;
     this.pageSize = event.pageSize;
@@ -945,14 +999,10 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     this.isExporting = true;
     this.cdr.detectChanges();
 
-    const dId = this.currentFilter.districtId || 0;
-    const bId = this.currentFilter.branchId || 0;
-    const mId = this.currentFilter.mandiId || 0;
-    const fromDate = this.currentFilter.fromDate || null;
-    const toDate = this.currentFilter.toDate || null;
+    const { districtId, branchId, mandiId, fromDate, toDate } = this.getExportFilters();
 
     this.mandiWiseService
-      .exportMandiWiseAllotmentSummary(dId, bId, mId, fromDate, toDate)
+      .exportMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate)
       .pipe(
         finalize(() => {
           this.isExporting = false;
@@ -1144,7 +1194,8 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
         agencyName: d.agencyName ?? 'Mandi Board',
         mandiName: d.mandiName ?? row?.mandi ?? this.selectedMandiLabel ?? this.selectedMandiName ?? '',
         nameOfAllottee: d.bidderName ?? d.nameOfAllottee ?? d.alloteeName ?? row?.name ?? '',
-        fatherOrHusbandName: d.fatherOrHusbandName ?? d.FatherOrHusbandName ?? d.guardianName ?? d.allotteeFatherName ?? '',
+        fatherOrHusbandName:
+         nameWithoutRelationshipPrefix(d.fatherOrHusbandName ?? d.FatherOrHusbandName ?? d.guardianName ?? d.allotteeFatherName ?? ''),
         plotNo: d.plotNo != null ? String(d.plotNo) : (plotNo || row?.plotNo || ''),
         address: d.address ?? '',
         sizeOfPlot: d.plotSize ?? (row?.plotSize || ''),
