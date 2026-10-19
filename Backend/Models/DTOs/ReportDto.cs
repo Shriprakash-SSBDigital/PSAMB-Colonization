@@ -4,6 +4,8 @@ namespace Backend.Models.DTOs
     {
         public string? AllotteeCode { get; set; }
         public string? AllotteeName { get; set; }
+        public string? AllotteeFatherName { get; set; }
+
         public int PropertyAllotteeId { get; set; }
 
         public int DistrictId { get; set; }
@@ -26,6 +28,9 @@ namespace Backend.Models.DTOs
         public DateTime? AuctionDate { get; set; }
         public DateTime? DateOfAllotment { get; set; }
         public decimal? FinalBidPrice { get; set; }
+        public string? AllotmentNumber { get; set; }
+
+
 
     }
 
@@ -78,6 +83,26 @@ namespace Backend.Models.DTOs
     public class DigitizationPropertyDayWiseDetailsDto
     {
         public string? PropertyCode { get; set; }
+    }
+
+    public class MandiWiseAllotmentSummaryDto
+    {
+        public int MandiId { get; set; }
+        public string? MandiName { get; set; }
+        public int BranchId { get; set; }
+        public int DistrictId { get; set; }
+    }
+
+    public class PagedResponse<T>
+    {
+        
+
+        public int PageNumber { get; set; }
+
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public int TotalRecords { get; set; }
+        public List<T> Data { get; set; } = new();
     }
 
 }

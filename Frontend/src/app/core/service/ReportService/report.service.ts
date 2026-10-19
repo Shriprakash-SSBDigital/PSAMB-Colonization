@@ -58,6 +58,13 @@ export interface DigitizationPropertyDayWiseDetailsDto {
   propertyCode: string;
 }
 
+export interface MandiWiseSummaryMandi {
+  mandiId: number;
+  mandiName: string;
+  branchId: number;
+  districtId: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -73,6 +80,14 @@ export class ReportService {
 
   getMandisForPropertyReport(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/Report/GetMandisForPropertyReport`);
+  }
+
+  getAllMandisForMandiWiseAllotmentSummary(search: string = ''): Observable<any> {
+    let params = new HttpParams();
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
+    return this.http.get<any>(`${this.baseUrl}/Report/GetAllMandisForMandiWiseAllotmentSummaryAsync`, { params });
   }
 
   getMandiWiseAllotmentSummary(districtId: number = 0, branchId: number = 0, mandiId: number = 0): Observable<any> {
