@@ -53,6 +53,7 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   selectedMandiId: number | null = null;
   selectedPlotNo: string = '';
   plotDetail: any = null;
+  headerTitle: string = 'Sold Plot Details';
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
