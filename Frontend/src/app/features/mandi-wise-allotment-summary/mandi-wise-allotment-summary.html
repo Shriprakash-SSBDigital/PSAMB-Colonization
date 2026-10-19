@@ -1,85 +1,270 @@
 <div class="container-fluid py-3 px-3 px-lg-4">
 
     <!-- Heading -->
-    <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div>
             <h1 class="h5 fw-bold text-portal mb-1">Mandi Wise Allotment Summary</h1>
             <p class="small text-muted mb-0">
-                Choose a district, market committee and mandi to list every allotment recorded for that mandi.
+                Choose a mandi to list every allotment recorded for that mandi.
             </p>
         </div>
 
-        <!-- <div class="d-flex gap-3 result-stats" *ngIf="searched && rows.length">
-            <div class="stat">
-                <span class="stat-value">{{ rows.length }}</span>
-                <span class="stat-label">Allotments</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value">{{ totalValue | currency : 'INR' : 'symbol' : '1.0-0' }}</span>
-                <span class="stat-label">Total allotment value</span>
-            </div>
+        <!-- <div>
+            <button type="button"
+                class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+                (click)="exportToExcel()" [disabled]="loading || isExporting || !totalRecords"
+                title="Export to Excel">
+                <span *ngIf="isExporting" class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isExporting" class="fa-solid fa-file-excel fs-5 text-success"></i>
+                <span class="d-none d-sm-inline">{{ isExporting ? 'Exporting...' : 'Export to Excel' }}</span>
+            </button>
         </div> -->
     </div>
 
     <!-- Filters -->
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate
+    <form [formGroup]="form" (ngSubmit)="onSearch()" novalidate
         class="card filter-card border shadow-sm rounded-3 mb-3">
         <div class="card-body p-3 p-lg-4">
             <div class="row g-3">
 
-                <div class="col-12 col-md-6 col-xl-3">
-                    <label for="district" class="form-label small fw-semibold text-dark">
+                <!-- District -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold text-dark">
                         District <span class="text-danger">*</span>
                     </label>
-                    <select id="district" class="form-select custom-input-color rounded-3" formControlName="districtId"
-                        [class.is-invalid]="isInvalid('districtId')" (change)="onDistrictChange()">
-                        <option [ngValue]="null" disabled>
-                            {{ isLoadingDistricts ? 'Loading districts...' : 'Select district' }}
-                        </option>
-                        <option *ngFor="let d of districts" [ngValue]="d.id">{{ d.name }}</option>
-                    </select>
-                    <div class="invalid-feedback">Select a district to continue.</div>
+                    <div class="custom-select-box" [class.open]="isDistrictDropdownOpen" #districtDropdownRef>
+                        <button type="button" class="select-box-trigger custom-input-color rounded-3"
+                            [class.is-invalid]="isInvalid('districtId')" [disabled]="isLoadingDistricts"
+                            (click)="toggleDistrictDropdown($event)">
+                            <span class="text-truncate" [class.text-muted]="!selectedDistrictName">
+                                {{ isLoadingDistricts ? 'Loading districts...' : (selectedDistrictName || 'Select
+                                district') }}
+                            </span>
+                            <span class="select-box-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <ul class="dropdown-menu show w-100 shadow-sm rounded-3 p-1 m-0 list-unstyled"
+                            *ngIf="isDistrictDropdownOpen">
+                            <li>
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="form.get('districtId')?.value === null || form.get('districtId')?.value === undefined"
+                                    (mousedown)="selectDistrict(null); $event.preventDefault()">
+                                    Select district
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="form.get('districtId')?.value === 0"
+                                    (mousedown)="selectDistrict({ id: 0, name: 'All' }); $event.preventDefault()">
+                                    All
+                                </button>
+                            </li>
+                            <li *ngFor="let d of districts">
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="form.get('districtId')?.value === d.id"
+                                    (mousedown)="selectDistrict(d); $event.preventDefault()">
+                                    {{ d.name }}
+                                </button>
+                            </li>
+                            <li *ngIf="!districts.length" class="px-3 py-2 text-muted text-center small">
+                                {{ isLoadingDistricts ? 'Loading districts...' : 'No districts found' }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="invalid-feedback d-block" *ngIf="isInvalid('districtId')">
+                        Select a district to continue.
+                    </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3">
-                    <label for="marketCommittee" class="form-label small fw-semibold text-dark">
+                <!-- Market Committee -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold text-dark">
                         Market Committee
                     </label>
-                    <select id="marketCommittee" class="form-select custom-input-color rounded-3"
-                        formControlName="branchId" (change)="onCommitteeChange()">
-                        <option [ngValue]="null">
-                            {{ form.get('branchId')?.disabled ? 'Select a district first' : (isLoadingCommittees ?
-                            'Loading committees...' : 'Select committee') }}
-                        </option>
-                        <option *ngFor="let c of committees" [ngValue]="c.id">{{ c.name }}</option>
-                    </select>
+                    <div class="custom-select-box" [class.open]="isCommitteeDropdownOpen" #committeeDropdownRef>
+                        <button type="button" class="select-box-trigger custom-input-color rounded-3"
+                            [disabled]="isLoadingCommittees || !form.get('districtId')?.value"
+                            (click)="toggleCommitteeDropdown($event)">
+                            <span class="text-truncate" [class.text-muted]="!selectedCommitteeName">
+                                {{ isLoadingCommittees ? 'Loading committees...' : (!form.get('districtId')?.value ?
+                                'Select a district first' : (selectedCommitteeName || 'Select committee')) }}
+                            </span>
+                            <span class="select-box-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <ul class="dropdown-menu show w-100 shadow-sm rounded-3 p-1 m-0 list-unstyled"
+                            *ngIf="isCommitteeDropdownOpen">
+                            <li>
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="!form.get('branchId')?.value"
+                                    (mousedown)="selectCommittee(null); $event.preventDefault()">
+                                    Select committee
+                                </button>
+                            </li>
+                            <li *ngFor="let c of committees">
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="form.get('branchId')?.value === c.id"
+                                    (mousedown)="selectCommittee(c); $event.preventDefault()">
+                                    {{ c.name }}
+                                </button>
+                            </li>
+                            <li *ngIf="!committees.length" class="px-3 py-2 text-muted text-center small">
+                                {{ isLoadingCommittees ? 'Loading committees...' : 'No committees found' }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3">
+                <!-- Mandi (Type to search & select) -->
+                <div class="col-12 col-md-4">
                     <label for="mandi" class="form-label small fw-semibold text-dark">
                         Mandi
                     </label>
-                    <select id="mandi" class="form-select custom-input-color rounded-3" formControlName="mandiId"
-                        (change)="onMandiChange()">
-                        <option [ngValue]="null">
-                            {{ form.get('mandiId')?.disabled ? 'Select a committee first' : (isLoadingMandis ? 'Loading
-                            mandis...' : 'Select mandi') }}
-                        </option>
-                        <option *ngFor="let m of mandis" [ngValue]="m.id">{{ m.name }}</option>
-                    </select>
+                    <div class="searchable-combobox" [class.open]="isMandiDropdownOpen" #mandiDropdownRef>
+                        <input type="text" #mandiInputElement id="mandi"
+                            class="form-control custom-input-color rounded-3 combobox-input"
+                            [placeholder]="isLoadingMandis ? 'Loading mandis...' : 'Search / Select mandi...'"
+                            [value]="mandiDisplayText" [disabled]="isLoadingMandis" (focus)="onMandiInputFocus()"
+                            (input)="onMandiInputChange($event)" autocomplete="off" />
+                        <span *ngIf="mandiDisplayText && !isLoadingMandis" class="combobox-clear"
+                            (click)="clearMandiSelection($event)" title="Clear mandi">
+                            ✕
+                        </span>
+                        <span class="combobox-arrow" (click)="toggleMandiDropdown($event)" title="Toggle mandis">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1 0-.708z" />
+                            </svg>
+                        </span>
+
+                        <ul class="dropdown-menu show w-100 shadow-sm rounded-3 p-1 m-0 list-unstyled"
+                            *ngIf="isMandiDropdownOpen">
+                            <li *ngFor="let m of filteredMandis">
+                                <button type="button" class="dropdown-item px-3 py-2 rounded-2 small text-truncate"
+                                    [class.active]="form.get('mandiId')?.value === m.mandiId"
+                                    (mousedown)="selectMandi(m); $event.preventDefault()">
+                                    {{ m.mandiName }}
+                                </button>
+                            </li>
+                            <li *ngIf="!filteredMandis.length" class="px-3 py-2 text-muted text-center small">
+                                No matching mandi found
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <label class="form-label small fw-semibold text-dark">
+                        Columns
+                    </label>
+                    <div class="custom-select-box" [class.open]="isColumnDropdownOpen" #columnDropdownRef>
+                        <button type="button" class="select-box-trigger custom-input-color rounded-3"
+                            (click)="toggleColumnDropdown($event)">
+                            <span class="text-truncate">
+                                {{ columnDropdownDisplayText }}
+                            </span>
+                            <span class="select-box-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <div class="column-filter-menu show shadow-sm" *ngIf="isColumnDropdownOpen"
+                            (click)="$event.stopPropagation()">
+                            <div class="column-filter-header pb-2 mb-2 border-bottom">
+                                <div class="d-flex align-items-center justify-content-between mb-1 px-1">
+                                    <span class="small fw-bold text-muted text-uppercase"
+                                        style="font-size: 0.7rem; letter-spacing: 0.5px;">Visible Columns</span>
+                                    <span class="badge bg-light text-portal border" style="font-size: 0.7rem;">{{
+                                        visibleColumnsCount }}/{{ columns.length
+                                        }}</span>
+                                </div>
+                                <label class="column-menu-item select-all-item">
+                                    <input type="checkbox" class="column-checkbox" [checked]="isAllColumnsSelected"
+                                        (change)="toggleAllColumns($event)" />
+                                    <span class="column-name fw-semibold text-dark">Select All ({{
+                                        columns.length }})</span>
+                                </label>
+                            </div>
+                            <div class="column-filter-list">
+                                <label *ngFor="let col of columns" class="column-menu-item"
+                                    [class.selected]="col.visible">
+                                    <input type="checkbox" class="column-checkbox" [checked]="col.visible"
+                                        (change)="toggleColumn(col.key, $event)" />
+                                    <span class="column-name">{{ col.label }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- From Date -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <label for="fromDate" class="form-label small fw-semibold text-dark">
+                        From Date
+                    </label>
+                    <input type="date" id="fromDate" class="form-control custom-input-color rounded-3"
+                        formControlName="fromDate" [max]="form.get('toDate')?.value" (input)="onDateInputChange()" />
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3 d-flex align-items-end">
-                    <div class="d-flex gap-2 w-100">
-                        <!-- <button type="submit" class="btn btn-portal rounded-3 flex-fill" [disabled]="loading">
-                            <span class="spinner-border spinner-border-sm me-2" *ngIf="loading"
-                                aria-hidden="true"></span>
-                            {{ loading ? 'Loading' : 'Show summary' }}
-                        </button> -->
-                        <button type="button" class="btn btn-ghost rounded-3" (click)="onReset()" [disabled]="loading">
-                            Clear
-                        </button>
+                <!-- To Date -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <label for="toDate" class="form-label small fw-semibold text-dark">
+                        To Date
+                    </label>
+                    <input type="date" id="toDate" class="form-control custom-input-color rounded-3"
+                        formControlName="toDate" [min]="form.get('fromDate')?.value" (input)="onDateInputChange()" />
+                    <div class="invalid-feedback d-block"
+                        *ngIf="form.get('fromDate')?.value && form.get('toDate')?.value && form.get('fromDate')?.value > form.get('toDate')?.value">
+                        To date cannot be earlier than From date.
                     </div>
+                    <div class="invalid-feedback d-block" *ngIf="dateRangeError">
+                        Please select both From Date and To Date.
+                    </div>
+                </div>
+
+                <!-- Columns Dropdown -->
+
+
+                <!-- Actions: Search, Clear & Export -->
+                <div class="col-12 col-sm-6 col-xl-2 d-flex align-items-end gap-2">
+                    <button type="button"
+                        class="btn btn-portal rounded-3 flex-grow-1 d-flex align-items-center justify-content-center gap-1"
+                        (click)="onSearch()" [disabled]="loading">
+                        <span *ngIf="loading" class="spinner-border spinner-border-sm" role="status"
+                            aria-hidden="true"></span>
+                        <svg *ngIf="!loading" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            viewBox="0 0 16 16" fill="currentColor">
+                            <path
+                                d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                        </svg>
+                        <span>Search</span>
+                    </button>
+                    <button type="button" class="btn btn-ghost rounded-3" (click)="onReset()" [disabled]="loading">
+                        Clear
+                    </button>
+                    <button type="button"
+                        class="btn btn-outline-success btn-export-excel rounded-3 d-flex align-items-center justify-content-center px-3"
+                        (click)="exportToExcel()" [disabled]="loading || isExporting || !totalRecords"
+                        title="Export to Excel">
+                        <span *ngIf="isExporting" class="spinner-border spinner-border-sm text-success" role="status"
+                            aria-hidden="true"></span>
+                        <i *ngIf="!isExporting" class="fa-solid fa-file-excel fs-5 text-success"></i>
+                    </button>
                 </div>
 
             </div>
@@ -93,28 +278,35 @@
             <table class="table table-hover align-middle mb-0 table-verification">
                 <thead class="table-head-portal">
                     <tr>
-                        <th scope="col">Sr. No.</th>
-                        <th scope="col" class="sortable" (click)="sortBy('alloteeCode')">
+                        <th scope="col" *ngIf="isColumnVisible('srNo')">Sr. No.</th>
+                        <th scope="col" class="sortable" (click)="sortBy('alloteeCode')"
+                            *ngIf="isColumnVisible('alloteeCode')">
                             Allotee Code <i class="sort-mark" [class.on]="sortKey === 'alloteeCode'"
                                 [class.desc]="sortKey === 'alloteeCode' && !sortAsc"></i>
                         </th>
-                        <th scope="col" class="sortable" (click)="sortBy('name')">
-                            Name <i class="sort-mark" [class.on]="sortKey === 'name'"
+                        <th scope="col" class="sortable" (click)="sortBy('name')" *ngIf="isColumnVisible('name')">
+                            Allotee Name <i class="sort-mark" [class.on]="sortKey === 'name'"
                                 [class.desc]="sortKey === 'name' && !sortAsc"></i>
                         </th>
-                        <th scope="col">District</th>
-                        <th scope="col">Market Committee</th>
-                        <th scope="col">Mandi</th>
-                        <th scope="col" class="sortable" (click)="sortBy('plotType')">
+                        <th scope="col" class="sortable" (click)="sortBy('district')"
+                            *ngIf="isColumnVisible('district')">
+                            District <i class="sort-mark" [class.on]="sortKey === 'district'"
+                                [class.desc]="sortKey === 'district' && !sortAsc"></i>
+                        </th>
+                        <th scope="col" *ngIf="isColumnVisible('branchName')">Market Committee</th>
+                        <th scope="col" *ngIf="isColumnVisible('mandi')">Mandi</th>
+                        <th scope="col" class="sortable" (click)="sortBy('plotType')"
+                            *ngIf="isColumnVisible('plotType')">
                             Plot Type <i class="sort-mark" [class.on]="sortKey === 'plotType'"
                                 [class.desc]="sortKey === 'plotType' && !sortAsc"></i>
                         </th>
-                        <th scope="col">Plot No.</th>
-                        <th scope="col">Plot Size</th>
-                        <th scope="col">Auction Date</th>
-                        <th scope="col">Allotment Date</th>
-                        <th scope="col">Allotment No.</th>
-                        <th scope="col" class="text-end sortable" (click)="sortBy('allotmentPrice')">
+                        <th scope="col" *ngIf="isColumnVisible('plotNo')">Plot No.</th>
+                        <th scope="col" *ngIf="isColumnVisible('plotSize')">Plot Size</th>
+                        <th scope="col" *ngIf="isColumnVisible('auctionDate')">Auction Date</th>
+                        <th scope="col" *ngIf="isColumnVisible('allotmentDate')">Allotment Date</th>
+                        <th scope="col" *ngIf="isColumnVisible('allotmentNo')">Allotment No.</th>
+                        <th scope="col" class="text-end sortable" (click)="sortBy('allotmentPrice')"
+                            *ngIf="isColumnVisible('allotmentPrice')">
                             Allotment Price <i class="sort-mark" [class.on]="sortKey === 'allotmentPrice'"
                                 [class.desc]="sortKey === 'allotmentPrice' && !sortAsc"></i>
                         </th>
@@ -125,39 +317,52 @@
                     <!-- Loading skeleton -->
                     <ng-container *ngIf="loading">
                         <tr *ngFor="let s of skeletonRows">
-                            <td *ngFor="let c of [].constructor(12)"><span class="skeleton"></span></td>
+                            <td *ngFor="let c of [].constructor(visibleColumnsCount)"><span class="skeleton"></span>
+                            </td>
                         </tr>
                     </ng-container>
 
                     <!-- Data -->
                     <ng-container *ngIf="!loading">
                         <tr *ngFor="let row of pagedRows; let i = index; trackBy: trackByRow">
-                            <td class="fw-semibold text-secondary">{{ pageIndex * pageSize + i + 1 }}</td>
-                            <td class="fw-semibold text-portal">{{ row.alloteeCode }}</td>
-                            <td class="text-secondary text-nowrap">{{ row.name }}</td>
-                            <td class="text-secondary">{{ row.district }}</td>
-                            <td class="text-secondary">{{ row.branchName }}</td>
+                            <td class="fw-semibold text-secondary" *ngIf="isColumnVisible('srNo')">{{ pageIndex *
+                                pageSize + i + 1 }}</td>
+                            <td class="fw-semibold text-portal" *ngIf="isColumnVisible('alloteeCode')">
+                                <button type="button" class="allotee-link" data-bs-toggle="modal"
+                                    data-bs-target="#plotDetailModal" (click)="openPlotModal(row)"
+                                    [title]="'View plot details for ' + row.alloteeCode">
+                                    {{ row.alloteeCode }}
+                                </button>
+                            </td>
+                            <td class="text-secondary text-nowrap" *ngIf="isColumnVisible('name')">{{ row.name }}</td>
+                            <td class="text-secondary" *ngIf="isColumnVisible('district')">{{ row.district }}</td>
+                            <td class="text-secondary" *ngIf="isColumnVisible('branchName')">{{ row.branchName }}</td>
 
-                            <td class="text-secondary">{{ row.mandi }}</td>
-                            <td>
+                            <td class="text-secondary" *ngIf="isColumnVisible('mandi')">{{ row.mandi }}</td>
+                            <td *ngIf="isColumnVisible('plotType')">
                                 <span class="chip" [class.chip-commercial]="row.plotType === 'Commercial'">{{
                                     row.plotType }}</span>
                             </td>
-                            <td class="text-secondary">{{ row.plotNo }}</td>
-                            <td class="text-secondary text-nowrap">{{ row.plotSize }}</td>
-                            <td class="text-secondary text-nowrap">{{ row.auctionDate }}</td>
-                            <td class="text-secondary text-nowrap">{{ row.allotmentDate }}</td>
-                            <td class="text-secondary text-nowrap">{{ row.allotmentNo }}</td>
-                            <td class="text-end text-nowrap fw-semibold text-dark">
+                            <td class="text-secondary" *ngIf="isColumnVisible('plotNo')">{{ row.plotNo }}</td>
+                            <td class="text-secondary text-nowrap" *ngIf="isColumnVisible('plotSize')">{{ row.plotSize
+                                }}</td>
+                            <td class="text-secondary text-nowrap" *ngIf="isColumnVisible('auctionDate')">{{
+                                row.auctionDate }}</td>
+                            <td class="text-secondary text-nowrap" *ngIf="isColumnVisible('allotmentDate')">{{
+                                row.allotmentDate }}</td>
+                            <td class="text-secondary text-nowrap" *ngIf="isColumnVisible('allotmentNo')">{{
+                                row.allotmentNumber }}</td>
+                            <td class="text-end text-nowrap fw-semibold text-dark"
+                                *ngIf="isColumnVisible('allotmentPrice')">
                                 {{ row.allotmentPrice | currency : 'INR' : 'symbol' : '1.0-0' }}
                             </td>
                         </tr>
 
                         <tr *ngIf="!pagedRows.length">
-                            <td colspan="12" class="empty-cell text-center">
+                            <td [attr.colspan]="visibleColumnsCount" class="empty-cell text-center">
                                 <ng-container *ngIf="!searched">
                                     <p class="fw-semibold mb-1 text-dark">No Data Available</p>
-                                    <p class="small text-muted mb-0">Select a district to view the allotment summary.
+                                    <p class="small text-muted mb-0">Select a mandi to view the allotment summary.
                                     </p>
                                 </ng-container>
                                 <ng-container *ngIf="searched">
@@ -171,11 +376,333 @@
             </table>
         </div>
 
-        <div class="border-top" *ngIf="rows.length && !loading">
-            <mat-paginator [length]="rows.length" [pageSize]="pageSize" [pageIndex]="pageIndex"
+        <div class="border-top" *ngIf="totalRecords > 0 && !loading">
+            <mat-paginator [length]="totalRecords" [pageSize]="pageSize" [pageIndex]="pageIndex"
                 [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)">
             </mat-paginator>
         </div>
 
+    </div>
+</div>
+
+
+<div class="modal fade" id="plotDetailModal" tabindex="-1" aria-labelledby="plotDetailModalLabel" aria-hidden="true"
+    #plotDetailModal>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-3 shadow-lg">
+
+            <!-- Modal Header -->
+            <div class="modal-header bg-success text-white position-relative">
+                <div class="w-100 text-center">
+                    <h5 class="modal-title fw-bold mb-0" id="plotDetailModalLabel">
+                        Plot Details
+                    </h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white position-absolute end-0 me-3"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-3 p-lg-4">
+
+                <!-- Loading state -->
+                <div class="text-center py-5" *ngIf="plotDetailLoading">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted small mb-0">Fetching plot details...</p>
+                </div>
+
+                <!-- Error state -->
+                <div class="p-3" *ngIf="!plotDetailLoading && plotDetailError">
+                    <div class="alert alert-danger rounded-3 mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ plotDetailError }}
+                    </div>
+                </div>
+
+                <!-- Detail sections -->
+                <div *ngIf="!plotDetailLoading && !plotDetailError && balanceData">
+
+                    <div class="row g-2 bg-light rounded-3 p-3 mb-3 border">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <span class="fw-semibold">Allottee Code :</span>
+                                {{ balanceData.propertyInfo.allotteeCode || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Name of Allottee :</span>
+                                {{ balanceData.propertyInfo.nameOfAllottee || '-' }}
+                            </p>
+
+                            <p class="mb-2">
+                                <span class="fw-semibold">Auction Date :</span>
+                                {{ balanceData.propertyInfo.auctionDate || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Allotment Date :</span>
+                                {{ balanceData.propertyInfo.allotmentDate || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Allotment Amount(Rs.) :</span>
+                                ₹{{ (balanceData.propertyInfo.finalBidPrice | number) || '0' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Address :</span>
+                                {{ balanceData.propertyInfo.address || '-' }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <span class="fw-semibold">Mandi Name :</span>
+                                {{ balanceData.propertyInfo.mandiName || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Father's Name :</span>
+                                {{ balanceData.propertyInfo.fatherOrHusbandName || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Plot Type :</span>
+                                {{ balanceData.propertyInfo.plotType || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Plot Number :</span>
+                                {{ balanceData.propertyInfo.plotNo || selectedPlotNo || '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Size of Plot :</span>
+                                {{ balanceData.propertyInfo.sizeOfPlot || '-' }}
+                            </p>
+
+                        </div>
+                    </div>
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Detail of Initial 25% deposited :
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft/Cheque/RTGS No</th>
+                                        <th>Draft/Cheque/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Bank</th>
+                                        <th class="text-end">Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.initialDeposits.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let deposit of balanceData.initialDeposits">
+                                        <td>{{ deposit.receiptNo || '-' }}</td>
+                                        <td>{{ deposit.receiptDate || '-' }}</td>
+                                        <td>{{ deposit.draftChequeRtgsNo || '-' }}</td>
+                                        <td>{{ deposit.draftChequeRtgsDate || '-' }}</td>
+                                        <td>{{ deposit.paymentMode || '-' }}</td>
+                                        <td>{{ deposit.bank || '-' }}</td>
+                                        <td class="text-end">₹{{ deposit.amount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.initialDeposits.length">
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.initialDeposits, 'amount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Due Installments -->
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Due Installments : (Rate of Interest({{ getRateOfInterest() }}%))
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Installment No.</th>
+                                        <th>Due Date</th>
+                                        <th class="text-end">Due Amount(Rs.)</th>
+                                        <th class="text-end">Interest(Rs.)</th>
+                                        <th class="text-end">Total Due Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.dueInstallments.length">
+                                        <td colspan="5" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let installment of balanceData.dueInstallments">
+                                        <td>{{ installment.installmentNo }}</td>
+                                        <td>{{ installment.dueDate }}</td>
+                                        <td class="text-end">₹{{ installment.dueAmount | number }}</td>
+                                        <td class="text-end">₹{{ installment.interest | number }}</td>
+                                        <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.dueInstallments.length">
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'dueAmount') | number:'1.2-2' }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'interest') | number:'1.2-2' }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.dueInstallments, 'totalDueAmount') | number:'1.2-2'
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Installments Amount Received :
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft No</th>
+                                        <th>Draft/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Draft/RTGS Bank</th>
+                                        <th class="text-end">Draft Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.installmentReceipts.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let receipt of balanceData.installmentReceipts">
+                                        <td>{{ receipt.receiptNo }}</td>
+                                        <td>{{ receipt.receiptDate }}</td>
+                                        <td>{{ receipt.draftNo || '-' }}</td>
+                                        <td>{{ receipt.draftRtgsDate }}</td>
+                                        <td>{{ receipt.paymentMode }}</td>
+                                        <td>{{ receipt.draftRtgsBank }}</td>
+                                        <td class="text-end">₹{{ receipt.draftAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="balanceData.installmentReceipts.length">
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.installmentReceipts, 'draftAmount') |
+                                            number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-section mb-3" *ngIf="balanceData.futureInstallments.length">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Future Installments:
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Installment No.</th>
+                                        <th>Due Date</th>
+                                        <th class="text-end">Due Amount(Rs.)</th>
+                                        <th class="text-end">Interest(Rs.)</th>
+                                        <th class="text-end">Total Due Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let installment of balanceData.futureInstallments">
+                                        <td>{{ installment.installmentNo }}</td>
+                                        <td>{{ installment.dueDate }}</td>
+                                        <td class="text-end">₹{{ installment.dueAmount | number }}</td>
+                                        <td class="text-end">₹{{ installment.interest | number }}</td>
+                                        <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'interest') | number }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Other Amounts (if any) -->
+                    <div class="table-section mb-3" *ngIf="balanceData.otherAmounts.length">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Other Amount Received (If Any):
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Payment Type</th>
+                                        <th>Receipt No.</th>
+                                        <th>Receipt Date</th>
+                                        <th>Draft No</th>
+                                        <th>Draft/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Draft/RTGS Bank</th>
+                                        <th class="text-end">Draft Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let other of balanceData.otherAmounts">
+                                        <td>{{ other.paymentType }}</td>
+                                        <td>{{ other.receiptNo }}</td>
+                                        <td>{{ other.receiptDate }}</td>
+                                        <td>{{ other.draftNo || '-' }}</td>
+                                        <td>{{ other.draftRtgsDate || '-' }}</td>
+                                        <td>{{ other.paymentMode || '-' }}</td>
+                                        <td>{{ other.draftRtgsBank || '-' }}</td>
+                                        <td class="text-end">₹{{ other.draftAmount | number }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td class="text-end fw-semibold">
+                                            ₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer py-2 px-3 border-top bg-light">
+                <button type="button" class="btn btn-outline-secondary fw-semibold"
+                    data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
     </div>
 </div>

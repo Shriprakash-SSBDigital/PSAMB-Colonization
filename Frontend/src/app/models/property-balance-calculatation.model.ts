@@ -18,6 +18,7 @@ export interface PropertyInfo {
   agencyName: string;
   mandiName: string;
   nameOfAllottee: string;
+  fatherOrHusbandName?: string;
   plotNo: string;
   address: string;
   sizeOfPlot: string;

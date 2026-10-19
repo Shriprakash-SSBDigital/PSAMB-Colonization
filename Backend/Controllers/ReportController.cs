@@ -17,11 +17,35 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetMandiWiseAllotmentSummary")]
-        public async Task<IActionResult> GetMandiWiseAllotmentSummary([FromQuery] int districtId=0, [FromQuery] int branchId = 0,[FromQuery] int mandiId = 0)
+        public async Task<IActionResult> GetMandiWiseAllotmentSummary([FromQuery] int districtId=0, [FromQuery] int branchId = 0,[FromQuery] int mandiId = 0, int pageNumber = 1,
+        int pageSize = 10, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
         {
-            var response = await _service.GetMandiWiseAllotmentSummaryAsync(districtId,branchId, mandiId);
+            var response = await _service.GetMandiWiseAllotmentSummaryAsync(districtId,branchId, mandiId, pageNumber, pageSize, fromDate, toDate);
 
             return Ok(response);
+        }
+
+        [HttpGet("ExportMandiWiseAllotmentSummary")]
+        public async Task<IActionResult> ExportMandiWiseAllotmentSummary(int districtId, int branchId, int mandiId, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                byte[] fileBytes = await _service.ExportGetMandiWiseAllotmentSummaryAsync(districtId, branchId, mandiId, fromDate, toDate);
+
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MandiWiseAllotmentSummary.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode( StatusCodes.Status500InternalServerError,  new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("ExportMandiWiseAllotmentSummaryPdf")]
+        public async Task<IActionResult> ExportMandiWiseAllotmentSummaryPdf([FromQuery] int? districtId, [FromQuery] int? branchId, [FromQuery] int? mandiId,[FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate)
+        {
+            var pdfBytes = await _service.ExportMandiWiseAllotmentSummaryPdfAsync(districtId, branchId, mandiId,fromDate, toDate);
+
+            return File(pdfBytes,"application/pdf","MandiWiseAllotmentSummary.pdf");
         }
 
         [HttpGet("GetMandisForPropertyReport")]
@@ -60,6 +84,14 @@ namespace Backend.Controllers
         public async Task<IActionResult> GetDigitizationPropertyDayWiseCountDetailsAsync([FromQuery] DateTime fromDate)
         {
             var response = await _service.GetDigitizationPropertyDayWiseCountDetailsAsync( fromDate);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetAllMandisForMandiWiseAllotmentSummaryAsync")]
+        public async Task<IActionResult> GetAllMandisForMandiWiseAllotmentSummaryAsync(string? search)
+        {
+            var response = await _service.GetAllMandisForMandiWiseAllotmentSummaryAsync(search);
 
             return Ok(response);
         }
