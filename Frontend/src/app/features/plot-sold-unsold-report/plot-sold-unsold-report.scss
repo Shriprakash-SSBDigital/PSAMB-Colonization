@@ -50,3 +50,6 @@
 ::ng-deep .mat-mdc-paginator .mat-mdc-icon-button:not([disabled]) {
     color: var(--theme-primary);
 }
+.text-success {
+    color: var(--theme-primary) !important;
+}

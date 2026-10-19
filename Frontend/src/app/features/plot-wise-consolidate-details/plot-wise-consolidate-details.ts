@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -6,6 +6,8 @@ import { Subject, takeUntil, finalize } from 'rxjs';
 import { ReportService } from '../../core/service/ReportService/report.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
+import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
+import { PlotDetailsModal } from '../plot-details-modal/plot-details-modal';
 
 export interface PlotSummaryRow {
   plotType: string;
@@ -30,7 +32,7 @@ export interface MandiOption {
 @Component({
   selector: 'app-plot-wise-consolidate-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule],
+  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule, PlotDetailsModal],
   templateUrl: './plot-wise-consolidate-details.html',
   styleUrl: './plot-wise-consolidate-details.scss',
 })
@@ -54,7 +56,6 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
-  @ViewChild('plotDetailModal') plotDetailModalRef!: ElementRef;
 
   filterForm: FormGroup;
 
@@ -234,6 +235,9 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
         agencyName: d.agencyName ?? 'Mandi Board',
         mandiName: d.mandiName ?? this.selectedMandiLabel ?? '',
         nameOfAllottee: d.bidderName ?? d.nameOfAllottee ?? d.alloteeName ?? '',
+        fatherOrHusbandName: nameWithoutRelationshipPrefix(
+          d.fatherOrHusbandName ?? d.alloteeFatherName
+        ),
         plotNo: d.plotNo != null ? String(d.plotNo) : (plotNo || ''),
         address: d.address ?? '',
         sizeOfPlot: d.plotSize ?? (row?.plotSize || ''),
@@ -263,33 +267,33 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     };
   }
 
-  getTotal(rows: Array<Record<string, any>> | null | undefined, field: string): number {
-    const safeRows = rows ?? [];
-    return safeRows.reduce((sum, row) => sum + (Number(row?.[field]) || 0), 0);
-  }
+  // getTotal(rows: Array<Record<string, any>> | null | undefined, field: string): number {
+  //   const safeRows = rows ?? [];
+  //   return safeRows.reduce((sum, row) => sum + (Number(row?.[field]) || 0), 0);
+  // }
 
-  getRateOfInterest(): number {
-    const propertyDate =
-      this.balanceData?.propertyInfo?.allotmentDate ||
-      this.balanceData?.propertyInfo?.auctionDate ||
-      '';
+  // getRateOfInterest(): number {
+  //   const propertyDate =
+  //     this.balanceData?.propertyInfo?.allotmentDate ||
+  //     this.balanceData?.propertyInfo?.auctionDate ||
+  //     '';
 
-    if (!propertyDate) {
-      return 0;
-    }
+  //   if (!propertyDate) {
+  //     return 0;
+  //   }
 
-    const dateParts = propertyDate.split('-');
-    if (dateParts.length !== 3) {
-      return 0;
-    }
+  //   const dateParts = propertyDate.split('-');
+  //   if (dateParts.length !== 3) {
+  //     return 0;
+  //   }
 
-    const year = Number(dateParts[2]);
-    if (isNaN(year)) {
-      return 0;
-    }
+  //   const year = Number(dateParts[2]);
+  //   if (isNaN(year)) {
+  //     return 0;
+  //   }
 
-    return year < 1992 ? 6 : 12;
-  }
+  //   return (year <= 1992) ? 6 : 12;
+  // }
 
   printReport(): void {
     window.print();
@@ -371,7 +375,10 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
             allPlots: row.allPlots ?? row.AllPlots ?? '',
             soldPlots: row.soldPlots ?? row.SoldPlots ?? '',
             unsoldPlots: row.unsoldPlots ?? row.UnsoldPlots ?? '',
-          }));
+            }))
+            .sort((a: PlotSummaryRow, b: PlotSummaryRow) =>
+              a.plotType.localeCompare(b.plotType, undefined, { sensitivity: 'base' })
+            );
 
           if (this.allRows.length === 0 && res?.message) {
             this.errorMessage = res.message;
