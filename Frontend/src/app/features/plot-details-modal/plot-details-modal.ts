@@ -14,7 +14,7 @@ export class PlotDetailsModal {
   @Input() plotDetailLoading: boolean = false;
   @Input() plotDetailError: string = '';
   @Input() selectedPlotNo: string = '';
-  @Input() header: string = '';
+  @Input() header: string = 'Plot Details';
 
   @Output() modalClosed = new EventEmitter<void>();
 

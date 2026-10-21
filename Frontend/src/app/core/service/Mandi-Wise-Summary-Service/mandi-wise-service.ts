@@ -99,4 +99,28 @@ export class MandiWiseService {
       responseType: 'blob',
     });
   }
+
+  exportPdfMandiWiseAllotmentSummary(
+    districtId: number = 0,
+    branchId: number = 0,
+    mandiId: number = 0,
+    fromDate?: string | null,
+    toDate?: string | null
+  ): Observable<Blob> {
+    let params = new HttpParams();
+    params = params.set('districtId', (districtId || 0).toString());
+    params = params.set('branchId', (branchId || 0).toString());
+    params = params.set('mandiId', (mandiId || 0).toString());
+    if (fromDate) {
+      params = params.set('fromDate', fromDate);
+    }
+    if (toDate) {
+      params = params.set('toDate', toDate);
+    }
+
+    return this.http.get(`${this.baseUrl}/Report/ExportMandiWiseAllotmentSummaryPdf`, {
+      params,
+      responseType: 'blob',
+    });
+  }
 }
