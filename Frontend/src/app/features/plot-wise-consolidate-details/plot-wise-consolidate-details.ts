@@ -63,7 +63,6 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
-  headerTitle: string = 'Sold Plot Details';
   filterForm: FormGroup;
 
   constructor(

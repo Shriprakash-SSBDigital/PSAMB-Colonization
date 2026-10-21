@@ -18,7 +18,7 @@ export class PlotDetailsModal {
 
   @Output() modalClosed = new EventEmitter<void>();
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef) { }
 
   onModalClose(): void {
     this.modalClosed.emit();
