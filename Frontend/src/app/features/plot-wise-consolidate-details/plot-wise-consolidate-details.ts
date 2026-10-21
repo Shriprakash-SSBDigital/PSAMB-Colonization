@@ -43,9 +43,15 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
 
   allRows: PlotSummaryRow[] = [];
   pagedRows: PlotSummaryRow[] = [];
+  totalRecords = 0;
+  totalMandiPlots = 0;
+  totalMandiSoldPlots = 0;
+  totalMandiUnsoldPlots = 0;
 
   loading = false;
   isLoadingMandis = false;
+  isExportingExcel = false;
+  isExportingPdf = false;
   searched = false;
   errorMessage = '';
   pageIndex = 0;
@@ -103,9 +109,9 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     this.plotDetailLoading = true;
     this.cdr.detectChanges();
 
-    const mandiId    = this.selectedMandiId;
+    const mandiId = this.selectedMandiId;
     const plotTypeId = row.plotTypeId;
-    const plotSize   = row.plotSize;
+    const plotSize = row.plotSize;
 
     this.service
       .getPropertyDetailsByMandiPlot(mandiId, plotTypeId, plotNo, plotSize, true)
@@ -346,15 +352,18 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       });
   }
 
-  private fetchMandiSummary(mandi: string | number): void {
+  private fetchMandiSummary(mandi: string | number, pageIndex: number = 0, pageSize: number = this.pageSize): void {
     this.loading = true;
     this.searched = true;
     this.errorMessage = '';
-    this.pageIndex = 0;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
     this.cdr.detectChanges();
 
+    const pageNumber = pageIndex + 1;
+
     this.reportService
-      .getPlotWiseConsolidateDetails(mandi)
+      .getPlotWiseConsolidateDetails(mandi, pageNumber, pageSize)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -364,8 +373,16 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res: any) => {
-          const list = res?.data || (Array.isArray(res) ? res : []);
-          this.allRows = list.map((row: any) => ({
+          const pagedData = res?.data ?? res?.Data ?? res;
+          const rawList = pagedData?.data ?? pagedData?.Data ?? (Array.isArray(pagedData) ? pagedData : []);
+
+          this.totalRecords = Number(
+            pagedData?.totalRecords ??
+            pagedData?.TotalRecords ??
+            (rawList.length > 0 ? (rawList[0]?.totalRecords ?? rawList[0]?.TotalRecords ?? rawList.length) : 0)
+          );
+
+          this.pagedRows = rawList.map((row: any) => ({
             plotType: row.plotType ?? row.PlotType ?? '',
             plotTypeId: Number(row.plotTypeId ?? row.PlotTypeId ?? 0),
             plotSize: row.plotSize ?? row.PlotSize ?? '',
@@ -375,21 +392,40 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
             allPlots: row.allPlots ?? row.AllPlots ?? '',
             soldPlots: row.soldPlots ?? row.SoldPlots ?? '',
             unsoldPlots: row.unsoldPlots ?? row.UnsoldPlots ?? '',
-            }))
-            .sort((a: PlotSummaryRow, b: PlotSummaryRow) =>
-              a.plotType.localeCompare(b.plotType, undefined, { sensitivity: 'base' })
-            );
+          }));
 
-          if (this.allRows.length === 0 && res?.message) {
+          this.allRows = this.pagedRows;
+
+          // Mandi-level totals: priority to backend/SP, fallback to current rows
+          const backendMandiPlots = pagedData?.mandiTotalPlots ?? pagedData?.MandiTotalPlots ?? rawList[0]?.mandiTotalPlots ?? rawList[0]?.MandiTotalPlots;
+          const backendSoldPlots = pagedData?.mandiTotalSoldPlots ?? pagedData?.MandiTotalSoldPlots ?? rawList[0]?.mandiTotalSoldPlots ?? rawList[0]?.MandiTotalSoldPlots;
+          const backendUnsoldPlots = pagedData?.mandiTotalUnsoldPlots ?? pagedData?.MandiTotalUnsoldPlots ?? rawList[0]?.mandiTotalUnsoldPlots ?? rawList[0]?.MandiTotalUnsoldPlots;
+
+          this.totalMandiPlots = backendMandiPlots != null
+            ? Number(backendMandiPlots)
+            : this.pagedRows.reduce((sum, r) => sum + (Number(r.totalPlots) || 0), 0);
+
+          this.totalMandiSoldPlots = backendSoldPlots != null
+            ? Number(backendSoldPlots)
+            : this.pagedRows.reduce((sum, r) => sum + (Number(r.totalSoldPlots) || 0), 0);
+
+          this.totalMandiUnsoldPlots = backendUnsoldPlots != null
+            ? Number(backendUnsoldPlots)
+            : this.pagedRows.reduce((sum, r) => sum + (Number(r.totalUnsoldPlots) || 0), 0);
+
+          if (this.pagedRows.length === 0 && res?.message) {
             this.errorMessage = res.message;
           }
-          this.updatePagedRows();
           this.cdr.detectChanges();
         },
         error: (err: any) => {
           this.errorMessage = err?.error?.message || 'Error fetching plot consolidate details.';
           this.allRows = [];
           this.pagedRows = [];
+          this.totalRecords = 0;
+          this.totalMandiPlots = 0;
+          this.totalMandiSoldPlots = 0;
+          this.totalMandiUnsoldPlots = 0;
           this.cdr.detectChanges();
         },
       });
@@ -398,6 +434,10 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   private resetResults(): void {
     this.allRows = [];
     this.pagedRows = [];
+    this.totalRecords = 0;
+    this.totalMandiPlots = 0;
+    this.totalMandiSoldPlots = 0;
+    this.totalMandiUnsoldPlots = 0;
     this.searched = false;
     this.loading = false;
     this.errorMessage = '';
@@ -408,15 +448,10 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   onPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.updatePagedRows();
-    this.cdr.detectChanges();
-  }
-
-  private updatePagedRows(): void {
-    const start = this.pageIndex * this.pageSize;
-    const end = start + this.pageSize;
-    this.pagedRows = this.allRows.slice(start, end);
-    this.cdr.detectChanges();
+    const mandi = this.selectedMandiId ?? this.filterForm.get('mandi')?.value;
+    if (mandi) {
+      this.fetchMandiSummary(mandi, this.pageIndex, this.pageSize);
+    }
   }
 
   rowNumber(indexInPage: number): number {
@@ -428,14 +463,83 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   }
 
   exportToExcel(): void {
-    if (!this.allRows.length) return;
+    debugger
+    const mandi = this.selectedMandiId ?? this.filterForm.get('mandi')?.value;
+    if (!mandi) return;
 
-    const totalPlots = this.totalTotalPlots;
-    const soldPlots = this.totalSoldPlots;
-    const unsoldPlots = this.totalUnsoldPlots;
+    this.isExportingExcel = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .exportPlotWiseConsolidateDetails(mandi)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isExportingExcel = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().split('T')[0];
+          const mandiName = (this.selectedMandiLabel || `Mandi_${mandi}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+          link.download = `PlotWiseConsolidateDetails_${mandiName}_${timestamp}.xlsx`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err: any) => {
+          console.error('Error downloading Excel file:', err);
+          alert('Failed to export Excel file. Please try again.');
+        },
+      });
+  }
+
+  exportToPdf(): void {
+    const mandi = this.selectedMandiId ?? this.filterForm.get('mandi')?.value;
+    if (!mandi) return;
+
+    this.isExportingPdf = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .exportPlotWiseConsolidateDetailsPdf(mandi)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isExportingPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().split('T')[0];
+          const mandiName = (this.selectedMandiLabel || `Mandi_${mandi}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+          link.download = `PlotWiseConsolidateDetails_${mandiName}_${timestamp}.pdf`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err: any) => {
+          console.error('Error downloading PDF file:', err);
+          alert('Failed to export PDF file. Please try again.');
+        },
+      });
+  }
+
+  private generateExcelFile(rows: PlotSummaryRow[]): void {
+    if (!rows.length) return;
+
+    const totalPlots = rows.reduce((sum, r) => sum + (Number(r.totalPlots) || 0), 0);
+    const soldPlots = rows.reduce((sum, r) => sum + (Number(r.totalSoldPlots) || 0), 0);
+    const unsoldPlots = rows.reduce((sum, r) => sum + (Number(r.totalUnsoldPlots) || 0), 0);
 
     let tableRows = '';
-    for (const r of this.allRows) {
+    for (const r of rows) {
       tableRows += `
         <tr>
           <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.plotType || ''}</td>
@@ -519,12 +623,12 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   }
 
   get totalTotalPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + (Number(r.totalPlots) || 0), 0);
+    return this.totalMandiPlots;
   }
   get totalSoldPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + (Number(r.totalSoldPlots) || 0), 0);
+    return this.totalMandiSoldPlots;
   }
   get totalUnsoldPlots(): number {
-    return this.allRows.reduce((sum, r) => sum + (Number(r.totalUnsoldPlots) || 0), 0);
+    return this.totalMandiUnsoldPlots;
   }
 }

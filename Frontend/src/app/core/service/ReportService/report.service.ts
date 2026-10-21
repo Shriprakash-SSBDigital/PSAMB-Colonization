@@ -73,9 +73,32 @@ export class ReportService {
 
   constructor(private http: HttpClient) {}
 
-  getPlotWiseConsolidateDetails(mandiId: number | string): Observable<any> {
-    const params = new HttpParams().set('mandiId', mandiId.toString());
+  getPlotWiseConsolidateDetails(
+    mandiId: number | string,
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('mandiId', mandiId.toString())
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
     return this.http.get<any>(`${this.baseUrl}/Report/GetPlotWiseConsolidateDetails`, { params });
+  }
+
+  exportPlotWiseConsolidateDetails(mandiId: number | string): Observable<Blob> {
+    const params = new HttpParams().set('mandiId', mandiId.toString());
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotWiseConsolidateDetails`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  exportPlotWiseConsolidateDetailsPdf(mandiId: number | string): Observable<Blob> {
+    const params = new HttpParams().set('mandiId', mandiId.toString());
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotWiseConsolidateDetailsPdf`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   getMandisForPropertyReport(): Observable<any> {
@@ -99,12 +122,41 @@ export class ReportService {
     return this.http.get<any>(`${this.baseUrl}/Report/GetMandiWiseAllotmentSummary`, { params });
   }
 
-  getPlotSoldUnsoldDetails(districtId: number = 0, branchId: number = 0): Observable<any> {
+  getPlotSoldUnsoldDetails(
+    districtId: number = 0,
+    branchId: number = 0,
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<any> {
     let params = new HttpParams();
     params = params.set('districtId', (districtId || 0).toString());
     params = params.set('branchId', (branchId || 0).toString());
+    params = params.set('pageNumber', (pageNumber || 1).toString());
+    params = params.set('pageSize', (pageSize || 10).toString());
 
     return this.http.get<any>(`${this.baseUrl}/Report/GetPlotSoldUnsoldDetails`, { params });
+  }
+
+  exportPlotSoldUnsoldDetails(districtId: number = 0, branchId: number = 0): Observable<Blob> {
+    let params = new HttpParams()
+      .set('districtId', (districtId || 0).toString())
+      .set('branchId', (branchId || 0).toString());
+
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotSoldUnsoldDetails`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  exportPlotSoldUnsoldDetailsPdf(districtId: number = 0, branchId: number = 0): Observable<Blob> {
+    let params = new HttpParams()
+      .set('districtId', (districtId || 0).toString())
+      .set('branchId', (branchId || 0).toString());
+
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotSoldUnsoldDetailsPdf`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   getDigitizationPropertyDayWiseCountAsync(fromDate: string, toDate: string): Observable<any> {

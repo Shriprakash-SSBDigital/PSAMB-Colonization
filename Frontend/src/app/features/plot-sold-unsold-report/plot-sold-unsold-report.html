@@ -10,9 +10,20 @@
         <div class="d-flex gap-2">
             <button type="button"
                 class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
-                (click)="exportExcel()" [disabled]="!filtered.length || loading" matTooltip="Export"
+                (click)="exportToExcel()" [disabled]="!hasData || loading || isExportingExcel"
+                matTooltip="Export to Excel" matTooltipPosition="above">
+                <i class="fa-solid fa-spinner fa-spin fs-5 text-success" *ngIf="isExportingExcel"></i>
+                <!-- <i class="fa-solid fa-file-excel fs-5 text-success" *ngIf="!isExportingExcel"></i> -->
+                <span class="d-none d-sm-inline ms-1">{{ isExportingExcel ? 'Exporting...' : 'Export to Excel' }}</span>
+            </button>
+
+            <button type="button"
+                class="btn btn-outline-secondary fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
+                (click)="exportToPdf()" [disabled]="!hasData || loading || isExportingPdf" matTooltip="Export to PDF"
                 matTooltipPosition="above">
-                <i class="fa-solid fa-file-excel fs-5 text-success"></i>
+                <i class="fa-solid fa-spinner fa-spin fs-5 text-danger" *ngIf="isExportingPdf"></i>
+                <!-- <i class="fa-solid fa-file-pdf fs-5 text-danger" *ngIf="!isExportingPdf"></i> -->
+                <span class="d-none d-sm-inline ms-1">{{ isExportingPdf ? 'Exporting...' : 'Export to PDF' }}</span>
             </button>
         </div>
     </div>
@@ -94,76 +105,76 @@
             </div>
         </div>
     </div>
-        <div class="text-center py-5" *ngIf="loading">
-            <div class="spinner-border text-success"></div>
-            <div class="text-muted small mt-2">Loading details...</div>
-        </div>
+    <div class="text-center py-5" *ngIf="loading">
+        <div class="spinner-border text-success"></div>
+        <div class="text-muted small mt-2">Loading details...</div>
+    </div>
 
-        <div class="text-center text-muted py-5" *ngIf="!loading && !hasData">
-            <i class="fa-solid fa-box-open fs-1 text-secondary mb-2"></i>
-            <div class="fw-semibold">No records found.</div>
-        </div>
+    <div class="text-center text-muted py-5" *ngIf="!loading && !hasData">
+        <i class="fa-solid fa-box-open fs-1 text-secondary mb-2"></i>
+        <div class="fw-semibold">No records found.</div>
+    </div>
 
-        <div class="table-responsive mt-3 rounded-top-3" *ngIf="hasData && !loading">
-            <table mat-table [dataSource]="dataSource" class="table table-hover align-middle mb-0 bg-white">
+    <div class="table-responsive mt-3 rounded-top-3" *ngIf="hasData && !loading">
+        <table mat-table [dataSource]="dataSource" class="table table-hover align-middle mb-0 bg-white">
 
-                <ng-container matColumnDef="index">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">Sr. No</th>
-                    <td mat-cell *matCellDef="let row; let i = index" class="fw-semibold text-secondary">{{ serialNo(i)
-                        }}</td>
-                </ng-container>
+            <ng-container matColumnDef="index">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">Sr. No</th>
+                <td mat-cell *matCellDef="let row; let i = index" class="fw-semibold text-secondary">{{ row.srNo ||
+                    serialNo(i) }}</td>
+            </ng-container>
 
-                <ng-container matColumnDef="district">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">District</th>
-                    <td mat-cell *matCellDef="let row" class="fw-semibold text-dark">
-                        <!-- <i class="fa-solid fa-location-dot text-success me-2"></i> -->
-                        {{ row.district }}
-                    </td>
-                </ng-container>
+            <ng-container matColumnDef="district">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">District</th>
+                <td mat-cell *matCellDef="let row" class="fw-semibold text-dark">
+                    <!-- <i class="fa-solid fa-location-dot text-success me-2"></i> -->
+                    {{ row.district }}
+                </td>
+            </ng-container>
 
-                <ng-container matColumnDef="mcName">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">Market Committee</th>
-                    <td mat-cell *matCellDef="let row" class="text-secondary fw-medium">{{ row.mcName || '—' }}</td>
-                </ng-container>
+            <ng-container matColumnDef="mcName">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">Market Committee</th>
+                <td mat-cell *matCellDef="let row" class="text-secondary fw-medium">{{ row.mcName || '—' }}</td>
+            </ng-container>
 
-                <ng-container matColumnDef="totalPlots">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">Total Plots</th>
-                    <td mat-cell *matCellDef="let row">
-                        <span class="fw-bold text-dark">{{ row.totalPlots }}</span>
-                    </td>
-                </ng-container>
+            <ng-container matColumnDef="totalPlots">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">Total Plots</th>
+                <td mat-cell *matCellDef="let row">
+                    <span class="fw-bold text-dark">{{ row.totalPlots }}</span>
+                </td>
+            </ng-container>
 
-                <ng-container matColumnDef="soldPlots">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">Sold Plots</th>
-                    <td mat-cell *matCellDef="let row">
-                        <span class="fw-semibold text-success">{{ row.soldPlots }}</span>
-                    </td>
-                </ng-container>
+            <ng-container matColumnDef="soldPlots">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">Sold Plots</th>
+                <td mat-cell *matCellDef="let row">
+                    <span class="fw-semibold text-success">{{ row.soldPlots }}</span>
+                </td>
+            </ng-container>
 
-                <ng-container matColumnDef="unsoldPlots">
-                    <th mat-header-cell *matHeaderCellDef class="table-header-portal">Unsold Plots</th>
-                    <td mat-cell *matCellDef="let row">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fw-semibold text-danger">{{ row.unsoldPlots }}</span>
-                        </div>
-                    </td>
-                </ng-container>
+            <ng-container matColumnDef="unsoldPlots">
+                <th mat-header-cell *matHeaderCellDef class="table-header-portal">Unsold Plots</th>
+                <td mat-cell *matCellDef="let row">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-semibold text-danger">{{ row.unsoldPlots }}</span>
+                    </div>
+                </td>
+            </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
 
-                <tr class="mat-row" *matNoDataRow>
-                    <td class="text-center text-muted py-4" [attr.colspan]="displayedColumns.length">
-                        No records match the selected filters.
-                    </td>
-                </tr>
-            </table>
-        </div>
+            <tr class="mat-row" *matNoDataRow>
+                <td class="text-center text-muted py-4" [attr.colspan]="displayedColumns.length">
+                    No records match the selected filters.
+                </td>
+            </tr>
+        </table>
+    </div>
 
-        <div class="border-top" *ngIf="hasData && !loading">
-            <mat-paginator [length]="filtered.length" [pageSize]="pageSize" [pageIndex]="pageIndex"
-                [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)">
-            </mat-paginator>
-        </div>
+    <div class="border-top" *ngIf="hasData && !loading">
+        <mat-paginator [length]="totalRecords" [pageSize]="pageSize" [pageIndex]="pageIndex"
+            [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)">
+        </mat-paginator>
+    </div>
     <!-- </div> -->
 </div>
