@@ -153,5 +153,6 @@
 
 <!-- Reusable Plot Details Modal Component -->
 <app-plot-details-modal [balanceData]="balanceData" [plotDetailLoading]="plotDetailLoading"
-    [plotDetailError]="plotDetailError" [selectedPlotNo]="selectedPlotNo" (modalClosed)="closePreviewModal()">
+    [plotDetailError]="plotDetailError" [selectedPlotNo]="selectedPlotNo" [header]="headerTitle"
+    (modalClosed)="closePreviewModal()">
 </app-plot-details-modal>
