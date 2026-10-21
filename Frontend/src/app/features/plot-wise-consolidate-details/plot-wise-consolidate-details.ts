@@ -63,7 +63,6 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
-
   filterForm: FormGroup;
 
   constructor(
@@ -464,7 +463,6 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   }
 
   exportToExcel(): void {
-    debugger
     const mandi = this.selectedMandiId ?? this.filterForm.get('mandi')?.value;
     if (!mandi) return;
 
