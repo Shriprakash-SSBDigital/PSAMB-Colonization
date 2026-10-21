@@ -3103,9 +3103,14 @@ namespace Backend.Services.Implementations
                     decimal receivedAmount;
                     DateTime receiptDate;
 
+                    int delayDays = 0;
+                    int penalInterestRate = 12;
+                    int PenalityRateInPercent = 10;
+                    decimal penalityAmount = 0;
+                    decimal DueAmount = 0;
 
                     DateTime dueDate = schedule.CalculatedDueDate.Value.Date;
-                    decimal? installmentAmount = schedule.TotalEstimatedAmount;
+                    decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
 
                     if (installmentAmount <= extraBalanceAmount)
                     {
@@ -3136,45 +3141,65 @@ namespace Backend.Services.Implementations
                         receiptIndex++;
                     }
 
+                    if (receiptDate >= dueDate)
+                    {
+                        //var nextreceivedAmount = receipt.DraftAmount ?? 0m;
+                       // receivedAmount = nextreceivedAmount;
+
+                        delayDays = (receiptDate - dueDate).Days;
+                        if (delayDays > 0)
+                        {
+                            penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+                        }
+                    }
+
+                        DueAmount = installmentAmount + penalityAmount;
+
+
+
                     if (response.InstallmentNotCompleted.Count > 0)
                     {
+                        int InstallmentdelayDays = 0;
+                        int InstallpenalInterestRate = 12;
+                        int InstallPenalityRateInPercent = 10;
+                        decimal pendingAmount = 0;
+                        decimal InstallmentpenalityAmount = 0;
+
                         var pendingInstallment = response.InstallmentNotCompleted[0];
 
-                        decimal pendingAmount = pendingInstallment.TotalEstimatedAmount ?? 0m;
+                        decimal pendingInstallmentAmount = pendingInstallment.TotalEstimatedAmount ?? 0m;
                         DateTime dueDateofPendingInstallent = pendingInstallment.CalculatedDueDate.Value.Date;
                         var receiveamountwithPreviousDraftAmount = receivedAmount + PendingEMIReceiveAmount;
+
+                        if(receiptDate >= dueDateofPendingInstallent)
+                        {
+                            InstallmentdelayDays = (receiptDate - dueDateofPendingInstallent).Days;
+                            if (InstallmentdelayDays > 0)
+                            {
+                                InstallmentpenalityAmount = Convert.ToDecimal((pendingInstallmentAmount * InstallPenalityRateInPercent) / 100);
+
+                            }
+                        }
+                        pendingAmount = pendingInstallmentAmount + InstallmentpenalityAmount;
 
                         if (receiveamountwithPreviousDraftAmount >= pendingAmount)
                         {
                             // Pending installment completed
-                            int delayDays = 0;
-                            int penalInterestRate = 12;
-                            int PenalityRateInPercent = 10;
-                            decimal penalityAmount = 0;
-
                             if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
                             {
-                                penalInterestRate = 12;
+                                InstallpenalInterestRate = 12;
                             }
                             else
                             {
-                                penalInterestRate = 6;
+                                InstallpenalInterestRate = 6;
                             }
 
-                            if (receiptDate > dueDateofPendingInstallent)
-                            {
-                                delayDays = (receiptDate - dueDateofPendingInstallent).Days;
-                            }
 
                             // Your calculation here
-                            decimal penalInterest = Convert.ToDecimal((pendingAmount * delayDays * penalInterestRate) / 36500);
+                            decimal LatepenalInterest = Convert.ToDecimal((pendingInstallmentAmount * InstallmentdelayDays * InstallpenalInterestRate) / 36500);
 
-                            if (delayDays > 0)
-                            {
-                                penalityAmount = Convert.ToDecimal((pendingAmount * PenalityRateInPercent) / 100);
-
-                            }
-                            decimal totalPenalityAmount = penalInterest + penalityAmount;
+                           // decimal totalPenalityAmount = penalInterest + penalityAmount;
                             decimal extraAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount - pendingAmount);
                             //extraBalanceAmount = extraAmount;
                             receivedAmount = extraAmount;
@@ -3193,13 +3218,13 @@ namespace Backend.Services.Implementations
 
                                 ReceivedAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount),
 
-                                DelayDays = delayDays,
+                                DelayDays = InstallmentdelayDays,
 
-                                PenalInterest = Math.Round(penalInterest, 2),
-                                PenaltyRateInPercent = PenalityRateInPercent,
-                                PenalityAmount = Math.Round(penalityAmount, 2),
+                                PenalInterest = Math.Round(LatepenalInterest, 2),
+                                PenaltyRateInPercent = InstallPenalityRateInPercent,
+                                PenalityAmount = Math.Round(InstallmentpenalityAmount, 2),
 
-                                TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
+                                //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
 
                                 ExtraAmount = Math.Round(extraAmount, 2)
                             });
@@ -3224,12 +3249,9 @@ namespace Backend.Services.Implementations
                             });
                         }
                     }
-                    if (receivedAmount >= installmentAmount)
+
+                    if (receivedAmount >= DueAmount)
                     {
-                        int delayDays = 0;
-                        int penalInterestRate = 12;
-                        int PenalityRateInPercent = 10;
-                        decimal penalityAmount = 0;
 
                         if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
                         {
@@ -3240,21 +3262,12 @@ namespace Backend.Services.Implementations
                             penalInterestRate = 6;
                         }
 
-                        if (receiptDate > dueDate)
-                        {
-                            delayDays = (receiptDate - dueDate).Days;
-                        }
 
                         // Your calculation here
                         decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
 
-                        if (delayDays > 0)
-                        {
-                            penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
-
-                        }
-                        decimal totalPenalityAmount = penalInterest + penalityAmount;
-                        decimal extraAmount = Convert.ToDecimal(receivedAmount - installmentAmount);
+                        //decimal totalPenalityAmount = penalInterest + penalityAmount;
+                        decimal extraAmount = Convert.ToDecimal(receivedAmount - DueAmount);
                         extraBalanceAmount = extraAmount;
 
                         response.InstallmentCalculations.Add(new InstallmentCalculationDto
@@ -3277,7 +3290,7 @@ namespace Backend.Services.Implementations
                             PenaltyRateInPercent = PenalityRateInPercent,
                             PenalityAmount = Math.Round(penalityAmount, 2),
 
-                            TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
+                            //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
 
                             ExtraAmount = Math.Round(extraAmount, 2)
                         });
