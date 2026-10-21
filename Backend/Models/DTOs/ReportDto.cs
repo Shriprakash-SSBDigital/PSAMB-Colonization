@@ -45,6 +45,10 @@ namespace Backend.Models.DTOs
         public string? AllPlots { get; set; }
         public string? SoldPlots { get; set; }
         public string? UnsoldPlots { get; set; }
+        public int TotalRecords { get; set; }
+        public int MandiTotalPlots { get; set; }
+        public int MandiTotalSoldPlots { get; set; }
+        public int MandiTotalUnsoldPlots { get; set; }
     }
 
     public class MandiForPropertyReportDto
@@ -71,6 +75,8 @@ namespace Backend.Models.DTOs
         public int SoldPlots { get; set; }
 
         public int UnsoldPlots { get; set; }
+
+        public int TotalRecords { get; set; }
     }
 
 
@@ -102,6 +108,12 @@ namespace Backend.Models.DTOs
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
         public int TotalRecords { get; set; }
+        public int MandiTotalPlots { get; set; }
+        public int MandiTotalSoldPlots { get; set; }
+        public int MandiTotalUnsoldPlots { get; set; }
+        public int OverallTotalPlots { get; set; }
+        public int OverallSoldPlots { get; set; }
+        public int OverallUnsoldPlots { get; set; }
         public List<T> Data { get; set; } = new();
     }
 

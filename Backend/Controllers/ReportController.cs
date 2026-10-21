@@ -57,19 +57,75 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetPlotWiseConsolidateDetails")]
-        public async Task<IActionResult> GetPlotWiseConsolidateDetails([FromQuery] long mandiId)
+        public async Task<IActionResult> GetPlotWiseConsolidateDetails([FromQuery] long mandiId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var response = await _service.GetPlotWiseConsolidateDetailsAsync(mandiId);
+            var response = await _service.GetPlotWiseConsolidateDetailsAsync(mandiId, pageNumber, pageSize);
 
             return Ok(response);
         }
 
-        [HttpGet("GetPlotSoldUnsoldDetails")]
-        public async Task<IActionResult> GetPlotSoldUnsoldDetails(int districtId = 0,int branchId = 0)
+        [HttpGet("ExportPlotWiseConsolidateDetails")]
+        public async Task<IActionResult> ExportPlotWiseConsolidateDetails([FromQuery] long mandiId)
         {
-            var response = await _service.GetPlotSoldUnsoldDetailsAsync(districtId,branchId);
+            try
+            {
+                byte[] fileBytes = await _service.ExportPlotWiseConsolidateDetailsAsync(mandiId);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PlotWiseConsolidateDetails_{mandiId}.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("ExportPlotWiseConsolidateDetailsPdf")]
+        public async Task<IActionResult> ExportPlotWiseConsolidateDetailsPdf([FromQuery] long mandiId)
+        {
+            try
+            {
+                var pdfBytes = await _service.ExportPlotWiseConsolidateDetailsPdfAsync(mandiId);
+                return File(pdfBytes, "application/pdf", $"PlotWiseConsolidateDetails_{mandiId}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("GetPlotSoldUnsoldDetails")]
+        public async Task<IActionResult> GetPlotSoldUnsoldDetails([FromQuery] int districtId = 0, [FromQuery] int branchId = 0, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var response = await _service.GetPlotSoldUnsoldDetailsAsync(districtId, branchId, pageNumber, pageSize);
 
             return Ok(response);
+        }
+
+        [HttpGet("ExportPlotSoldUnsoldDetails")]
+        public async Task<IActionResult> ExportPlotSoldUnsoldDetails([FromQuery] int districtId = 0, [FromQuery] int branchId = 0)
+        {
+            try
+            {
+                byte[] fileBytes = await _service.ExportPlotSoldUnsoldDetailsAsync(districtId, branchId);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PlotSoldUnsoldDetails_{DateTime.Now:yyyyMMdd}.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("ExportPlotSoldUnsoldDetailsPdf")]
+        public async Task<IActionResult> ExportPlotSoldUnsoldDetailsPdf([FromQuery] int districtId = 0, [FromQuery] int branchId = 0)
+        {
+            try
+            {
+                byte[] pdfBytes = await _service.ExportPlotSoldUnsoldDetailsPdfAsync(districtId, branchId);
+                return File(pdfBytes, "application/pdf", $"PlotSoldUnsoldDetails_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
         }
 
         [HttpGet("GetDigitizationPropertyDayWiseCountAsync")]

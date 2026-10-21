@@ -546,72 +546,442 @@ namespace Backend.Services.Implementations
                     $"Error while fetching mandis for property report: {ex.Message}");
             }
         }
-        public async Task<ApiResponse<List<PlotWiseConsolidateDetailsDto>>> GetPlotWiseConsolidateDetailsAsync(long mandiId)
+        public async Task<ApiResponse<PagedResponse<PlotWiseConsolidateDetailsDto>>> GetPlotWiseConsolidateDetailsAsync(long mandiId, int pageNumber = 1, int pageSize = 10)
         {
             try
             {
+                var pagedResult = new PagedResponse<PlotWiseConsolidateDetailsDto>
+                {
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize <= 0 ? 10 : pageSize
+                };
+
                 var result = new List<PlotWiseConsolidateDetailsDto>();
 
-                await using var connection = _context.Database.GetDbConnection();
+                var connectionString = _context.Database.GetConnectionString() ?? _config.GetConnectionString("DefaultConnection");
+                await using var connection = new SqlConnection(connectionString);
 
                 if (connection.State != ConnectionState.Open)
                     await connection.OpenAsync();
 
-                await using var command = connection.CreateCommand();
-
-                command.CommandText = "GetPlotWiseConsolidateDetails";
+                await using var command = new SqlCommand("GetPlotWiseConsolidateDetails", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.Add(new SqlParameter("@MandiId", mandiId));
+                command.Parameters.Add(new SqlParameter("@PageNumber", SqlDbType.Int) { Value = pagedResult.PageNumber });
+                command.Parameters.Add(new SqlParameter("@PageSize", SqlDbType.Int) { Value = pagedResult.PageSize });
 
                 var dataSet = new DataSet();
 
-                using (var adapter = new SqlDataAdapter((SqlCommand)command))
+                using (var adapter = new SqlDataAdapter(command))
                 {
                     adapter.Fill(dataSet);
                 }
 
                 if (dataSet.Tables.Count == 0 || dataSet.Tables[0].Rows.Count == 0)
                 {
-                    return ApiResponse<List<PlotWiseConsolidateDetailsDto>>.Ok(
-                        result,
+                    return ApiResponse<PagedResponse<PlotWiseConsolidateDetailsDto>>.Ok(
+                        pagedResult,
                         "No plot consolidate details found.");
                 }
 
                 DataTable table = dataSet.Tables[0];
 
+                int totalRecords = 0;
+                int mandiTotalPlots = 0;
+                int mandiTotalSoldPlots = 0;
+                int mandiTotalUnsoldPlots = 0;
+
+                if (table.Rows.Count > 0)
+                {
+                    if (table.Columns.Contains("TotalRecords") && table.Rows[0]["TotalRecords"] != DBNull.Value)
+                        totalRecords = Convert.ToInt32(table.Rows[0]["TotalRecords"]);
+                    else
+                        totalRecords = table.Rows.Count;
+
+                    if (table.Columns.Contains("MandiTotalPlots") && table.Rows[0]["MandiTotalPlots"] != DBNull.Value)
+                        mandiTotalPlots = Convert.ToInt32(table.Rows[0]["MandiTotalPlots"]);
+
+                    if (table.Columns.Contains("MandiTotalSoldPlots") && table.Rows[0]["MandiTotalSoldPlots"] != DBNull.Value)
+                        mandiTotalSoldPlots = Convert.ToInt32(table.Rows[0]["MandiTotalSoldPlots"]);
+
+                    if (table.Columns.Contains("MandiTotalUnsoldPlots") && table.Rows[0]["MandiTotalUnsoldPlots"] != DBNull.Value)
+                        mandiTotalUnsoldPlots = Convert.ToInt32(table.Rows[0]["MandiTotalUnsoldPlots"]);
+                }
+
+                pagedResult.TotalRecords = totalRecords;
+                pagedResult.TotalPages = (int)Math.Ceiling((double)totalRecords / pagedResult.PageSize);
+                pagedResult.MandiTotalPlots = mandiTotalPlots;
+                pagedResult.MandiTotalSoldPlots = mandiTotalSoldPlots;
+                pagedResult.MandiTotalUnsoldPlots = mandiTotalUnsoldPlots;
+
                 foreach (DataRow row in table.Rows)
                 {
                     var item = new PlotWiseConsolidateDetailsDto
                     {
-                        PlotTypeId = row["PlotTypeId"] == DBNull.Value ? 0 : Convert.ToInt32(row["PlotTypeId"]),
-                        PlotType = row["PlotType"] == DBNull.Value ? null : row["PlotType"].ToString(),
-                        PlotSize = row["PlotSize"] == DBNull.Value ? null : row["PlotSize"].ToString(),
-                        TotalPlots = row["TotalPlots"] == DBNull.Value ? 0 : Convert.ToInt32(row["TotalPlots"]),
-                        TotalSoldPlots = row["TotalSoldPlots"] == DBNull.Value ? 0 : Convert.ToInt32(row["TotalSoldPlots"]),
-                        TotalUnsoldPlots = row["TotalUnsoldPlots"] == DBNull.Value ? 0 : Convert.ToInt32(row["TotalUnsoldPlots"]),
-                        AllPlots = row["AllPlots"] == DBNull.Value ? null : row["AllPlots"].ToString(),
-                        SoldPlots = row["SoldPlots"] == DBNull.Value ? null : row["SoldPlots"].ToString(),
-                        UnsoldPlots = row["UnsoldPlots"] == DBNull.Value ? null : row["UnsoldPlots"].ToString()
+                        PlotTypeId = table.Columns.Contains("PlotTypeId") && row["PlotTypeId"] != DBNull.Value ? Convert.ToInt32(row["PlotTypeId"]) : 0,
+                        PlotType = table.Columns.Contains("PlotType") && row["PlotType"] != DBNull.Value ? row["PlotType"].ToString() : null,
+                        PlotSize = table.Columns.Contains("PlotSize") && row["PlotSize"] != DBNull.Value ? row["PlotSize"].ToString() : null,
+                        TotalPlots = table.Columns.Contains("TotalPlots") && row["TotalPlots"] != DBNull.Value ? Convert.ToInt32(row["TotalPlots"]) : 0,
+                        TotalSoldPlots = table.Columns.Contains("TotalSoldPlots") && row["TotalSoldPlots"] != DBNull.Value ? Convert.ToInt32(row["TotalSoldPlots"]) : 0,
+                        TotalUnsoldPlots = table.Columns.Contains("TotalUnsoldPlots") && row["TotalUnsoldPlots"] != DBNull.Value ? Convert.ToInt32(row["TotalUnsoldPlots"]) : 0,
+                        AllPlots = table.Columns.Contains("AllPlots") && row["AllPlots"] != DBNull.Value ? row["AllPlots"].ToString() : null,
+                        SoldPlots = table.Columns.Contains("SoldPlots") && row["SoldPlots"] != DBNull.Value ? row["SoldPlots"].ToString() : null,
+                        UnsoldPlots = table.Columns.Contains("UnsoldPlots") && row["UnsoldPlots"] != DBNull.Value ? row["UnsoldPlots"].ToString() : null,
+                        TotalRecords = totalRecords,
+                        MandiTotalPlots = mandiTotalPlots,
+                        MandiTotalSoldPlots = mandiTotalSoldPlots,
+                        MandiTotalUnsoldPlots = mandiTotalUnsoldPlots
                     };
 
                     result.Add(item);
                 }
 
-                return ApiResponse<List<PlotWiseConsolidateDetailsDto>>.Ok(
-                    result,
+                pagedResult.Data = result;
+
+                return ApiResponse<PagedResponse<PlotWiseConsolidateDetailsDto>>.Ok(
+                    pagedResult,
                     "Plot wise consolidate details fetched successfully.");
             }
             catch (Exception ex)
             {
-                return ApiResponse<List<PlotWiseConsolidateDetailsDto>>.Fail(
+                return ApiResponse<PagedResponse<PlotWiseConsolidateDetailsDto>>.Fail(
                     $"Error while fetching plot wise consolidate details: {ex.Message}");
             }
         }
 
-        public async Task<ApiResponse<List<PlotSoldUnsoldDto>>> GetPlotSoldUnsoldDetailsAsync(int districtId = 0, int branchId = 0)
+        public async Task<byte[]> ExportPlotWiseConsolidateDetailsAsync(long mandiId)
         {
             try
             {
+                var mandiName = await _context.MandiMaster
+                    .Where(x => x.MandiId == mandiId)
+                    .Select(x => x.MandiName)
+                    .FirstOrDefaultAsync() ?? $"Mandi_{mandiId}";
+
+                var response = await GetPlotWiseConsolidateDetailsAsync(mandiId, pageNumber: 1, pageSize: 1000000);
+
+                var records = response.Data?.Data ?? new List<PlotWiseConsolidateDetailsDto>();
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Plot Consolidate Details");
+
+                // Title row
+                worksheet.Cell(1, 1).Value = $"{mandiName}";
+                worksheet.Range(1, 1, 1, 7).Merge();
+                worksheet.Row(1).Style.Font.Bold = true;
+                worksheet.Row(1).Style.Font.FontSize = 14;
+                worksheet.Row(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Row(1).Style.Fill.BackgroundColor = XLColor.FromHtml("#E8F5E9");
+
+                // Headers
+                string[] headers = { "Sr. No.", "Plot Type", "Plot Size", "Total Plots", "All Plots", "Sold Plots", "Unsold Plots" };
+
+                for (int col = 0; col < headers.Length; col++)
+                {
+                    worksheet.Cell(3, col + 1).Value = headers[col];
+                }
+
+                var headerRow = worksheet.Row(3);
+                headerRow.Style.Font.Bold = true;
+                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#1B4332");
+                headerRow.Style.Font.FontColor = XLColor.White;
+                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                int row = 4;
+                int srNo = 1;
+                foreach (var item in records)
+                {
+                    worksheet.Cell(row, 1).Value = srNo++;
+                    worksheet.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    worksheet.Cell(row, 2).Value = item.PlotType ?? "";
+                    worksheet.Cell(row, 3).Value = item.PlotSize ?? "";
+                    worksheet.Cell(row, 4).Value = item.TotalPlots;
+                    worksheet.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    worksheet.Cell(row, 5).Value = item.AllPlots ?? "-";
+                    worksheet.Cell(row, 6).Value = item.SoldPlots ?? "-";
+                    worksheet.Cell(row, 7).Value = item.UnsoldPlots ?? "-";
+
+                    row++;
+                }
+
+                // Summary Row
+                int totalPlotsSum = response.Data?.MandiTotalPlots ?? records.Sum(r => r.TotalPlots);
+                int totalSoldPlotsSum = response.Data?.MandiTotalSoldPlots ?? records.Sum(r => r.TotalSoldPlots);
+                int totalUnsoldPlotsSum = response.Data?.MandiTotalUnsoldPlots ?? records.Sum(r => r.TotalUnsoldPlots);
+
+                worksheet.Cell(row, 1).Value = "";
+                worksheet.Cell(row, 2).Value = "";
+                worksheet.Cell(row, 3).Value = "Total";
+                worksheet.Cell(row, 3).Style.Font.Bold = true;
+                worksheet.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                worksheet.Cell(row, 4).Value = totalPlotsSum;
+                worksheet.Cell(row, 4).Style.Font.Bold = true;
+                worksheet.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                worksheet.Cell(row, 5).Value = "";
+
+                worksheet.Cell(row, 6).Value = totalSoldPlotsSum;
+                worksheet.Cell(row, 6).Style.Font.Bold = true;
+                worksheet.Cell(row, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                worksheet.Cell(row, 7).Value = totalUnsoldPlotsSum;
+                worksheet.Cell(row, 7).Style.Font.Bold = true;
+                worksheet.Cell(row, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                var totalRow = worksheet.Row(row);
+                totalRow.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                worksheet.Range(3, 1, row, 7).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                worksheet.Range(3, 1, row, 7).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                worksheet.Columns().AdjustToContents();
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while exporting Plot Wise Consolidate Details to Excel.", ex);
+            }
+        }
+
+        public async Task<byte[]> ExportPlotWiseConsolidateDetailsPdfAsync(long mandiId)
+        {
+            var mandiName = await _context.MandiMaster
+                .Where(x => x.MandiId == mandiId)
+                .Select(x => x.MandiName)
+                .FirstOrDefaultAsync() ?? $"Mandi {mandiId}";
+
+            var response = await GetPlotWiseConsolidateDetailsAsync(mandiId, pageNumber: 1, pageSize: 1000000);
+
+            if (response == null || !response.Success)
+            {
+                throw new InvalidOperationException(
+                    response?.Message ?? "Unable to fetch plot consolidate details.");
+            }
+
+            var data = response.Data?.Data ?? new List<PlotWiseConsolidateDetailsDto>();
+
+            int mandiTotalPlots = response.Data?.MandiTotalPlots ?? data.Sum(r => r.TotalPlots);
+            int mandiTotalSoldPlots = response.Data?.MandiTotalSoldPlots ?? data.Sum(r => r.TotalSoldPlots);
+            int mandiTotalUnsoldPlots = response.Data?.MandiTotalUnsoldPlots ?? data.Sum(r => r.TotalUnsoldPlots);
+
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+            var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48");
+            var headerBgColor = QuestPDF.Infrastructure.Color.FromHex("#1b4332");
+            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f4f9f5");
+            var borderColor = QuestPDF.Infrastructure.Color.FromHex("#d1d5db");
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4.Landscape());
+                    page.Margin(0.8f, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+
+                    page.DefaultTextStyle(style => style.FontSize(8f));
+
+                    // Header
+                    page.Header().PaddingBottom(8).Column(headerCol =>
+                    {
+                        headerCol.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(titleCol =>
+                            {
+                                titleCol.Item().Text($"{mandiName}")
+                                    .Bold()
+                                    .FontSize(12)
+                                    .FontColor(primaryColor);
+
+                                titleCol.Item().Text($"Summary: Total Plots: {mandiTotalPlots}  |  Sold Plots: {mandiTotalSoldPlots}  |  Unsold Plots: {mandiTotalUnsoldPlots}")
+                                    .FontSize(8.5f)
+                                    .SemiBold()
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                            });
+
+                            row.ConstantItem(200).AlignRight().Column(metaCol =>
+                            {
+                                metaCol.Item().Text($"Date: {DateTime.Now:dd-MMM-yyyy hh:mm tt}")
+                                    .FontSize(8)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+
+                                
+                            });
+                        });
+
+                        headerCol.Item().PaddingTop(4).LineHorizontal(1.5f).LineColor(primaryColor);
+                    });
+
+                    // Content
+                    page.Content()
+                        .PaddingVertical(4)
+                        .Column(column =>
+                        {
+                            if (data.Count == 0)
+                            {
+                                column.Item()
+                                    .AlignCenter()
+                                    .Padding(30)
+                                    .Text("No plot details found.")
+                                    .FontSize(11)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            }
+                            else
+                            {
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.ConstantColumn(35);   // Sr.
+                                        columns.RelativeColumn(2.0f); // Plot Type
+                                        columns.RelativeColumn(1.8f); // Plot Size
+                                        columns.RelativeColumn(1.2f); // Total Plots
+                                        columns.RelativeColumn(4.5f); // All Plots
+                                        columns.RelativeColumn(4.5f); // Sold Plots
+                                        columns.RelativeColumn(3.0f); // Unsold Plots
+                                    });
+
+                                    // Table header
+                                    table.Header(header =>
+                                    {
+                                        void HeaderCell(string text, bool alignCenter = false)
+                                        {
+                                            var cell = header.Cell()
+                                                .Background(headerBgColor)
+                                                .Border(0.5f)
+                                                .BorderColor(headerBgColor)
+                                                .Padding(4);
+
+                                            if (alignCenter)
+                                                cell.AlignCenter().Text(text).Bold().FontSize(8f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else
+                                                cell.AlignLeft().Text(text).Bold().FontSize(8f).FontColor(QuestPDF.Helpers.Colors.White);
+                                        }
+
+                                        HeaderCell("Sr.", alignCenter: true);
+                                        HeaderCell("Plot Type");
+                                        HeaderCell("Plot Size");
+                                        HeaderCell("Total", alignCenter: true);
+                                        HeaderCell("All Plots");
+                                        HeaderCell("Sold Plots");
+                                        HeaderCell("Unsold Plots");
+                                    });
+
+                                    var srNo = 1;
+
+                                    foreach (var item in data)
+                                    {
+                                        var isEven = (srNo % 2 == 0);
+                                        var rowBg = isEven ? zebraBgColor : QuestPDF.Helpers.Colors.White;
+
+                                        void DataCell(string? value, bool alignCenter = false, bool isSold = false, bool isUnsold = false)
+                                        {
+                                            var cell = table.Cell()
+                                                .Background(rowBg)
+                                                .BorderBottom(0.5f)
+                                                .BorderColor(borderColor)
+                                                .Padding(3);
+
+                                            var display = string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+                                            if (alignCenter)
+                                            {
+                                                cell.AlignCenter().Text(display).FontSize(7.5f);
+                                            }
+                                            else if (isSold)
+                                            {
+                                                cell.AlignLeft().Text(display).FontSize(7.5f).FontColor(QuestPDF.Infrastructure.Color.FromHex("#15803d"));
+                                            }
+                                            else if (isUnsold)
+                                            {
+                                                cell.AlignLeft().Text(display).FontSize(7.5f).FontColor(QuestPDF.Infrastructure.Color.FromHex("#b91c1c"));
+                                            }
+                                            else
+                                            {
+                                                cell.AlignLeft().Text(display).FontSize(7.5f);
+                                            }
+                                        }
+
+                                        DataCell(srNo.ToString(), alignCenter: true);
+                                        DataCell(item.PlotType);
+                                        DataCell(item.PlotSize);
+                                        DataCell(item.TotalPlots.ToString(), alignCenter: true);
+                                        DataCell(item.AllPlots);
+                                        DataCell(item.SoldPlots, isSold: true);
+                                        DataCell(item.UnsoldPlots, isUnsold: true);
+
+                                        srNo++;
+                                    }
+
+                                    // Table Total Row
+                                    void TotalCell(string text, bool alignCenter = false, bool alignRight = false)
+                                    {
+                                        var cell = table.Cell()
+                                            .Background(QuestPDF.Helpers.Colors.Grey.Lighten3)
+                                            .BorderTop(1f)
+                                            .BorderColor(primaryColor)
+                                            .Padding(4);
+
+                                        if (alignCenter)
+                                            cell.AlignCenter().Text(text).Bold().FontSize(8f);
+                                        else if (alignRight)
+                                            cell.AlignRight().Text(text).Bold().FontSize(8f);
+                                        else
+                                            cell.AlignLeft().Text(text).Bold().FontSize(8f);
+                                    }
+
+                                    //TotalCell("");
+                                    //TotalCell("");
+                                    //TotalCell("Total:", alignRight: true);
+                                    //TotalCell(mandiTotalPlots.ToString(), alignCenter: true);
+                                    //TotalCell("");
+                                    //TotalCell($"Sold: {mandiTotalSoldPlots}");
+                                    //TotalCell($"Unsold: {mandiTotalUnsoldPlots}");
+                                });
+                            }
+                        });
+
+                    // Footer
+                    page.Footer()
+                        .PaddingTop(6)
+                        .Column(footerCol =>
+                        {
+                            footerCol.Item().LineHorizontal(0.5f).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten1);
+                            footerCol.Item().PaddingTop(4).Row(footerRow =>
+                            {
+                                footerRow.RelativeItem().Text("PSAMB - Colonization Management").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                                footerRow.RelativeItem().AlignCenter().Text(text =>
+                                {
+                                    text.Span("Page ").FontSize(7.5f);
+                                    text.CurrentPageNumber().FontSize(7.5f).Bold();
+                                    text.Span(" of ").FontSize(7.5f);
+                                    text.TotalPages().FontSize(7.5f).Bold();
+                                });
+                                footerRow.RelativeItem().AlignRight().Text($"{DateTime.Now:yyyy-MM-dd}").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            });
+                        });
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        public async Task<ApiResponse<PagedResponse<PlotSoldUnsoldDto>>> GetPlotSoldUnsoldDetailsAsync(int districtId = 0, int branchId = 0, int pageNumber = 1, int pageSize = 10)
+        {
+            try
+            {
+                var pagedResult = new PagedResponse<PlotSoldUnsoldDto>
+                {
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize <= 0 ? 10 : pageSize
+                };
+
                 var result = new List<PlotSoldUnsoldDto>();
 
                 await using var connection = _context.Database.GetDbConnection();
@@ -626,11 +996,44 @@ namespace Backend.Services.Implementations
 
                 command.Parameters.Add(new SqlParameter("@DistrictId", districtId));
                 command.Parameters.Add(new SqlParameter("@BranchId", branchId));
+                command.Parameters.Add(new SqlParameter("@PageNumber", pagedResult.PageNumber));
+                command.Parameters.Add(new SqlParameter("@PageSize", pagedResult.PageSize));
 
                 await using var reader = await command.ExecuteReaderAsync();
 
+                int totalRecords = 0;
+                int overallTotalPlots = 0;
+                int overallSoldPlots = 0;
+                int overallUnsoldPlots = 0;
+
+                bool hasTotalRecords = false;
+                bool hasOverallTotalPlots = false;
+                bool hasOverallSoldPlots = false;
+                bool hasOverallUnsoldPlots = false;
+
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    var colName = reader.GetName(i);
+                    if (string.Equals(colName, "TotalRecords", StringComparison.OrdinalIgnoreCase)) hasTotalRecords = true;
+                    else if (string.Equals(colName, "OverallTotalPlots", StringComparison.OrdinalIgnoreCase)) hasOverallTotalPlots = true;
+                    else if (string.Equals(colName, "OverallSoldPlots", StringComparison.OrdinalIgnoreCase)) hasOverallSoldPlots = true;
+                    else if (string.Equals(colName, "OverallUnsoldPlots", StringComparison.OrdinalIgnoreCase)) hasOverallUnsoldPlots = true;
+                }
+
                 while (await reader.ReadAsync())
                 {
+                    if (hasTotalRecords && reader["TotalRecords"] != DBNull.Value)
+                        totalRecords = Convert.ToInt32(reader["TotalRecords"]);
+
+                    if (hasOverallTotalPlots && reader["OverallTotalPlots"] != DBNull.Value)
+                        overallTotalPlots = Convert.ToInt32(reader["OverallTotalPlots"]);
+
+                    if (hasOverallSoldPlots && reader["OverallSoldPlots"] != DBNull.Value)
+                        overallSoldPlots = Convert.ToInt32(reader["OverallSoldPlots"]);
+
+                    if (hasOverallUnsoldPlots && reader["OverallUnsoldPlots"] != DBNull.Value)
+                        overallUnsoldPlots = Convert.ToInt32(reader["OverallUnsoldPlots"]);
+
                     result.Add(new PlotSoldUnsoldDto
                     {
                         SrNo = reader["SrNo"] == DBNull.Value
@@ -663,18 +1066,429 @@ namespace Backend.Services.Implementations
 
                         UnsoldPlots = reader["UnsoldPlots"] == DBNull.Value
                             ? 0
-                            : Convert.ToInt32(reader["UnsoldPlots"])
+                            : Convert.ToInt32(reader["UnsoldPlots"]),
+
+                        TotalRecords = totalRecords
                     });
                 }
 
-                return ApiResponse<List<PlotSoldUnsoldDto>>.Ok(
-                    result,"Plot details fetched successfully.");
+                await reader.CloseAsync();
+
+                if (!hasTotalRecords)
+                {
+                    try
+                    {
+                        await using var countCmd = connection.CreateCommand();
+                        countCmd.CommandText = @"
+                            SELECT COUNT(*) FROM (
+                                SELECT PRM.BranchId
+                                FROM PropertyRegistrationMaster PRM
+                                INNER JOIN BranchMaster BM ON BM.BranchId = PRM.BranchId
+                                WHERE PRM.IsDeleted = 0 AND PRM.IsActive = 1
+                                    AND (@DistrictId = 0 OR BM.DistrictId = @DistrictId)
+                                    AND (@BranchId = 0 OR PRM.BranchId = @BranchId)
+                                GROUP BY BM.DistrictId, PRM.BranchId
+                            ) AS t";
+                        countCmd.Parameters.Add(new SqlParameter("@DistrictId", districtId));
+                        countCmd.Parameters.Add(new SqlParameter("@BranchId", branchId));
+
+                        var countObj = await countCmd.ExecuteScalarAsync();
+                        if (countObj != null && countObj != DBNull.Value)
+                        {
+                            totalRecords = Convert.ToInt32(countObj);
+                        }
+                        else
+                        {
+                            totalRecords = result.Count;
+                        }
+                    }
+                    catch
+                    {
+                        totalRecords = result.Count;
+                    }
+                }
+
+                if (!hasOverallTotalPlots || !hasOverallSoldPlots || !hasOverallUnsoldPlots)
+                {
+                    try
+                    {
+                        await using var sumCmd = connection.CreateCommand();
+                        sumCmd.CommandText = @"
+                            SELECT 
+                                COUNT(PRM.PropertyId) AS OverallTotalPlots,
+                                SUM(CASE WHEN ISNULL(PRM.Propertystatus, 0) = 1 THEN 1 ELSE 0 END) AS OverallSoldPlots,
+                                SUM(CASE WHEN ISNULL(PRM.Propertystatus, 0) = 0 THEN 1 ELSE 0 END) AS OverallUnsoldPlots
+                            FROM PropertyRegistrationMaster PRM
+                            INNER JOIN BranchMaster BM ON BM.BranchId = PRM.BranchId
+                            WHERE PRM.IsDeleted = 0 AND PRM.IsActive = 1
+                                AND (@DistrictId = 0 OR BM.DistrictId = @DistrictId)
+                                AND (@BranchId = 0 OR PRM.BranchId = @BranchId)";
+                        sumCmd.Parameters.Add(new SqlParameter("@DistrictId", districtId));
+                        sumCmd.Parameters.Add(new SqlParameter("@BranchId", branchId));
+
+                        await using var sumReader = await sumCmd.ExecuteReaderAsync();
+                        if (await sumReader.ReadAsync())
+                        {
+                            if (!hasOverallTotalPlots && sumReader["OverallTotalPlots"] != DBNull.Value)
+                                overallTotalPlots = Convert.ToInt32(sumReader["OverallTotalPlots"]);
+                            if (!hasOverallSoldPlots && sumReader["OverallSoldPlots"] != DBNull.Value)
+                                overallSoldPlots = Convert.ToInt32(sumReader["OverallSoldPlots"]);
+                            if (!hasOverallUnsoldPlots && sumReader["OverallUnsoldPlots"] != DBNull.Value)
+                                overallUnsoldPlots = Convert.ToInt32(sumReader["OverallUnsoldPlots"]);
+                        }
+                    }
+                    catch
+                    {
+                        if (!hasOverallTotalPlots) overallTotalPlots = result.Sum(x => x.TotalPlots);
+                        if (!hasOverallSoldPlots) overallSoldPlots = result.Sum(x => x.SoldPlots);
+                        if (!hasOverallUnsoldPlots) overallUnsoldPlots = result.Sum(x => x.UnsoldPlots);
+                    }
+                }
+
+                pagedResult.Data = result;
+                pagedResult.TotalRecords = totalRecords;
+                pagedResult.TotalPages = (int)Math.Ceiling((double)totalRecords / pagedResult.PageSize);
+                pagedResult.OverallTotalPlots = overallTotalPlots;
+                pagedResult.OverallSoldPlots = overallSoldPlots;
+                pagedResult.OverallUnsoldPlots = overallUnsoldPlots;
+
+                return ApiResponse<PagedResponse<PlotSoldUnsoldDto>>.Ok(
+                    pagedResult, "Plot details fetched successfully.");
             }
             catch (Exception ex)
             {
-                return ApiResponse<List<PlotSoldUnsoldDto>>.Fail(
+                return ApiResponse<PagedResponse<PlotSoldUnsoldDto>>.Fail(
                     $"Error fetching plot details: {ex.Message}");
             }
+        }
+
+        public async Task<byte[]> ExportPlotSoldUnsoldDetailsAsync(int districtId = 0, int branchId = 0)
+        {
+            try
+            {
+                var response = await GetPlotSoldUnsoldDetailsAsync(districtId, branchId, pageNumber: 1, pageSize: 1000000);
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Plot Sold Unsold Details");
+
+
+                worksheet.Cell(1, 1).Value = "Plot Sold/Unsold Details Report";
+                worksheet.Range(1, 1, 1, 6).Merge();
+                worksheet.Row(1).Style.Font.Bold = true;
+                worksheet.Row(1).Style.Font.FontSize = 13;
+                worksheet.Row(2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Row(1).Style.Fill.BackgroundColor = XLColor.FromHtml("#E8F5E9");
+
+
+                // Headers
+                string[] headers = { "Sr. No.", "District", "Market Committee", "Total Plots", "Sold Plots", "Unsold Plots" };
+
+                for (int col = 0; col < headers.Length; col++)
+                {
+                    worksheet.Cell(4, col + 1).Value = headers[col];
+                }
+
+                var headerRow = worksheet.Row(4);
+                headerRow.Style.Font.Bold = true;
+                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#1B4332");
+                headerRow.Style.Font.FontColor = XLColor.White;
+                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                var records = response.Data?.Data ?? new List<PlotSoldUnsoldDto>();
+                int row = 5;
+                int srNo = 1;
+
+                foreach (var item in records)
+                {
+                    worksheet.Cell(row, 1).Value = srNo++;
+                    worksheet.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    worksheet.Cell(row, 2).Value = item.DistrictName ?? "";
+                    worksheet.Cell(row, 3).Value = item.MarketCommittee ?? "";
+
+                    worksheet.Cell(row, 4).Value = item.TotalPlots;
+                    worksheet.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    worksheet.Cell(row, 5).Value = item.SoldPlots;
+                    worksheet.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    worksheet.Cell(row, 6).Value = item.UnsoldPlots;
+                    worksheet.Cell(row, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    row++;
+                }
+
+                // Summary Row
+                int totalPlotsSum = response.Data?.OverallTotalPlots ?? records.Sum(r => r.TotalPlots);
+                int totalSoldSum = response.Data?.OverallSoldPlots ?? records.Sum(r => r.SoldPlots);
+                int totalUnsoldSum = response.Data?.OverallUnsoldPlots ?? records.Sum(r => r.UnsoldPlots);
+
+                worksheet.Cell(row, 1).Value = "";
+                worksheet.Cell(row, 2).Value = "";
+                worksheet.Cell(row, 3).Value = "Total";
+                worksheet.Cell(row, 3).Style.Font.Bold = true;
+                worksheet.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                worksheet.Cell(row, 4).Value = totalPlotsSum;
+                worksheet.Cell(row, 4).Style.Font.Bold = true;
+                worksheet.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                worksheet.Cell(row, 5).Value = totalSoldSum;
+                worksheet.Cell(row, 5).Style.Font.Bold = true;
+                worksheet.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                worksheet.Cell(row, 6).Value = totalUnsoldSum;
+                worksheet.Cell(row, 6).Style.Font.Bold = true;
+                worksheet.Cell(row, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                var totalRow = worksheet.Row(row);
+                totalRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#F4F9F5");
+
+                worksheet.Range(4, 1, row, headers.Length).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                worksheet.Range(4, 1, row, headers.Length).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                worksheet.Columns().AdjustToContents();
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while exporting Plot Sold/Unsold Details to Excel.", ex);
+            }
+        }
+
+        public async Task<byte[]> ExportPlotSoldUnsoldDetailsPdfAsync(int districtId = 0, int branchId = 0)
+        {
+            var response = await GetPlotSoldUnsoldDetailsAsync(districtId, branchId, pageNumber: 1, pageSize: 1000000);
+
+            if (response == null || !response.Success)
+            {
+                throw new InvalidOperationException(response?.Message ?? "Unable to fetch plot details.");
+            }
+
+            var data = response.Data?.Data ?? new List<PlotSoldUnsoldDto>();
+
+            int overallTotalPlots = response.Data?.OverallTotalPlots ?? data.Sum(r => r.TotalPlots);
+            int overallSoldPlots = response.Data?.OverallSoldPlots ?? data.Sum(r => r.SoldPlots);
+            int overallUnsoldPlots = response.Data?.OverallUnsoldPlots ?? data.Sum(r => r.UnsoldPlots);
+
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+            var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48");
+            var headerBgColor = QuestPDF.Infrastructure.Color.FromHex("#1b4332");
+            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f4f9f5");
+            var borderColor = QuestPDF.Infrastructure.Color.FromHex("#d1d5db");
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4.Portrait());
+                    page.Margin(1.0f, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+
+                    page.DefaultTextStyle(style => style.FontSize(9f));
+
+                    // Header
+                    page.Header().PaddingBottom(6).Column(headerCol =>
+                    {
+                        headerCol.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(titleCol =>
+                            {
+                                titleCol.Item().Text("Plot Sold/Unsold Details Report")
+                                    .Bold()
+                                    .FontSize(12f)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
+                            });
+
+                            row.ConstantItem(180).AlignRight().Column(metaCol =>
+                            {
+                                metaCol.Item().Text($"Date: {DateTime.Now:dd-MMM-yyyy hh:mm tt}")
+                                    .FontSize(8)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            });
+                        });
+
+                        headerCol.Item().PaddingTop(4).LineHorizontal(1.5f).LineColor(primaryColor);
+                    });
+
+                    // Content
+                    page.Content()
+                        .PaddingVertical(4)
+                        .Column(column =>
+                        {
+                            // Show Summary ONLY on first page, with smaller font
+                            column.Item().PaddingBottom(6).Text($"Summary: Total: {overallTotalPlots:N0}  |  Sold: {overallSoldPlots:N0}  |  Unsold: {overallUnsoldPlots:N0}")
+                                .FontSize(8f)
+                                .SemiBold()
+                                .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+
+                            if (data.Count == 0)
+                            {
+                                column.Item()
+                                    .AlignCenter()
+                                    .Padding(30)
+                                    .Text("No plot details found.")
+                                    .FontSize(11)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            }
+                            else
+                            {
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.ConstantColumn(32);   // Sr. No
+                                        columns.RelativeColumn(3.8f); // District
+                                        columns.RelativeColumn(3.4f); // Market Committee
+                                        columns.RelativeColumn(1.4f); // Total Plots
+                                        columns.RelativeColumn(1.4f); // Sold Plots
+                                        columns.RelativeColumn(1.4f); // Unsold Plots
+                                    });
+
+                                    var gridBorderColor = QuestPDF.Infrastructure.Color.FromHex("#cbd5e1");
+
+                                    // Table header
+                                    table.Header(header =>
+                                    {
+                                        void HeaderCell(string text, bool alignRight = false, bool alignCenter = false)
+                                        {
+                                            var cell = header.Cell()
+                                                .Background(headerBgColor)
+                                                .Border(0.5f)
+                                                .BorderColor(QuestPDF.Infrastructure.Color.FromHex("#0f291e"))
+                                                .Padding(5);
+
+                                            if (alignCenter)
+                                                cell.AlignCenter().Text(text).Bold().FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else if (alignRight)
+                                                cell.AlignRight().Text(text).Bold().FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else
+                                                cell.AlignLeft().Text(text).Bold().FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                        }
+
+                                        HeaderCell("Sr.", alignCenter: true);
+                                        HeaderCell("District");
+                                        HeaderCell("Market Committee");
+                                        HeaderCell("Total Plots", alignRight: true);
+                                        HeaderCell("Sold Plots", alignRight: true);
+                                        HeaderCell("Unsold Plots", alignRight: true);
+                                    });
+
+                                    int srNo = 1;
+                                    foreach (var item in data)
+                                    {
+                                        var isEven = (srNo % 2 == 0);
+                                        var rowBg = isEven ? QuestPDF.Infrastructure.Color.FromHex("#f8fafc") : QuestPDF.Helpers.Colors.White;
+
+                                        void DataCell(string? value, bool alignRight = false, bool alignCenter = false, bool isBold = false)
+                                        {
+                                            var cell = table.Cell()
+                                                .Background(rowBg)
+                                                .Border(0.5f)
+                                                .BorderColor(gridBorderColor)
+                                                .PaddingVertical(3.5f)
+                                                .PaddingHorizontal(5);
+
+                                            if (alignCenter)
+                                            {
+                                                var t = cell.AlignCenter().Text(value ?? "").FontSize(8);
+                                                if (isBold) t.Bold();
+                                            }
+                                            else if (alignRight)
+                                            {
+                                                var t = cell.AlignRight().Text(value ?? "").FontSize(8);
+                                                if (isBold) t.Bold();
+                                            }
+                                            else
+                                            {
+                                                var t = cell.AlignLeft().Text(value ?? "").FontSize(8);
+                                                if (isBold) t.Bold();
+                                            }
+                                        }
+
+                                        DataCell(srNo.ToString(), alignCenter: true);
+                                        DataCell(item.DistrictName ?? "");
+                                        DataCell(item.MarketCommittee ?? "");
+                                        DataCell(item.TotalPlots.ToString("N0"), alignRight: true, isBold: true);
+                                        DataCell(item.SoldPlots.ToString("N0"), alignRight: true);
+                                        DataCell(item.UnsoldPlots.ToString("N0"), alignRight: true);
+
+                                        srNo++;
+                                    }
+
+                                    // Summary / Total Row
+                                    table.Cell().ColumnSpan(3)
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(gridBorderColor)
+                                        .Padding(5)
+                                        .AlignRight()
+                                        .Text("Total")
+                                        .Bold()
+                                        .FontSize(8.5f)
+                                        .FontColor(primaryColor);
+
+                                    table.Cell()
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(gridBorderColor)
+                                        .Padding(5)
+                                        .AlignRight()
+                                        .Text(overallTotalPlots.ToString("N0"))
+                                        .Bold()
+                                        .FontSize(8.5f)
+                                        .FontColor(primaryColor);
+
+                                    table.Cell()
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(gridBorderColor)
+                                        .Padding(5)
+                                        .AlignRight()
+                                        .Text(overallSoldPlots.ToString("N0"))
+                                        .Bold()
+                                        .FontSize(8.5f)
+                                        .FontColor(QuestPDF.Infrastructure.Color.FromHex("#198754"));
+
+                                    table.Cell()
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(gridBorderColor)
+                                        .Padding(5)
+                                        .AlignRight()
+                                        .Text(overallUnsoldPlots.ToString("N0"))
+                                        .Bold()
+                                        .FontSize(8.5f)
+                                        .FontColor(QuestPDF.Infrastructure.Color.FromHex("#dc3545"));
+                                });
+                            }
+                        });
+
+                    // Footer
+                    page.Footer().PaddingTop(4).Column(footerCol =>
+                    {
+                        footerCol.Item().LineHorizontal(0.5f).LineColor(borderColor);
+                        footerCol.Item().PaddingTop(2).Row(row =>
+                        {
+                          
+
+                            row.RelativeItem().AlignRight().Text(text =>
+                            {
+                                text.Span("Page ").FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                                text.CurrentPageNumber().FontSize(7.5f).Bold();
+                                text.Span(" of ").FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                                text.TotalPages().FontSize(7.5f).Bold();
+                            });
+                        });
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
         }
 
         public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>>  GetDigitizationPropertyDayWiseCountAsync(    DateTime fromDate, DateTime toDate)

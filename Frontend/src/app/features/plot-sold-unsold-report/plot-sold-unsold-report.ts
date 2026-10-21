@@ -56,6 +56,12 @@ export class PlotSoldUnsoldReport implements OnInit {
 
   pageIndex = 0;
   pageSize = 10;
+  totalRecords = 0;
+  overallTotalPlots = 0;
+  overallSoldPlots = 0;
+  overallUnsoldPlots = 0;
+  isExportingExcel = false;
+  isExportingPdf = false;
 
   districtCtrl = new FormControl('', { nonNullable: true });
   mcCtrl = new FormControl('', { nonNullable: true });
@@ -66,12 +72,6 @@ export class PlotSoldUnsoldReport implements OnInit {
   isLoadingDistricts = false;
   isLoadingCommittees = false;
 
-  @ViewChild(MatPaginator) set paginator(p: MatPaginator | undefined) {
-    if (p) {
-      this.dataSource.paginator = p;
-    }
-  }
-
   get hasData(): boolean {
     return this.dataSource.data.length > 0;
   }
@@ -81,15 +81,15 @@ export class PlotSoldUnsoldReport implements OnInit {
   }
 
   get totalPlots(): number {
-    return this.allRows.reduce((s, r) => s + (r.totalPlots || 0), 0);
+    return this.overallTotalPlots || this.allRows.reduce((s, r) => s + (r.totalPlots || 0), 0);
   }
 
   get totalSold(): number {
-    return this.allRows.reduce((s, r) => s + (r.soldPlots || 0), 0);
+    return this.overallSoldPlots || this.allRows.reduce((s, r) => s + (r.soldPlots || 0), 0);
   }
 
   get totalUnsold(): number {
-    return this.allRows.reduce((s, r) => s + (r.unsoldPlots || 0), 0);
+    return this.overallUnsoldPlots || this.allRows.reduce((s, r) => s + (r.unsoldPlots || 0), 0);
   }
 
   percent(part: number, total: number): number {
@@ -153,13 +153,17 @@ export class PlotSoldUnsoldReport implements OnInit {
     });
   }
 
-  loadData(): void {
+  loadData(resetPage: boolean = false): void {
+    if (resetPage) {
+      this.pageIndex = 0;
+    }
     this.loading = true;
     const districtId = Number(this.districtCtrl.value) || 0;
     const branchId = Number(this.mcCtrl.value) || 0;
+    const pageNumber = this.pageIndex + 1;
 
     this.reportService
-      .getPlotSoldUnsoldDetails(districtId, branchId)
+      .getPlotSoldUnsoldDetails(districtId, branchId, pageNumber, this.pageSize)
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -168,10 +172,22 @@ export class PlotSoldUnsoldReport implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
-          const rawList = res?.data ?? (Array.isArray(res) ? res : []);
+          const pagedData = res?.data ?? res;
+          const rawList = pagedData?.data ?? (Array.isArray(pagedData) ? pagedData : []);
+
+          this.totalRecords = Number(
+            pagedData?.totalRecords ??
+            pagedData?.TotalRecords ??
+            (rawList.length > 0 ? (rawList[0]?.totalRecords ?? rawList[0]?.TotalRecords ?? rawList.length) : 0)
+          );
+
+          this.overallTotalPlots = Number(pagedData?.overallTotalPlots ?? pagedData?.OverallTotalPlots ?? 0);
+          this.overallSoldPlots = Number(pagedData?.overallSoldPlots ?? pagedData?.OverallSoldPlots ?? 0);
+          this.overallUnsoldPlots = Number(pagedData?.overallUnsoldPlots ?? pagedData?.OverallUnsoldPlots ?? 0);
+
           this.allRows = Array.isArray(rawList)
-            ? rawList.map((item: any) => ({
-                srNo: item.srNo ?? item.SrNo ?? 0,
+            ? rawList.map((item: any, idx: number) => ({
+                srNo: item.srNo ?? item.SrNo ?? (this.pageIndex * this.pageSize + idx + 1),
                 districtId: item.districtId ?? item.DistrictId ?? 0,
                 district: item.districtName ?? item.DistrictName ?? item.district ?? '',
                 branchId: item.branchId ?? item.BranchId ?? 0,
@@ -181,15 +197,18 @@ export class PlotSoldUnsoldReport implements OnInit {
                 unsoldPlots: Number(item.unsoldPlots ?? item.UnsoldPlots ?? 0),
               }))
             : [];
+
           this.dataSource.data = this.allRows;
-          this.pageIndex = 0;
           this.cdr.detectChanges();
         },
         error: (err: any) => {
           console.error('Error fetching plot sold unsold details:', err);
           this.allRows = [];
           this.dataSource.data = [];
-          this.pageIndex = 0;
+          this.totalRecords = 0;
+          this.overallTotalPlots = 0;
+          this.overallSoldPlots = 0;
+          this.overallUnsoldPlots = 0;
           this.cdr.detectChanges();
         },
       });
@@ -203,89 +222,96 @@ export class PlotSoldUnsoldReport implements OnInit {
     if (districtId > 0) {
       this.loadMarketCommittees(districtId);
     }
-    this.loadData();
+    this.loadData(true);
   }
 
   onMcChange(): void {
-    this.loadData();
+    this.loadData(true);
   }
 
   clearFilters(): void {
     this.districtCtrl.setValue('');
     this.mcCtrl.setValue('');
     this.committees = [];
-    this.loadData();
+    this.loadData(true);
   }
 
+  exportToExcel(): void {
+    if (!this.totalRecords && !this.allRows.length) return;
+
+    const districtId = Number(this.districtCtrl.value) || 0;
+    const branchId = Number(this.mcCtrl.value) || 0;
+
+    this.isExportingExcel = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .exportPlotSoldUnsoldDetails(districtId, branchId)
+      .pipe(
+        finalize(() => {
+          this.isExportingExcel = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().split('T')[0];
+          link.download = `PlotSoldUnsoldDetails_${timestamp}.xlsx`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err: any) => {
+          console.error('Error downloading Excel file:', err);
+          alert('Failed to export Excel file. Please try again.');
+        },
+      });
+  }
+
+  exportToPdf(): void {
+    if (!this.totalRecords && !this.allRows.length) return;
+
+    const districtId = Number(this.districtCtrl.value) || 0;
+    const branchId = Number(this.mcCtrl.value) || 0;
+
+    this.isExportingPdf = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .exportPlotSoldUnsoldDetailsPdf(districtId, branchId)
+      .pipe(
+        finalize(() => {
+          this.isExportingPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().split('T')[0];
+          link.download = `PlotSoldUnsoldDetails_${timestamp}.pdf`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err: any) => {
+          console.error('Error downloading PDF file:', err);
+          alert('Failed to export PDF file. Please try again.');
+        },
+      });
+  }
+
+  // Alias for backward compatibility if template calls exportExcel
   exportExcel(): void {
-    if (!this.allRows.length) return;
-
-    const totalPlots = this.totalPlots;
-    const totalSold = this.totalSold;
-    const totalUnsold = this.totalUnsold;
-
-    let tableRows = '';
-    this.allRows.forEach((r, idx) => {
-      tableRows += `
-        <tr>
-          <td style="border: 1px solid black; text-align: center;">${idx + 1}</td>
-          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.district || ''}</td>
-          <td style="border: 1px solid black; text-align: left; mso-number-format: '\\@';">${r.mcName || ''}</td>
-          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.totalPlots ?? 0}</td>
-          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.soldPlots ?? 0}</td>
-          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.unsoldPlots ?? 0}</td>
-        </tr>`;
-    });
-
-    const excelHtml = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office"
-            xmlns:x="urn:schemas-microsoft-com:office:excel"
-            xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <style>
-          table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-          th { border: 1px solid black; font-weight: bold; background-color: #d1e7dd; padding: 6px 10px; }
-          td { padding: 6px 10px; }
-        </style>
-      </head>
-      <body>
-        <table>
-          <tr>
-            <th colspan="6" style="font-size: 14pt; text-align: center; height: 30px;">Plot Sold/Unsold Details</th>
-          </tr>
-          <tr>
-            <th style="border: 1px solid black; text-align: center;">Sr. No</th>
-            <th style="border: 1px solid black; text-align: left;">District</th>
-            <th style="border: 1px solid black; text-align: left;">Market Committee</th>
-            <th style="border: 1px solid black; text-align: right;">Total Plots</th>
-            <th style="border: 1px solid black; text-align: right;">Sold Plots</th>
-            <th style="border: 1px solid black; text-align: right;">Unsold Plots</th>
-          </tr>
-          ${tableRows}
-          <tr style="font-weight: bold; background-color: #f8f9fa;">
-            <td style="border: 1px solid black; text-align: center;" colspan="3">Total</td>
-            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalPlots}</td>
-            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalSold}</td>
-            <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${totalUnsold}</td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `PlotSoldUnsoldDetails_${new Date().toISOString().slice(0, 10)}.xls`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.exportToExcel();
   }
 
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
-    this.cdr.detectChanges();
+    this.loadData();
   }
 }
