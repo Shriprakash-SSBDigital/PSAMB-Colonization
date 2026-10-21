@@ -44,9 +44,32 @@ export class MandiWiseService {
     return this.http.get<any>(`${this.baseUrl}/Report/GetMandiWiseAllotmentSummary`, { params });
   }
 
-  getPlotWiseConsolidateDetails(mandiId: number | string): Observable<any> {
-    const params = new HttpParams().set('mandiId', mandiId.toString());
+  getPlotWiseConsolidateDetails(
+    mandiId: number | string,
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('mandiId', mandiId.toString())
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
     return this.http.get<any>(`${this.baseUrl}/Report/GetPlotWiseConsolidateDetails`, { params });
+  }
+
+  exportPlotWiseConsolidateDetails(mandiId: number | string): Observable<Blob> {
+    const params = new HttpParams().set('mandiId', mandiId.toString());
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotWiseConsolidateDetails`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  exportPlotWiseConsolidateDetailsPdf(mandiId: number | string): Observable<Blob> {
+    const params = new HttpParams().set('mandiId', mandiId.toString());
+    return this.http.get(`${this.baseUrl}/Report/ExportPlotWiseConsolidateDetailsPdf`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   getMandisForPropertyReport(): Observable<any> {

@@ -33,8 +33,7 @@
     <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
 </div> -->
 
-<!-- Summary -->
-<div class="row g-3 mb-3" *ngIf="!loading && searched && allRows.length">
+<div class="row g-3 mb-3" *ngIf="!loading && searched && (totalRecords > 0 || pagedRows.length)">
     <div class="col-12 col-sm-4">
         <div class="bg-white border rounded-3 shadow-sm p-3 h-100">
             <p class="small text-uppercase text-muted fw-semibold mb-1">Total Plots</p>
@@ -68,13 +67,18 @@
 
         <div class="d-flex gap-2 justify-content-end header-actions">
             <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
-                (click)="exportToExcel()" [disabled]="loading || !allRows.length">
-                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                (click)="exportToExcel()" [disabled]="loading || isExportingExcel || !pagedRows.length">
+                <i class="bi bi-file-earmark-excel"></i>
+                <span *ngIf="!isExportingExcel">Export to Excel</span>
+                <span *ngIf="isExportingExcel">Exporting...</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
-                (click)="printTable()" [disabled]="loading || !allRows.length">
-                <i class="bi bi-printer"></i> Print
+            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                (click)="exportToPdf()" [disabled]="loading || isExportingPdf || !pagedRows.length">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span *ngIf="!isExportingPdf">Export to PDF</span>
+                <span *ngIf="isExportingPdf">Exporting...</span>
             </button>
+
         </div>
     </div>
 
@@ -111,8 +115,7 @@
                         <td class="fw-semibold">
                             <ng-container *ngIf="row.soldPlots; else noSold">
                                 <span *ngFor="let plotNo of row.soldPlots.split(',')">
-                                    <button type="button"
-                                        class="btn btn-sm me-1 mb-1 py-0 px-1 lh-sm text-success"
+                                    <button type="button" class="btn btn-sm me-1 mb-1 py-0 px-1 lh-sm text-success"
                                         data-bs-toggle="modal" data-bs-target="#plotDetailModal"
                                         (click)="openPlotModal(plotNo.trim(), row)">{{ plotNo.trim() }}</button>
                                 </span>
@@ -136,8 +139,8 @@
         </table>
     </div>
 
-    <div class="border-top d-print-none" *ngIf="!loading && allRows.length">
-        <mat-paginator [length]="allRows.length" [pageSize]="pageSize" [pageIndex]="pageIndex"
+    <div class="border-top d-print-none" *ngIf="!loading && totalRecords > 0">
+        <mat-paginator [length]="totalRecords" [pageSize]="pageSize" [pageIndex]="pageIndex"
             [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)"></mat-paginator>
     </div>
 </div>
@@ -149,11 +152,6 @@
 </div>
 
 <!-- Reusable Plot Details Modal Component -->
-<app-plot-details-modal
-    [balanceData]="balanceData"
-    [plotDetailLoading]="plotDetailLoading"
-    [plotDetailError]="plotDetailError"
-    [selectedPlotNo]="selectedPlotNo"
-    [header]="headerTitle"
-    (modalClosed)="closePreviewModal()">
+<app-plot-details-modal [balanceData]="balanceData" [plotDetailLoading]="plotDetailLoading"
+    [plotDetailError]="plotDetailError" [selectedPlotNo]="selectedPlotNo" (modalClosed)="closePreviewModal()">
 </app-plot-details-modal>
