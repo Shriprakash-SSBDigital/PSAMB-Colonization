@@ -1,29 +1,30 @@
 <div class="container-fluid py-3 px-3 px-lg-4">
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-chart-pie fs-4 text-success"></i>
-            <div>
-                <h1 class="h5 fw-bold text-success mb-0">Plot Sold/Unsold Details</h1>
-            </div>
+        <div>
+            <h1 class="h5 fw-bold text-portal mb-1">Plot Sold/Unsold Details</h1>
+            <p class="small text-muted mb-0">
+                Summary and details of sold and unsold plots across districts and market committees.
+            </p>
         </div>
-        <div class="d-flex gap-2">
+
+        <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
             <button type="button"
-                class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
+                class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
                 (click)="exportToExcel()" [disabled]="!hasData || loading || isExportingExcel"
                 matTooltip="Export to Excel" matTooltipPosition="above">
-                <i class="fa-solid fa-spinner fa-spin fs-5 text-success" *ngIf="isExportingExcel"></i>
-                <!-- <i class="fa-solid fa-file-excel fs-5 text-success" *ngIf="!isExportingExcel"></i> -->
-                <span class="d-none d-sm-inline ms-1">{{ isExportingExcel ? 'Exporting...' : 'Export to Excel' }}</span>
+                <span *ngIf="isExportingExcel" class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isExportingExcel" class="fa-solid fa-file-excel fs-5 text-success"></i>
+                <span class="d-none d-sm-inline">{{ isExportingExcel ? 'Exporting...' : 'Excel' }}</span>
             </button>
 
             <button type="button"
-                class="btn btn-outline-secondary fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
-                (click)="exportToPdf()" [disabled]="!hasData || loading || isExportingPdf" matTooltip="Export to PDF"
-                matTooltipPosition="above">
-                <i class="fa-solid fa-spinner fa-spin fs-5 text-danger" *ngIf="isExportingPdf"></i>
-                <!-- <i class="fa-solid fa-file-pdf fs-5 text-danger" *ngIf="!isExportingPdf"></i> -->
-                <span class="d-none d-sm-inline ms-1">{{ isExportingPdf ? 'Exporting...' : 'Export to PDF' }}</span>
+                class="btn btn-outline-secondary fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+                (click)="exportToPdf()" [disabled]="!hasData || loading || isExportingPdf"
+                matTooltip="Export to PDF" matTooltipPosition="above">
+                <span *ngIf="isExportingPdf" class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isExportingPdf" class="fa-regular fa-file-pdf fs-5 text-danger"></i>
+                <span class="d-none d-sm-inline">{{ isExportingPdf ? 'Exporting...' : 'PDF' }}</span>
             </button>
         </div>
     </div>

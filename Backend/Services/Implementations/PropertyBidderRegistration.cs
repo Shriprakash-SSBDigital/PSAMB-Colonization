@@ -3082,160 +3082,336 @@ namespace Backend.Services.Implementations
             response.InstallmentCalculations = new List<InstallmentCalculationDto>();
             response.InstallmentNotCompleted = new List<InstallmentScheduleDto>();
 
+            //if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
+            //{
+            //    var schedules = response.InstallmentSchedules.OrderBy(x => x.CalculatedDueDate).ToList();
+            //    var receipts = response.Installments.Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1).OrderBy(x => x.ReceiptDate).ToList();
+
+            //    int receiptIndex = 0;
+            //    decimal extraBalanceAmount = 0m;
+            //    decimal PendingEMIReceiveAmount = 0m;
+            //    DateTime previousReceiptDate = DateTime.MinValue;
+
+            //    foreach (var schedule in schedules)
+            //    {
+            //        if (!schedule.CalculatedDueDate.HasValue)
+            //            continue;
+
+            //        if (receiptIndex >= receipts.Count)
+            //            break;
+
+            //        decimal receivedAmount;
+            //        DateTime receiptDate;
+
+            //        int delayDays = 0;
+            //        int penalInterestRate = 12;
+            //        int PenalityRateInPercent = 10;
+            //        decimal penalityAmount = 0;
+            //        decimal DueAmount = 0;
+
+            //        DateTime dueDate = schedule.CalculatedDueDate.Value.Date;
+            //        decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
+
+            //        if (installmentAmount <= extraBalanceAmount)
+            //        {
+            //            receiptDate = previousReceiptDate;
+            //            receivedAmount = extraBalanceAmount;
+            //        }
+            //        else
+            //        {
+            //            if (receiptIndex >= receipts.Count)
+            //                break;
+
+            //            var receipt = receipts[receiptIndex];
+
+            //            if (!receipt.ReceiptDate.HasValue)
+            //                continue;
+
+            //            var nextreceivedAmount = receipt.DraftAmount ?? 0m;
+            //            receivedAmount = nextreceivedAmount + extraBalanceAmount;
+
+            //            if (receivedAmount <= 0)
+            //                continue;
+
+            //            receiptDate = receipt.ReceiptDate.Value.Date;
+
+            //            // Save this receipt date because it may
+            //            // be required for the next installment
+            //            previousReceiptDate = receiptDate;
+            //            receiptIndex++;
+            //        }
+
+            //        if (receiptDate >= dueDate)
+            //        {
+            //            //var nextreceivedAmount = receipt.DraftAmount ?? 0m;
+            //           // receivedAmount = nextreceivedAmount;
+
+            //            delayDays = (receiptDate - dueDate).Days;
+            //            if (delayDays > 0)
+            //            {
+            //                penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
+
+            //            }
+            //        }
+
+            //            DueAmount = installmentAmount + penalityAmount;
+
+
+
+            //        if (response.InstallmentNotCompleted.Count > 0)
+            //        {
+            //            int InstallmentdelayDays = 0;
+            //            int InstallpenalInterestRate = 12;
+            //            int InstallPenalityRateInPercent = 10;
+            //            decimal pendingAmount = 0;
+            //            decimal InstallmentpenalityAmount = 0;
+
+            //            var pendingInstallment = response.InstallmentNotCompleted[0];
+
+            //            decimal pendingInstallmentAmount = pendingInstallment.TotalEstimatedAmount ?? 0m;
+            //            DateTime dueDateofPendingInstallent = pendingInstallment.CalculatedDueDate.Value.Date;
+            //            var receiveamountwithPreviousDraftAmount = receivedAmount + PendingEMIReceiveAmount;
+
+            //            if(receiptDate >= dueDateofPendingInstallent)
+            //            {
+            //                InstallmentdelayDays = (receiptDate - dueDateofPendingInstallent).Days;
+            //                if (InstallmentdelayDays > 0)
+            //                {
+            //                    InstallmentpenalityAmount = Convert.ToDecimal((pendingInstallmentAmount * InstallPenalityRateInPercent) / 100);
+
+            //                }
+            //            }
+            //            pendingAmount = pendingInstallmentAmount + InstallmentpenalityAmount;
+
+            //            if (receiveamountwithPreviousDraftAmount >= pendingAmount)
+            //            {
+            //                // Pending installment completed
+            //                if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
+            //                {
+            //                    InstallpenalInterestRate = 12;
+            //                }
+            //                else
+            //                {
+            //                    InstallpenalInterestRate = 6;
+            //                }
+
+
+            //                // Your calculation here
+            //                decimal LatepenalInterest = Convert.ToDecimal((pendingInstallmentAmount * InstallmentdelayDays * InstallpenalInterestRate) / 36500);
+
+            //               // decimal totalPenalityAmount = penalInterest + penalityAmount;
+            //                decimal extraAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount - pendingAmount);
+            //                //extraBalanceAmount = extraAmount;
+            //                receivedAmount = extraAmount;
+
+            //                response.InstallmentCalculations.Add(new InstallmentCalculationDto
+            //                {
+            //                    InstallmentId = pendingInstallment.Id,
+
+            //                    InstallmentNo = pendingInstallment.InstallmentNo,
+
+            //                    DueDate = dueDateofPendingInstallent,
+
+            //                    ReceiptDate = receiptDate,
+
+            //                    InstallmentAmount = Convert.ToDecimal(pendingInstallment.TotalEstimatedAmount),
+
+            //                    ReceivedAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount),
+
+            //                    DelayDays = InstallmentdelayDays,
+
+            //                    PenalInterest = Math.Round(LatepenalInterest, 2),
+            //                    PenaltyRateInPercent = InstallPenalityRateInPercent,
+            //                    PenalityAmount = Math.Round(InstallmentpenalityAmount, 2),
+
+            //                    //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
+
+            //                    ExtraAmount = Math.Round(extraAmount, 2)
+            //                });
+
+            //                response.InstallmentNotCompleted.Clear();
+            //            }
+            //            else
+            //            {
+            //                extraBalanceAmount = 0;
+            //                PendingEMIReceiveAmount += receivedAmount;
+            //                response.InstallmentNotCompleted.Add(new InstallmentScheduleDto
+            //                {
+            //                    Id = schedule.Id,
+            //                    PropertyId = schedule.PropertyId,
+            //                    PropertyCode = schedule.PropertyCode,
+            //                    InstallmentNo = schedule.InstallmentNo,
+            //                    CalculatedDueDate = schedule.CalculatedDueDate,
+            //                    BasePrincipal = schedule.BasePrincipal,
+            //                    Interest = schedule.Interest,
+            //                    TotalEstimatedAmount = schedule.TotalEstimatedAmount,
+            //                    IsActive = schedule.IsActive
+            //                });
+            //            }
+            //        }
+
+            //        if (receivedAmount >= DueAmount)
+            //        {
+
+            //            if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
+            //            {
+            //                penalInterestRate = 12;
+            //            }
+            //            else
+            //            {
+            //                penalInterestRate = 6;
+            //            }
+
+
+            //            // Your calculation here
+            //            decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
+
+            //            //decimal totalPenalityAmount = penalInterest + penalityAmount;
+            //            decimal extraAmount = Convert.ToDecimal(receivedAmount - DueAmount);
+            //            extraBalanceAmount = extraAmount;
+
+            //            response.InstallmentCalculations.Add(new InstallmentCalculationDto
+            //            {
+            //                InstallmentId = schedule.Id,
+
+            //                InstallmentNo = schedule.InstallmentNo,
+
+            //                DueDate = dueDate,
+
+            //                ReceiptDate = receiptDate,
+
+            //                InstallmentAmount = Convert.ToDecimal(installmentAmount),
+
+            //                ReceivedAmount = Convert.ToDecimal(receivedAmount),
+
+            //                DelayDays = delayDays,
+
+            //                PenalInterest = Math.Round(penalInterest, 2),
+            //                PenaltyRateInPercent = PenalityRateInPercent,
+            //                PenalityAmount = Math.Round(penalityAmount, 2),
+
+            //                //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
+
+            //                ExtraAmount = Math.Round(extraAmount, 2)
+            //            });
+            //        }
+            //        else
+            //        {
+            //            extraBalanceAmount = 0;
+            //            PendingEMIReceiveAmount = receivedAmount;
+            //            response.InstallmentNotCompleted.Add(new InstallmentScheduleDto
+            //            {
+            //                Id = schedule.Id,
+            //                PropertyId = schedule.PropertyId,
+            //                PropertyCode = schedule.PropertyCode,
+            //                InstallmentNo = schedule.InstallmentNo,
+            //                CalculatedDueDate = schedule.CalculatedDueDate,
+            //                BasePrincipal = schedule.BasePrincipal,
+            //                Interest = schedule.Interest,
+            //                TotalEstimatedAmount = schedule.TotalEstimatedAmount,
+            //                IsActive = schedule.IsActive
+            //            });
+            //        }
+
+            //    }
+            //}
+
+
+
             if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
             {
-                var schedules = response.InstallmentSchedules.OrderBy(x => x.CalculatedDueDate).ToList();
-                var receipts = response.Installments.Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1).OrderBy(x => x.ReceiptDate).ToList();
+                var schedules = response.InstallmentSchedules
+                    .Where(x => x.CalculatedDueDate.HasValue)
+                    .OrderBy(x => x.CalculatedDueDate)
+                    .ToList();
+
+                var receipts = response.Installments
+                    .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1)
+                    .OrderBy(x => x.ReceiptDate)
+                    .ToList();
 
                 int receiptIndex = 0;
+
                 decimal extraBalanceAmount = 0m;
-                decimal PendingEMIReceiveAmount = 0m;
                 DateTime previousReceiptDate = DateTime.MinValue;
+
+                // Recalculate results from scratch.
+                response.InstallmentCalculations.Clear();
+                response.InstallmentNotCompleted.Clear();
 
                 foreach (var schedule in schedules)
                 {
-                    if (!schedule.CalculatedDueDate.HasValue)
-                        continue;
+                    DateTime dueDate = schedule.CalculatedDueDate!.Value.Date;
 
-                    if (receiptIndex >= receipts.Count)
-                        break;
-
-                    decimal receivedAmount;
-                    DateTime receiptDate;
-
-                    int delayDays = 0;
-                    int penalInterestRate = 12;
-                    int PenalityRateInPercent = 10;
-                    decimal penalityAmount = 0;
-                    decimal DueAmount = 0;
-
-                    DateTime dueDate = schedule.CalculatedDueDate.Value.Date;
                     decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
 
-                    if (installmentAmount <= extraBalanceAmount)
+                    if (installmentAmount <= 0m)
+                        continue;
+
+                    decimal receivedAmount = extraBalanceAmount;
+                    decimal penalityAmount = 0m;
+                    decimal DueAmount = installmentAmount;
+
+                    int delayDays = 0;
+                    int PenalityRateInPercent = 10;
+
+                    int penalInterestRate =
+                        response.AllotmentDate.HasValue &&
+                        response.AllotmentDate.Value.Year >= 1992
+                            ? 12
+                            : 6;
+
+                    DateTime receiptDate = extraBalanceAmount > 0m
+                        ? previousReceiptDate
+                        : DateTime.MinValue;
+
+                    // The previous surplus must not be counted again.
+                    extraBalanceAmount = 0m;
+
+                    // Calculate penalty for an existing carried balance.
+                    if (receiptDate != DateTime.MinValue)
                     {
-                        receiptDate = previousReceiptDate;
-                        receivedAmount = extraBalanceAmount;
-                    }
-                    else
-                    {
-                        if (receiptIndex >= receipts.Count)
-                            break;
+                        delayDays = Math.Max(0, (receiptDate - dueDate).Days);
 
-                        var receipt = receipts[receiptIndex];
-
-                        if (!receipt.ReceiptDate.HasValue)
-                            continue;
-
-                        var nextreceivedAmount = receipt.DraftAmount ?? 0m;
-                        receivedAmount = nextreceivedAmount + extraBalanceAmount;
-
-                        if (receivedAmount <= 0)
-                            continue;
-
-                        receiptDate = receipt.ReceiptDate.Value.Date;
-
-                        // Save this receipt date because it may
-                        // be required for the next installment
-                        previousReceiptDate = receiptDate;
-                        receiptIndex++;
-                    }
-
-                    if (receiptDate >= dueDate)
-                    {
-                        //var nextreceivedAmount = receipt.DraftAmount ?? 0m;
-                       // receivedAmount = nextreceivedAmount;
-
-                        delayDays = (receiptDate - dueDate).Days;
-                        if (delayDays > 0)
-                        {
-                            penalityAmount = Convert.ToDecimal((installmentAmount * PenalityRateInPercent) / 100);
-
-                        }
-                    }
+                        penalityAmount = delayDays > 0
+                            ? Math.Round(
+                                installmentAmount * PenalityRateInPercent / 100m, 2)
+                            : 0m;
 
                         DueAmount = installmentAmount + penalityAmount;
+                    }
 
-
-
-                    if (response.InstallmentNotCompleted.Count > 0)
+                    // Keep consuming receipts until the installment is fully paid.
+                    while (receivedAmount < DueAmount &&
+                           receiptIndex < receipts.Count)
                     {
-                        int InstallmentdelayDays = 0;
-                        int InstallpenalInterestRate = 12;
-                        int InstallPenalityRateInPercent = 10;
-                        decimal pendingAmount = 0;
-                        decimal InstallmentpenalityAmount = 0;
+                        var receipt = receipts[receiptIndex++];
 
-                        var pendingInstallment = response.InstallmentNotCompleted[0];
+                        decimal nextReceivedAmount = receipt.DraftAmount ?? 0m;
 
-                        decimal pendingInstallmentAmount = pendingInstallment.TotalEstimatedAmount ?? 0m;
-                        DateTime dueDateofPendingInstallent = pendingInstallment.CalculatedDueDate.Value.Date;
-                        var receiveamountwithPreviousDraftAmount = receivedAmount + PendingEMIReceiveAmount;
+                        if (nextReceivedAmount <= 0m)
+                            continue;
 
-                        if(receiptDate >= dueDateofPendingInstallent)
-                        {
-                            InstallmentdelayDays = (receiptDate - dueDateofPendingInstallent).Days;
-                            if (InstallmentdelayDays > 0)
-                            {
-                                InstallmentpenalityAmount = Convert.ToDecimal((pendingInstallmentAmount * InstallPenalityRateInPercent) / 100);
+                        receivedAmount += nextReceivedAmount;
 
-                            }
-                        }
-                        pendingAmount = pendingInstallmentAmount + InstallmentpenalityAmount;
+                        receiptDate = receipt.ReceiptDate!.Value.Date;
+                        previousReceiptDate = receiptDate;
 
-                        if (receiveamountwithPreviousDraftAmount >= pendingAmount)
-                        {
-                            // Pending installment completed
-                            if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
-                            {
-                                InstallpenalInterestRate = 12;
-                            }
-                            else
-                            {
-                                InstallpenalInterestRate = 6;
-                            }
+                        delayDays = Math.Max(0, (receiptDate - dueDate).Days);
 
+                        penalityAmount = delayDays > 0
+                            ? Math.Round(
+                                installmentAmount * PenalityRateInPercent / 100m, 2)
+                            : 0m;
 
-                            // Your calculation here
-                            decimal LatepenalInterest = Convert.ToDecimal((pendingInstallmentAmount * InstallmentdelayDays * InstallpenalInterestRate) / 36500);
+                        DueAmount = installmentAmount + penalityAmount;
+                    }
 
-                           // decimal totalPenalityAmount = penalInterest + penalityAmount;
-                            decimal extraAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount - pendingAmount);
-                            //extraBalanceAmount = extraAmount;
-                            receivedAmount = extraAmount;
-
-                            response.InstallmentCalculations.Add(new InstallmentCalculationDto
-                            {
-                                InstallmentId = pendingInstallment.Id,
-
-                                InstallmentNo = pendingInstallment.InstallmentNo,
-
-                                DueDate = dueDateofPendingInstallent,
-
-                                ReceiptDate = receiptDate,
-
-                                InstallmentAmount = Convert.ToDecimal(pendingInstallment.TotalEstimatedAmount),
-
-                                ReceivedAmount = Convert.ToDecimal(receiveamountwithPreviousDraftAmount),
-
-                                DelayDays = InstallmentdelayDays,
-
-                                PenalInterest = Math.Round(LatepenalInterest, 2),
-                                PenaltyRateInPercent = InstallPenalityRateInPercent,
-                                PenalityAmount = Math.Round(InstallmentpenalityAmount, 2),
-
-                                //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
-
-                                ExtraAmount = Math.Round(extraAmount, 2)
-                            });
-
-                            response.InstallmentNotCompleted.Clear();
-                        }
-                        else
-                        {
-                            extraBalanceAmount = 0;
-                            PendingEMIReceiveAmount += receivedAmount;
-                            response.InstallmentNotCompleted.Add(new InstallmentScheduleDto
+                    // INSTALLMENT NOT COMPLETED
+                    if (receivedAmount < DueAmount)
+                    {
+                        response.InstallmentNotCompleted.Add(
+                            new InstallmentScheduleDto
                             {
                                 Id = schedule.Id,
                                 PropertyId = schedule.PropertyId,
@@ -3247,74 +3423,50 @@ namespace Backend.Services.Implementations
                                 TotalEstimatedAmount = schedule.TotalEstimatedAmount,
                                 IsActive = schedule.IsActive
                             });
-                        }
+
+                        // Do not transfer this partial payment to the next
+                        // installment. It has already been consumed by this one.
+                        extraBalanceAmount = 0m;
+                        continue;
                     }
 
-                    if (receivedAmount >= DueAmount)
-                    {
+                    // INSTALLMENT COMPLETED
+                    decimal penalInterest = Math.Round(
+                        installmentAmount * delayDays * penalInterestRate / 36500m,
+                        2);
 
-                        if (response.AllotmentDate.HasValue && response.AllotmentDate.Value.Year >= 1992)
-                        {
-                            penalInterestRate = 12;
-                        }
-                        else
-                        {
-                            penalInterestRate = 6;
-                        }
+                    decimal extraAmount = receivedAmount - DueAmount;
 
-
-                        // Your calculation here
-                        decimal penalInterest = Convert.ToDecimal((installmentAmount * delayDays * penalInterestRate) / 36500);
-
-                        //decimal totalPenalityAmount = penalInterest + penalityAmount;
-                        decimal extraAmount = Convert.ToDecimal(receivedAmount - DueAmount);
-                        extraBalanceAmount = extraAmount;
-
-                        response.InstallmentCalculations.Add(new InstallmentCalculationDto
+                    response.InstallmentCalculations.Add(
+                        new InstallmentCalculationDto
                         {
                             InstallmentId = schedule.Id,
-
                             InstallmentNo = schedule.InstallmentNo,
-
                             DueDate = dueDate,
-
                             ReceiptDate = receiptDate,
-
-                            InstallmentAmount = Convert.ToDecimal(installmentAmount),
-
-                            ReceivedAmount = Convert.ToDecimal(receivedAmount),
-
+                            InstallmentAmount = installmentAmount,
+                            ReceivedAmount = receivedAmount,
                             DelayDays = delayDays,
-
-                            PenalInterest = Math.Round(penalInterest, 2),
+                            PenalInterest = penalInterest,
                             PenaltyRateInPercent = PenalityRateInPercent,
                             PenalityAmount = Math.Round(penalityAmount, 2),
-
-                            //TotalPenalityAmount = Math.Round(totalPenalityAmount, 2),
-
                             ExtraAmount = Math.Round(extraAmount, 2)
                         });
-                    }
-                    else
-                    {
-                        extraBalanceAmount = 0;
-                        PendingEMIReceiveAmount = receivedAmount;
-                        response.InstallmentNotCompleted.Add(new InstallmentScheduleDto
-                        {
-                            Id = schedule.Id,
-                            PropertyId = schedule.PropertyId,
-                            PropertyCode = schedule.PropertyCode,
-                            InstallmentNo = schedule.InstallmentNo,
-                            CalculatedDueDate = schedule.CalculatedDueDate,
-                            BasePrincipal = schedule.BasePrincipal,
-                            Interest = schedule.Interest,
-                            TotalEstimatedAmount = schedule.TotalEstimatedAmount,
-                            IsActive = schedule.IsActive
-                        });
-                    }
 
+                    // Carry forward only the actual surplus.
+                    extraBalanceAmount = extraAmount;
                 }
+
+                // Receipts left after all installment schedules are completed.
+                decimal remainingReceiptAmount = extraBalanceAmount;
+
+                for (int i = receiptIndex; i < receipts.Count; i++)
+                {
+                    remainingReceiptAmount += receipts[i].DraftAmount ?? 0m;
+                }
+
             }
+
 
             return response;
         }
