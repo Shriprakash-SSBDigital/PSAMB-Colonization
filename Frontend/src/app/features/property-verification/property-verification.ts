@@ -275,6 +275,9 @@ export class PropertyVerification implements OnInit {
       state: { registrationData: property.registrationData },
     });
   }
+
+  //View history of the property
+  
   viewHistory(property: PropertyVerificationModel): void {
     this.selectedHistoryPropertyNo = property.propertyNo;
     this.selectedHistory = [];

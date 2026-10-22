@@ -48,6 +48,7 @@ export class Propertybidderregn {
   }
 
   getPropertyHistory(id: number): Observable<any> {
+    //dummy data 
     return of({
       data: {
         propertyCode: `PROP-${id}`,
