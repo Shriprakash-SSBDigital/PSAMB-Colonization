@@ -52,6 +52,7 @@ export interface PlotSoldUnsoldDetail {
 export interface DigitizationPropertyDayWiseDto {
   createdDate: string;
   count: number;
+  totalRecords?: number;
 }
 
 export interface DigitizationPropertyDayWiseDetailsDto {
@@ -159,15 +160,49 @@ export class ReportService {
     });
   }
 
-  getDigitizationPropertyDayWiseCountAsync(fromDate: string, toDate: string): Observable<any> {
+  getDigitizationPropertyDayWiseCountAsync(
+    fromDate: string,
+    toDate: string,
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<any> {
     const params = new HttpParams()
       .set('fromDate', fromDate)
-      .set('toDate', toDate);
+      .set('toDate', toDate)
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
     return this.http.get<any>(`${this.baseUrl}/Report/GetDigitizationPropertyDayWiseCountAsync`, { params });
   }
 
-  getDigitizationPropertyDayWiseCount(fromDate: string, toDate: string): Observable<any> {
-    return this.getDigitizationPropertyDayWiseCountAsync(fromDate, toDate);
+  getDigitizationPropertyDayWiseCount(
+    fromDate: string,
+    toDate: string,
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<any> {
+    return this.getDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber, pageSize);
+  }
+
+  exportDigitizationPropertyDayWiseSummary(fromDate: string, toDate: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('fromDate', fromDate)
+      .set('toDate', toDate);
+
+    return this.http.get(`${this.baseUrl}/Report/ExportDigitizationPropertyDayWiseSummary`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  exportDigitizationPropertyDayWiseSummaryPdf(fromDate: string, toDate: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('fromDate', fromDate)
+      .set('toDate', toDate);
+
+    return this.http.get(`${this.baseUrl}/Report/ExportDigitizationPropertyDayWiseSummaryPdf`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   getDigitizationPropertyDayWiseCountDetailsAsync(fromDate: string): Observable<any> {

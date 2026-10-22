@@ -26,11 +26,11 @@ namespace Backend.Controllers
         }
 
         [HttpGet("ExportMandiWiseAllotmentSummary")]
-        public async Task<IActionResult> ExportMandiWiseAllotmentSummary(int districtId, int branchId, int mandiId, DateTime? fromDate = null, DateTime? toDate = null)
+        public async Task<IActionResult> ExportMandiWiseAllotmentSummary(int districtId, int branchId, int mandiId, DateTime? fromDate = null, DateTime? toDate = null, [FromQuery] string? columns = null)
         {
             try
             {
-                byte[] fileBytes = await _service.ExportGetMandiWiseAllotmentSummaryAsync(districtId, branchId, mandiId, fromDate, toDate);
+                byte[] fileBytes = await _service.ExportGetMandiWiseAllotmentSummaryAsync(districtId, branchId, mandiId, fromDate, toDate, columns);
 
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MandiWiseAllotmentSummary.xlsx");
             }
@@ -41,9 +41,9 @@ namespace Backend.Controllers
         }
 
         [HttpGet("ExportMandiWiseAllotmentSummaryPdf")]
-        public async Task<IActionResult> ExportMandiWiseAllotmentSummaryPdf([FromQuery] int? districtId, [FromQuery] int? branchId, [FromQuery] int? mandiId,[FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate)
+        public async Task<IActionResult> ExportMandiWiseAllotmentSummaryPdf([FromQuery] int? districtId, [FromQuery] int? branchId, [FromQuery] int? mandiId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] string? columns = null)
         {
-            var pdfBytes = await _service.ExportMandiWiseAllotmentSummaryPdfAsync(districtId, branchId, mandiId,fromDate, toDate);
+            var pdfBytes = await _service.ExportMandiWiseAllotmentSummaryPdfAsync(districtId, branchId, mandiId, fromDate, toDate, columns);
 
             return File(pdfBytes,"application/pdf","MandiWiseAllotmentSummary.pdf");
         }
@@ -129,11 +129,39 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetDigitizationPropertyDayWiseCountAsync")]
-        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountAsync([FromQuery] DateTime fromDate,  [FromQuery] DateTime toDate)
+        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountAsync([FromQuery] DateTime fromDate,  [FromQuery] DateTime toDate, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var response = await _service.GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate);
+            var response = await _service.GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber,pageSize);
 
             return Ok(response);
+        }
+
+        [HttpGet("ExportDigitizationPropertyDayWiseSummary")]
+        public async Task<IActionResult> ExportDigitizationPropertyDayWiseSummary([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+        {
+            try
+            {
+                byte[] fileBytes = await _service.ExportDigitizationPropertyDayWiseSummaryAsync(fromDate, toDate);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"DigitizationPropertySummary_{fromDate:yyyyMMdd}_to_{toDate:yyyyMMdd}.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("ExportDigitizationPropertyDayWiseSummaryPdf")]
+        public async Task<IActionResult> ExportDigitizationPropertyDayWiseSummaryPdf([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+        {
+            try
+            {
+                byte[] pdfBytes = await _service.ExportDigitizationPropertyDayWiseSummaryPdfAsync(fromDate, toDate);
+                return File(pdfBytes, "application/pdf", $"DigitizationPropertySummary_{fromDate:yyyyMMdd}_to_{toDate:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
         }
 
         [HttpGet("GetDigitizationPropertyDayWiseCountDetailsAsync")]

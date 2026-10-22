@@ -138,7 +138,11 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
   allRows: PlotSummaryRow[] = [];
   filterForm: any;
   mandiOptions: MandiOption[] = [];
-  isExporting = false;
+  isExportingExcel = false;
+  isExportingPdf = false;
+  get isExporting(): boolean {
+    return this.isExportingExcel || this.isExportingPdf;
+  }
 
   get selectedDistrictName(): string {
     const dId = this.form?.get('districtId')?.value;
@@ -897,16 +901,29 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
   }
 //export pdf function 
   exportToPDF(): void {
+    if (this.isExportingPdf) return;
+
+    this.isExportingPdf = true;
+    this.cdr.detectChanges();
+
     const { districtId, branchId, mandiId, fromDate, toDate } = this.getExportFilters();
+    const columns = this.getVisibleColumnKeys();
 
     this.mandiWiseService
-      .exportPdfMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate)
+      .exportPdfMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate, columns)
+      .pipe(
+        finalize(() => {
+          this.isExportingPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
       .subscribe({
         next: (data: Blob) => {
           const url = window.URL.createObjectURL(data);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'Mandi_Wise_Allotment_Summary.pdf';
+          const timestamp = new Date().toISOString().split('T')[0];
+          a.download = `Mandi_Wise_Allotment_Summary_${timestamp}.pdf`;
           document.body.appendChild(a);
           a.click();
           window.URL.revokeObjectURL(url);
@@ -993,19 +1010,24 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     );
   }
 
-  exportToExcel(): void {
-    if (this.isExporting) return;
+  getVisibleColumnKeys(): string {
+    return this.columns.filter((c) => c.visible).map((c) => c.key).join(',');
+  }
 
-    this.isExporting = true;
+  exportToExcel(): void {
+    if (this.isExportingExcel) return;
+
+    this.isExportingExcel = true;
     this.cdr.detectChanges();
 
     const { districtId, branchId, mandiId, fromDate, toDate } = this.getExportFilters();
+    const columns = this.getVisibleColumnKeys();
 
     this.mandiWiseService
-      .exportMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate)
+      .exportMandiWiseAllotmentSummary(districtId, branchId, mandiId, fromDate, toDate, columns)
       .pipe(
         finalize(() => {
-          this.isExporting = false;
+          this.isExportingExcel = false;
           this.cdr.detectChanges();
         })
       )
