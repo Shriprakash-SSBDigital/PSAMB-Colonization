@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -45,6 +45,33 @@ export class Propertybidderregn {
       url += `?searchCode=${encodeURIComponent(searchCode)}`;
     }
     return this.http.get<any>(url);
+  }
+
+  getPropertyHistory(id: number): Observable<any> {
+    return of({
+      data: {
+        propertyCode: `PROP-${id}`,
+        createdDate: '2026-07-25T11:42:00',
+        modifiedDate: '2026-07-29T15:20:00',
+        history: [
+          {
+            status: 'Pending',
+            date: '2026-07-25T11:42:00',
+            remarks: null
+          },
+          {
+            status: 'Objection',
+            date: '2026-07-27T10:15:00',
+            remarks: 'Please upload the updated ownership document.'
+          },
+          {
+            status: 'Verified',
+            date: '2026-07-29T15:20:00',
+            remarks: null
+          }
+        ]
+      }
+    });
   }
 
   VerifyByClerk(payload: any): Observable<any> {
@@ -98,4 +125,3 @@ export class Propertybidderregn {
     return this.http.get<any>(`${this.baseUrl}/PropertyBidderRegn/GetPlotSizebyPlotNo?MandiId=${mandiId}&PlotTypeId=${plotTypeId}&PlotNo=${encodeURIComponent(plotNo)}`);
   }
 }
-
