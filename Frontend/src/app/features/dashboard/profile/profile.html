@@ -67,32 +67,14 @@
               <label class="form-label">Email Address</label>
               <input type="email" class="form-control minimal-input"
                      [class.is-invalid]="f['email'].invalid && f['email'].touched"
-                     formControlName="email">
-              @if (f['email'].invalid && f['email'].touched) {
-                <div class="text-danger small mt-1">
-                  @if (f['email'].errors?.['required']) {
-                    Email is required.
-                  } @else if (f['email'].errors?.['email']) {
-                    Enter a valid email address.
-                  }
-                </div>
-              }
+                     formControlName="email" readonly>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Mobile No.</label>
               <input type="tel" class="form-control minimal-input"
                      [class.is-invalid]="f['mobile'].invalid && f['mobile'].touched"
-                     formControlName="mobile" maxlength="10">
-              @if (f['mobile'].invalid && f['mobile'].touched) {
-                <div class="text-danger small mt-1">
-                  @if (f['mobile'].errors?.['required']) {
-                    Mobile number is required.
-                  } @else if (f['mobile'].errors?.['pattern']) {
-                    Enter a valid 10 digit mobile number.
-                  }
-                </div>
-              }
+                     formControlName="mobile" maxlength="10" readonly>
             </div>
 
             <div class="col-md-6">

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { PropertyVerification } from './property-verification';
+import { PopoverModule } from 'primeng/popover';
 
 // Angular Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -35,6 +36,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatPaginatorModule,
     MatSelectModule,
     MatTooltipModule,
+    PopoverModule,
 
     RouterModule.forChild([
       {

@@ -73,14 +73,8 @@ export class Profile implements OnInit {
   private buildProfileForm(): void {
     this.profileForm = this.fb.group({
       name: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      mobile: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^[0-9]{10}$/)
-        ]
-      ],
+      email: [''],
+      mobile: [''],
       altMobile: [
         '',
         [Validators.pattern(/^[0-9]{10}$/)]
