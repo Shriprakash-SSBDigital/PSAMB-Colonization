@@ -1,3 +1,5 @@
+using ClosedXML.Excel;
+
 namespace Backend.Models.DTOs
 {
     public class ReportDto
@@ -84,6 +86,7 @@ namespace Backend.Models.DTOs
     {
         public DateTime CreatedDate { get; set; }
         public int Count { get; set; }
+        public int TotalRecords { get; set; }
     }
 
     public class DigitizationPropertyDayWiseDetailsDto
@@ -115,6 +118,18 @@ namespace Backend.Models.DTOs
         public int OverallSoldPlots { get; set; }
         public int OverallUnsoldPlots { get; set; }
         public List<T> Data { get; set; } = new();
+    }
+
+    public class MandiWiseReportColumnDef
+    {
+        public string Key { get; set; } = "";
+        public string Header { get; set; } = "";
+        public float PdfWeight { get; set; } = 1.0f;
+        public bool AlignCenter { get; set; }
+        public bool AlignRight { get; set; }
+        public bool Bold { get; set; }
+        public Action<IXLCell, ReportDto, int> SetExcelCell { get; set; } = (c, d, s) => { };
+        public Func<ReportDto, int, string> GetPdfText { get; set; } = (d, s) => "";
     }
 
 }

@@ -544,14 +544,17 @@ namespace Backend.Services.Implementations
                     return ApiResponse<UserProfileImageDto>.Fail("User ID is required.");
                 }
 
-                var applicantId = await _context.ApplicationUsers.Where(x => x.IdentityUserId == userId && !x.IsDeleted) .Select(x => x.ApplicantId).FirstOrDefaultAsync();
+                var applicantId = await _context.ApplicationUsers
+                    .Where(x => x.IdentityUserId == userId && !x.IsDeleted)
+                    .Select(x => x.ApplicantId)
+                    .FirstOrDefaultAsync();
 
                 if (applicantId == 0)
                 {
                     return ApiResponse<UserProfileImageDto>.Fail("Application user not found.");
                 }
 
-                var document = await _context.UserDocuments.Where(x => x.ApplicantId == applicantId &&!x.IsDeleted &&x.IsActive &&
+                var document = await _context.UserDocuments.Where(x => x.ApplicantId == applicantId && !x.IsDeleted && x.IsActive &&
                         (
                             (x.FolderPath != null &&
                              x.FolderPath.Contains("Photograph")) ||
@@ -572,7 +575,20 @@ namespace Backend.Services.Implementations
 
                 if (document == null)
                 {
-                    return ApiResponse<UserProfileImageDto>.Fail("Profile photograph not found.");
+                    var existingSessionId = await _context.UserDocuments
+                        .Where(x => x.ApplicantId == applicantId && !x.IsDeleted && !string.IsNullOrWhiteSpace(x.TempSessionId))
+                        .OrderByDescending(x => x.CreatedDate)
+                        .Select(x => x.TempSessionId)
+                        .FirstOrDefaultAsync();
+
+                    var sessionId = !string.IsNullOrWhiteSpace(existingSessionId)
+                        ? existingSessionId
+                        : Guid.NewGuid().ToString();
+
+                    return ApiResponse<UserProfileImageDto>.Ok(new UserProfileImageDto
+                    {
+                        TempSessionId = sessionId
+                    }, "Profile photograph not found.");
                 }
 
                 var relativePath = !string.IsNullOrWhiteSpace(document.RelativePath)
@@ -585,7 +601,7 @@ namespace Backend.Services.Implementations
 
                 var rootPath = _settings.RootPath;
 
-                relativePath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);
+                relativePath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 var filePath = Path.Combine(rootPath, relativePath);
 
@@ -605,11 +621,143 @@ namespace Backend.Services.Implementations
                     TempSessionId = document.TempSessionId
                 };
 
-                return ApiResponse<UserProfileImageDto>.Ok(result,"Profile photograph fetched successfully.");
+                return ApiResponse<UserProfileImageDto>.Ok(result, "Profile photograph fetched successfully.");
             }
             catch (Exception ex)
             {
                 return ApiResponse<UserProfileImageDto>.Fail($"Error while fetching profile photograph: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<ApplicationUserProfileDto>> SaveProfileChangesAsync(string userId, UpdateUserProfileDto dto)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    return ApiResponse<ApplicationUserProfileDto>.Fail("User ID is required.");
+                }
+
+                if (dto == null)
+                {
+                    return ApiResponse<ApplicationUserProfileDto>.Fail("Profile update data is required.");
+                }
+
+                var applicationUser = await _context.ApplicationUsers
+                    .FirstOrDefaultAsync(x => x.IdentityUserId == userId && !x.IsDeleted);
+
+                if (applicationUser == null)
+                {
+                    return ApiResponse<ApplicationUserProfileDto>.Fail("No profile found for the given user.");
+                }
+
+                // 1. Update Name (FirstName & LastName)
+                if (!string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    string[] parts = dto.Name.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    applicationUser.FirstName = parts[0];
+                    applicationUser.LastName = parts.Length > 1 ? parts[1] : string.Empty;
+                }
+                else if (!string.IsNullOrWhiteSpace(dto.FirstName))
+                {
+                    applicationUser.FirstName = dto.FirstName.Trim();
+                    if (dto.LastName != null)
+                    {
+                        applicationUser.LastName = dto.LastName.Trim();
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.FatherName))
+                {
+                    string[] parts = dto.FatherName.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    applicationUser.FatherHusbandFirstName = parts.Length > 0 ? parts[0] : null;
+                    applicationUser.FatherHusbandLastName = parts.Length > 1 ? parts[1] : null;
+                }
+                else
+                {
+                    if (dto.FatherHusbandFirstName != null) applicationUser.FatherHusbandFirstName = dto.FatherHusbandFirstName.Trim();
+                    if (dto.FatherHusbandLastName != null) applicationUser.FatherHusbandLastName = dto.FatherHusbandLastName.Trim();
+                }
+
+                // Mother's Name
+                if (!string.IsNullOrWhiteSpace(dto.MotherName))
+                {
+                    string[] parts = dto.MotherName.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    applicationUser.MotherFirstName = parts.Length > 0 ? parts[0] : null;
+                    applicationUser.MotherLastName = parts.Length > 1 ? parts[1] : null;
+                }
+                else
+                {
+                    if (dto.MotherFirstName != null) applicationUser.MotherFirstName = dto.MotherFirstName.Trim();
+                    if (dto.MotherLastName != null) applicationUser.MotherLastName = dto.MotherLastName.Trim();
+                }
+
+                // 3. Address Details
+                var streetAddress = dto.IndividualPlotStreetLandmark;
+                if (streetAddress != null)
+                {
+                    applicationUser.IndividualPlotStreetLandmark = streetAddress.Trim();
+                }
+
+                var pinCode = dto.IndividualPinCode;
+                if (pinCode != null)
+                {
+                    applicationUser.IndividualPinCode = pinCode.Trim();
+                }
+
+                // State
+                if (dto.IndividualStateId.HasValue && dto.IndividualStateId.Value > 0)
+                {
+                    applicationUser.IndividualStateId = dto.IndividualStateId.Value;
+                }
+                //else if (!string.IsNullOrWhiteSpace(dto.State))
+                //{
+                //    var stateMatch = await _context.StateMasters
+                //        .FirstOrDefaultAsync(s => s.StateName.ToLower() == dto.State.Trim().ToLower());
+                //    if (stateMatch != null)
+                //    {
+                //        applicationUser.IndividualStateId = stateMatch.StateId;
+                //    }
+                //}
+
+                // District
+                if (dto.IndividualDistrictId.HasValue && dto.IndividualDistrictId.Value > 0)
+                {
+                    applicationUser.IndividualDistrictId = dto.IndividualDistrictId.Value;
+                }
+                //else if (!string.IsNullOrWhiteSpace(dto.District))
+                //{
+                //    var districtMatch = await _context.DistrictMasters
+                //        .FirstOrDefaultAsync(d => d.DistrictName.ToLower() == dto.District.Trim().ToLower());
+                //    if (districtMatch != null)
+                //    {
+                //        applicationUser.IndividualDistrictId = districtMatch.DistrictId;
+                //    }
+                //}
+
+                // City
+                if (dto.IndividualCityId.HasValue && dto.IndividualCityId.Value > 0)
+                {
+                    applicationUser.IndividualCityId = dto.IndividualCityId.Value;
+                }
+                //else if (!string.IsNullOrWhiteSpace(dto.City))
+                //{
+                //    var cityMatch = await _context.CityMasters
+                //        .FirstOrDefaultAsync(c => c.CityName.ToLower() == dto.City.Trim().ToLower());
+                //    if (cityMatch != null)
+                //    {
+                //        applicationUser.IndividualCityId = cityMatch.CityId;
+                //    }
+                //}
+
+                await _context.SaveChangesAsync();
+
+                return await GetProfileDetailsByUserId(userId);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<ApplicationUserProfileDto>.Fail(
+                    $"Error while updating profile details: {ex.Message}");
             }
         }
     }

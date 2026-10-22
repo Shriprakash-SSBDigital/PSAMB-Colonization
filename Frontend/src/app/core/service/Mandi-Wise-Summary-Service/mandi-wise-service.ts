@@ -81,7 +81,8 @@ export class MandiWiseService {
     branchId: number = 0,
     mandiId: number = 0,
     fromDate?: string | null,
-    toDate?: string | null
+    toDate?: string | null,
+    columns?: string | null
   ): Observable<Blob> {
     let params = new HttpParams();
     params = params.set('districtId', (districtId || 0).toString());
@@ -92,6 +93,9 @@ export class MandiWiseService {
     }
     if (toDate) {
       params = params.set('toDate', toDate);
+    }
+    if (columns) {
+      params = params.set('columns', columns);
     }
 
     return this.http.get(`${this.baseUrl}/Report/ExportMandiWiseAllotmentSummary`, {
@@ -105,7 +109,8 @@ export class MandiWiseService {
     branchId: number = 0,
     mandiId: number = 0,
     fromDate?: string | null,
-    toDate?: string | null
+    toDate?: string | null,
+    columns?: string | null
   ): Observable<Blob> {
     let params = new HttpParams();
     params = params.set('districtId', (districtId || 0).toString());
@@ -116,6 +121,9 @@ export class MandiWiseService {
     }
     if (toDate) {
       params = params.set('toDate', toDate);
+    }
+    if (columns) {
+      params = params.set('columns', columns);
     }
 
     return this.http.get(`${this.baseUrl}/Report/ExportMandiWiseAllotmentSummaryPdf`, {

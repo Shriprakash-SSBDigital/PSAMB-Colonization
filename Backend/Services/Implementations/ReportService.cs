@@ -187,106 +187,288 @@ namespace Backend.Services.Implementations
         }
 
   
-        public async Task<byte[]> ExportGetMandiWiseAllotmentSummaryAsync(int districtId, int branchId, int mandiId, DateTime? fromDate = null, DateTime? toDate = null)
+ 
+
+        private static readonly Dictionary<string, MandiWiseReportColumnDef> MandiWiseColumnsMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["srNo"] = new MandiWiseReportColumnDef
+            {
+                Key = "srNo",
+                Header = "Sr. No.",
+                PdfWeight = 0.8f,
+                AlignCenter = true,
+                Bold = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = sr;
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                },
+                GetPdfText = (dto, sr) => sr.ToString()
+            },
+            ["alloteeCode"] = new MandiWiseReportColumnDef
+            {
+                Key = "alloteeCode",
+                Header = "Allotee Code",
+                PdfWeight = 2.0f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.AllotteeCode ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.AllotteeCode ?? ""
+            },
+            ["name"] = new MandiWiseReportColumnDef
+            {
+                Key = "name",
+                Header = "Allotee Name",
+                PdfWeight = 2.4f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.AllotteeName ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.AllotteeName ?? ""
+            },
+            ["district"] = new MandiWiseReportColumnDef
+            {
+                Key = "district",
+                Header = "District",
+                PdfWeight = 1.8f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.DistrictName ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.DistrictName ?? ""
+            },
+            ["branchName"] = new MandiWiseReportColumnDef
+            {
+                Key = "branchName",
+                Header = "Market Committee",
+                PdfWeight = 2.0f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.BranchName ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.BranchName ?? ""
+            },
+            ["mandi"] = new MandiWiseReportColumnDef
+            {
+                Key = "mandi",
+                Header = "Mandi",
+                PdfWeight = 2.0f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.MandiName ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.MandiName ?? ""
+            },
+            ["plotType"] = new MandiWiseReportColumnDef
+            {
+                Key = "plotType",
+                Header = "Plot Type",
+                PdfWeight = 1.6f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.PlotType ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.PlotType ?? ""
+            },
+            ["plotNo"] = new MandiWiseReportColumnDef
+            {
+                Key = "plotNo",
+                Header = "Plot No.",
+                PdfWeight = 1.2f,
+                AlignCenter = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.PlotNo ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                },
+                GetPdfText = (dto, sr) => dto.PlotNo ?? ""
+            },
+            ["plotSize"] = new MandiWiseReportColumnDef
+            {
+                Key = "plotSize",
+                Header = "Plot Size",
+                PdfWeight = 1.4f,
+                AlignCenter = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.PlotSize ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                },
+                GetPdfText = (dto, sr) => dto.PlotSize ?? ""
+            },
+            ["auctionDate"] = new MandiWiseReportColumnDef
+            {
+                Key = "auctionDate",
+                Header = "Auction Date",
+                PdfWeight = 1.6f,
+                AlignCenter = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    if (dto.AuctionDate.HasValue)
+                    {
+                        cell.Value = dto.AuctionDate.Value;
+                        cell.Style.DateFormat.Format = "dd-MM-yyyy";
+                    }
+                    else
+                    {
+                        cell.Value = "";
+                    }
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                },
+                GetPdfText = (dto, sr) => dto.AuctionDate?.ToString("dd-MM-yyyy") ?? ""
+            },
+            ["allotmentDate"] = new MandiWiseReportColumnDef
+            {
+                Key = "allotmentDate",
+                Header = "Allotment Date",
+                PdfWeight = 1.6f,
+                AlignCenter = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    if (dto.DateOfAllotment.HasValue)
+                    {
+                        cell.Value = dto.DateOfAllotment.Value;
+                        cell.Style.DateFormat.Format = "dd-MM-yyyy";
+                    }
+                    else
+                    {
+                        cell.Value = "";
+                    }
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                },
+                GetPdfText = (dto, sr) => dto.DateOfAllotment?.ToString("dd-MM-yyyy") ?? ""
+            },
+            ["allotmentNo"] = new MandiWiseReportColumnDef
+            {
+                Key = "allotmentNo",
+                Header = "Allotment No.",
+                PdfWeight = 1.8f,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    cell.Value = dto.AllotmentNumber ?? "";
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                },
+                GetPdfText = (dto, sr) => dto.AllotmentNumber ?? ""
+            },
+            ["allotmentPrice"] = new MandiWiseReportColumnDef
+            {
+                Key = "allotmentPrice",
+                Header = "Allotment Price",
+                PdfWeight = 1.8f,
+                AlignRight = true,
+                Bold = true,
+                SetExcelCell = (cell, dto, sr) =>
+                {
+                    if (dto.FinalBidPrice.HasValue)
+                    {
+                        cell.Value = dto.FinalBidPrice.Value;
+                        cell.Style.NumberFormat.Format = "#,##0.00";
+                    }
+                    else
+                    {
+                        cell.Value = "";
+                    }
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                },
+                GetPdfText = (dto, sr) => dto.FinalBidPrice?.ToString("N2") ?? ""
+            }
+        };
+
+        private static List<MandiWiseReportColumnDef> ResolveMandiWiseColumns(string? columns)
+        {
+            var defaultKeys = new[]
+            {
+                "srNo", "alloteeCode", "name", "district", "branchName", "mandi",
+                "plotType", "plotNo", "plotSize", "auctionDate", "allotmentDate", "allotmentNo", "allotmentPrice"
+            };
+
+            if (string.IsNullOrWhiteSpace(columns))
+            {
+                return defaultKeys.Select(k => MandiWiseColumnsMap[k]).ToList();
+            }
+
+            var requestedKeys = columns.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var list = new List<MandiWiseReportColumnDef>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var rawKey in requestedKeys)
+            {
+                var key = rawKey.Trim();
+                if (MandiWiseColumnsMap.TryGetValue(key, out var colDef) && seen.Add(colDef.Key))
+                {
+                    list.Add(colDef);
+                }
+            }
+
+            return list.Count > 0 ? list : defaultKeys.Select(k => MandiWiseColumnsMap[k]).ToList();
+        }
+
+        public async Task<byte[]> ExportGetMandiWiseAllotmentSummaryAsync(int districtId, int branchId, int mandiId, DateTime? fromDate = null, DateTime? toDate = null, string? columns = null)
         {
             try
             {
                 var response = await GetMandiWiseAllotmentSummaryAsync(districtId, branchId, mandiId, pageNumber: 1, pageSize: 1000000, fromDate, toDate);
 
                 using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Mandi Wise Allotment Summary");
 
-                var worksheet = workbook.Worksheets.Add(
-                    "Mandi Wise Allotment Summary");
+                var selectedColumns = ResolveMandiWiseColumns(columns);
 
-                // Excel Headers
-                string[] headers =
-                {"Allottee Code", "Allottee Name", "Father Name", "District Name","Branch Name","Mandi Name","Plot Type", "Plot No","Plot Size", "Auction Date", "Date Of Allotment", "Property ID", "Sales Amount","Estate No" };
-
-                for (int col = 0; col < headers.Length; col++)
+                for (int col = 0; col < selectedColumns.Count; col++)
                 {
-                    worksheet.Cell(1, col + 1).Value = headers[col];
+                    worksheet.Cell(1, col + 1).Value = selectedColumns[col].Header;
                 }
 
                 var headerRow = worksheet.Row(1);
-
                 headerRow.Style.Font.Bold = true;
                 headerRow.Style.Fill.BackgroundColor = XLColor.LightGray;
-                headerRow.Style.Alignment.Horizontal =XLAlignmentHorizontalValues.Center;
+                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 var records = response.Data?.Data ?? new List<ReportDto>();
 
                 int row = 2;
+                int srNo = 1;
 
                 foreach (var item in records)
                 {
-                    worksheet.Cell(row, 1).Value = item.AllotteeCode ?? "";
-                    worksheet.Cell(row, 2).Value = item.AllotteeName ?? "";
-                    worksheet.Cell(row, 3).Value = item.AllotteeFatherName ?? "";
-                    worksheet.Cell(row, 4).Value = item.DistrictName ?? "";
-                    worksheet.Cell(row, 5).Value = item.BranchName ?? "";
-                    worksheet.Cell(row, 6).Value = item.MandiName ?? "";
-                    worksheet.Cell(row, 7).Value = item.PlotType ?? "";
-                    worksheet.Cell(row, 8).Value = item.PlotNo ?? "";
-                    worksheet.Cell(row, 9).Value = item.PlotSize ?? "";
-
-                    if (item.AuctionDate.HasValue)
+                    for (int col = 0; col < selectedColumns.Count; col++)
                     {
-                        worksheet.Cell(row, 10).Value = item.AuctionDate.Value;
-                        worksheet.Cell(row, 10).Style.DateFormat.Format =
-                            "dd-MM-yyyy";
+                        var cell = worksheet.Cell(row, col + 1);
+                        selectedColumns[col].SetExcelCell(cell, item, srNo);
                     }
-
-                    if (item.DateOfAllotment.HasValue)
-                    {
-                        worksheet.Cell(row, 11).Value = item.DateOfAllotment.Value;
-                        worksheet.Cell(row, 11).Style.DateFormat.Format =
-                            "dd-MM-yyyy";
-                    }
-
-                    worksheet.Cell(row, 12).Value = item.PropertyId;
-
-                    if (item.FinalBidPrice.HasValue)
-                    {
-                        worksheet.Cell(row, 13).Value = item.FinalBidPrice.Value;
-                        worksheet.Cell(row, 13).Style.NumberFormat.Format =
-                            "#,##0.00";
-                    }
-
-                    worksheet.Cell(row, 14).Value = item.AllotmentNumber ?? "";
-
                     row++;
+                    srNo++;
                 }
 
-                if (row > 2)
-                {
-                    worksheet.Range(1, 1, row - 1, headers.Length)
-                        .Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                int totalDataRows = row - 2;
+                int endRow = totalDataRows > 0 ? row - 1 : 1;
 
-                    worksheet.Range(1, 1, row - 1, headers.Length)
-                        .Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-                }
+                worksheet.Range(1, 1, endRow, selectedColumns.Count)
+                    .Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                worksheet.Range(1, 1, endRow, selectedColumns.Count)
+                    .Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 worksheet.SheetView.FreezeRows(1);
-
                 worksheet.Columns().AdjustToContents();
 
                 using var stream = new MemoryStream();
-
                 workbook.SaveAs(stream);
-
                 return stream.ToArray();
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    "Error while exporting Mandi Wise Allotment Summary to Excel.",
-                    ex);
+                throw new Exception("Error while exporting Mandi Wise Allotment Summary to Excel.", ex);
             }
         }
 
-
-
-        public async Task<byte[]> ExportMandiWiseAllotmentSummaryPdfAsync(int? districtId, int? branchId, int? mandiId, DateTime? fromDate = null, DateTime? toDate = null)
+        public async Task<byte[]> ExportMandiWiseAllotmentSummaryPdfAsync(int? districtId, int? branchId, int? mandiId, DateTime? fromDate = null, DateTime? toDate = null, string? columns = null)
         {
             var response = await GetMandiWiseAllotmentSummaryAsync(districtId ?? 0, branchId ?? 0, mandiId ?? 0, pageNumber: 1, pageSize: 1000000, fromDate: fromDate, toDate: toDate);
 
@@ -297,13 +479,14 @@ namespace Backend.Services.Implementations
             }
 
             var data = response.Data?.Data ?? new List<ReportDto>();
+            var selectedColumns = ResolveMandiWiseColumns(columns);
 
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
             var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48"); 
             var headerBgColor = QuestPDF.Infrastructure.Color.FromHex("#1b4332");
-            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f4f9f5"); 
-            var borderColor = QuestPDF.Infrastructure.Color.FromHex("#d1d5db");
+            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f8fafc"); 
+            var gridBorderColor = QuestPDF.Infrastructure.Color.FromHex("#cbd5e1");
 
             // Generate PDF
             var document = QuestPDF.Fluent.Document.Create(container =>
@@ -323,8 +506,6 @@ namespace Backend.Services.Implementations
                         {
                             row.RelativeItem().Column(titleCol =>
                             {
-                                
-
                                 titleCol.Item().Text("Mandi-Wise Allotment Summary Report")
                                     .SemiBold()
                                     .FontSize(10)
@@ -365,55 +546,36 @@ namespace Backend.Services.Implementations
                             {
                                 column.Item().Table(table =>
                                 {
-                                    table.ColumnsDefinition(columns =>
+                                    table.ColumnsDefinition(cols =>
                                     {
-                                        columns.ConstantColumn(36);   
-                                        columns.RelativeColumn(2.0f); 
-                                        columns.RelativeColumn(2.6f); 
-                                        columns.RelativeColumn(2.4f); 
-                                        columns.RelativeColumn(1.8f); 
-                                        columns.RelativeColumn(1.9f); 
-                                        columns.RelativeColumn(2.1f);
-                                        columns.RelativeColumn(1.8f);
-                                        columns.RelativeColumn(1.2f); 
-                                        columns.RelativeColumn(1.4f);
-                                        columns.RelativeColumn(1.7f);
-                                        columns.RelativeColumn(1.7f);
-                                        columns.RelativeColumn(1.8f);
+                                        foreach (var col in selectedColumns)
+                                        {
+                                            if (col.Key == "srNo")
+                                                cols.ConstantColumn(30);
+                                            else
+                                                cols.RelativeColumn(col.PdfWeight);
+                                        }
                                     });
 
                                     // Table header
                                     table.Header(header =>
                                     {
-                                        void HeaderCell(string text, bool alignCenter = false, bool alignRight = false)
+                                        foreach (var col in selectedColumns)
                                         {
                                             var cell = header.Cell()
                                                 .Background(headerBgColor)
                                                 .Border(0.5f)
-                                                .BorderColor(headerBgColor)
-                                                .Padding(4);
+                                                .BorderColor(QuestPDF.Infrastructure.Color.FromHex("#143d2b"))
+                                                .PaddingVertical(4)
+                                                .PaddingHorizontal(3);
 
-                                            if (alignCenter)
-                                                cell.AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
-                                            else if (alignRight)
-                                                cell.AlignRight().Text(text).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            if (col.AlignCenter)
+                                                cell.AlignCenter().Text(col.Header).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else if (col.AlignRight)
+                                                cell.AlignRight().Text(col.Header).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
                                             else
-                                                cell.AlignLeft().Text(text).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
+                                                cell.AlignLeft().Text(col.Header).Bold().FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.White);
                                         }
-
-                                        HeaderCell("Sr.", alignCenter: true);
-                                        HeaderCell("Allottee Code");
-                                        HeaderCell("Allottee Name");
-                                        HeaderCell("Father Name");
-                                        HeaderCell("District");
-                                        HeaderCell("Branch");
-                                        HeaderCell("Mandi");
-                                        HeaderCell("Plot Type");
-                                        HeaderCell("Plot No", alignCenter: true);
-                                        HeaderCell("Size", alignCenter: true);
-                                        HeaderCell("Auction Date", alignCenter: true);
-                                        HeaderCell("Allotment Date", alignCenter: true);
-                                        HeaderCell("Price", alignRight: true);
                                     });
 
                                     var srNo = 1;
@@ -423,45 +585,35 @@ namespace Backend.Services.Implementations
                                         var isEven = (srNo % 2 == 0);
                                         var rowBg = isEven ? zebraBgColor : QuestPDF.Helpers.Colors.White;
 
-                                        void DataCell(string? value, bool alignCenter = false, bool alignRight = false, bool bold = false)
+                                        foreach (var col in selectedColumns)
                                         {
                                             var cell = table.Cell()
+                                                .ShowEntire()
                                                 .Background(rowBg)
-                                                .BorderBottom(0.5f)
-                                                .BorderColor(borderColor)
-                                                .PaddingVertical(3)
-                                                .PaddingHorizontal(3);
+                                                .Border(0.5f)
+                                                .BorderColor(gridBorderColor)
+                                                .PaddingVertical(3f)
+                                                .PaddingHorizontal(3.5f);
 
-                                            if (alignCenter)
+                                            string val = col.GetPdfText(item, srNo);
+
+                                            if (col.AlignCenter)
                                             {
-                                                var t = cell.AlignCenter().Text(value ?? "").FontSize(7);
-                                                if (bold) t.Bold();
+                                                var t = cell.AlignCenter().Text(val).FontSize(7f);
+                                                if (col.Bold) t.Bold();
                                             }
-                                            else if (alignRight)
+                                            else if (col.AlignRight)
                                             {
-                                                var t = cell.AlignRight().Text(value ?? "").FontSize(7);
-                                                if (bold) t.Bold();
+                                                var t = cell.AlignRight().Text(val).FontSize(7f);
+                                                if (col.Bold) t.Bold();
                                             }
                                             else
                                             {
-                                                var t = cell.AlignLeft().Text(value ?? "").FontSize(7);
-                                                if (bold) t.Bold();
+                                                var t = cell.AlignLeft().Text(val).FontSize(7f);
+                                                if (col.Bold) t.Bold();
                                             }
                                         }
-
-                                        DataCell((srNo++).ToString(), alignCenter: true, bold: true);
-                                        DataCell(item.AllotteeCode);
-                                        DataCell(item.AllotteeName);
-                                        DataCell(item.AllotteeFatherName);
-                                        DataCell(item.DistrictName);
-                                        DataCell(item.BranchName);
-                                        DataCell(item.MandiName);
-                                        DataCell(item.PlotType);
-                                        DataCell(item.PlotNo, alignCenter: true);
-                                        DataCell(item.PlotSize, alignCenter: true);
-                                        DataCell(item.AuctionDate?.ToString("dd-MM-yyyy"), alignCenter: true);
-                                        DataCell(item.DateOfAllotment?.ToString("dd-MM-yyyy"), alignCenter: true);
-                                        DataCell(item.FinalBidPrice?.ToString("N2"), alignRight: true, bold: true);
+                                        srNo++;
                                     }
                                 });
                             }
@@ -474,7 +626,7 @@ namespace Backend.Services.Implementations
                             footerCol.Item().LineHorizontal(0.5f).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten1);
                             footerCol.Item().PaddingTop(4).Row(footerRow =>
                             {
-                               
+                                footerRow.RelativeItem().Text("PSAMB - Mandi Wise Allotment Summary").FontSize(7f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                                 footerRow.RelativeItem().AlignCenter().Text(text =>
                                 {
                                     text.Span("Page ").FontSize(7.5f);
@@ -482,8 +634,7 @@ namespace Backend.Services.Implementations
                                     text.Span(" of ").FontSize(7.5f);
                                     text.TotalPages().FontSize(7.5f).Bold();
                                 });
-
-                              
+                                footerRow.RelativeItem().AlignRight().Text($"{DateTime.Now:dd-MMM-yyyy}").FontSize(7f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                             });
                         });
                 });
@@ -1491,7 +1642,7 @@ namespace Backend.Services.Implementations
             return document.GeneratePdf();
         }
 
-        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>>  GetDigitizationPropertyDayWiseCountAsync(    DateTime fromDate, DateTime toDate)
+        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>>  GetDigitizationPropertyDayWiseCountAsync(DateTime fromDate, DateTime toDate, int pageNumber = 1,int pageSize = 10)
         {
             try
             {
@@ -1500,7 +1651,17 @@ namespace Backend.Services.Implementations
                     return ApiResponse<List<DigitizationPropertyDayWiseDto>>
                         .Fail("From Date cannot be greater than To Date.");
                 }
+                if (pageNumber < 1)
+                {
+                    return ApiResponse<List<DigitizationPropertyDayWiseDto>>
+                        .Fail("Page number must be greater than 0.");
+                }
 
+                if (pageSize < 1)
+                {
+                    return ApiResponse<List<DigitizationPropertyDayWiseDto>>
+                        .Fail("Page size must be greater than 0.");
+                }
                 var result = new List<DigitizationPropertyDayWiseDto>();
 
                 await using var connection = _context.Database.GetDbConnection();
@@ -1515,8 +1676,21 @@ namespace Backend.Services.Implementations
 
                 command.Parameters.Add(new SqlParameter("@FromDate", fromDate));
                 command.Parameters.Add(new SqlParameter("@ToDate", toDate));
+                command.Parameters.Add( new SqlParameter("@PageNumber", SqlDbType.Int) { Value = pageNumber });
+
+                command.Parameters.Add( new SqlParameter("@PageSize", SqlDbType.Int) { Value = pageSize });
 
                 await using var reader = await command.ExecuteReaderAsync();
+
+                bool hasTotalRecords = false;
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (string.Equals(reader.GetName(i), "TotalRecords", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasTotalRecords = true;
+                        break;
+                    }
+                }
 
                 while (await reader.ReadAsync())
                 {
@@ -1525,7 +1699,10 @@ namespace Backend.Services.Implementations
                         CreatedDate = Convert.ToDateTime(
                             reader["CreatedDate"]),
 
-                        Count = Convert.ToInt32(reader["Count"])
+                        Count = Convert.ToInt32(reader["Count"]),
+                        TotalRecords = hasTotalRecords && reader["TotalRecords"] != DBNull.Value
+                            ? Convert.ToInt32(reader["TotalRecords"])
+                            : 0
                     });
                 }
 
@@ -1537,6 +1714,289 @@ namespace Backend.Services.Implementations
                 return ApiResponse<List<DigitizationPropertyDayWiseDto>>
                     .Fail($"Error fetching day-wise property count: {ex.Message}");
             }
+        }
+
+        public async Task<byte[]> ExportDigitizationPropertyDayWiseSummaryAsync(DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var response = await GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber: 1, pageSize: 1000000);
+                if (response == null || !response.Success)
+                {
+                    throw new InvalidOperationException(response?.Message ?? "Unable to fetch digitization property count for export.");
+                }
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Digitization Property Summary");
+
+                worksheet.Cell(1, 1).Value = "Digitization Property Summary Report";
+                worksheet.Range(1, 1, 1, 3).Merge();
+                worksheet.Row(1).Style.Font.Bold = true;
+                worksheet.Row(1).Style.Font.FontSize = 13;
+                worksheet.Row(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Row(1).Style.Fill.BackgroundColor = XLColor.FromHtml("#E8F5E9");
+
+                // Headers (Row 3, so there is only 1 row space after heading)
+                string[] headers = { "Sr. No.", "Date", "Digitized Properties Count" };
+                for (int col = 0; col < headers.Length; col++)
+                {
+                    worksheet.Cell(3, col + 1).Value = headers[col];
+                }
+
+                var headerRow = worksheet.Row(3);
+                headerRow.Style.Font.Bold = true;
+                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#1B4332");
+                headerRow.Style.Font.FontColor = XLColor.White;
+                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                var records = response.Data ?? new List<DigitizationPropertyDayWiseDto>();
+                int row = 4;
+                int srNo = 1;
+                long totalCount = 0;
+
+                foreach (var item in records)
+                {
+                    worksheet.Cell(row, 1).Value = srNo++;
+                    worksheet.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    worksheet.Cell(row, 2).Value = item.CreatedDate.ToString("dd-MMM-yyyy");
+                    worksheet.Cell(row, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    worksheet.Cell(row, 3).Value = item.Count;
+                    worksheet.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0";
+
+                    totalCount += item.Count;
+                    row++;
+                }
+
+                // Summary Row
+                worksheet.Cell(row, 1).Value = "";
+                worksheet.Cell(row, 2).Value = "Total";
+                worksheet.Cell(row, 2).Style.Font.Bold = true;
+                worksheet.Cell(row, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                worksheet.Cell(row, 3).Value = totalCount;
+                worksheet.Cell(row, 3).Style.Font.Bold = true;
+                worksheet.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                worksheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0";
+
+                var totalRow = worksheet.Row(row);
+                totalRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#F4F9F5");
+
+                worksheet.Range(3, 1, row, headers.Length).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                worksheet.Range(3, 1, row, headers.Length).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                worksheet.Columns().AdjustToContents();
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while exporting Digitization Property Summary to Excel.", ex);
+            }
+        }
+
+        public async Task<byte[]> ExportDigitizationPropertyDayWiseSummaryPdfAsync(DateTime fromDate, DateTime toDate)
+        {
+            var response = await GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber: 1, pageSize: 1000000);
+
+            if (response == null || !response.Success)
+            {
+                throw new InvalidOperationException(response?.Message ?? "Unable to fetch digitization property summary.");
+            }
+
+            var data = response.Data ?? new List<DigitizationPropertyDayWiseDto>();
+            long totalCount = data.Sum(d => (long)d.Count);
+
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+            var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48");
+            var headerBgColor = QuestPDF.Infrastructure.Color.FromHex("#1b4332");
+            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f8fafc");
+            var borderColor = QuestPDF.Infrastructure.Color.FromHex("#cbd5e1");
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4.Portrait());
+                    page.Margin(1.2f, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+
+                    page.DefaultTextStyle(style => style.FontSize(9f));
+
+                    // Header
+                    page.Header().PaddingBottom(10).Column(headerCol =>
+                    {
+                        headerCol.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(titleCol =>
+                            {
+                                titleCol.Item().Text("Digitization Property Summary Report")
+                                    .Bold()
+                                    .FontSize(14f)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
+
+                                
+                            });
+
+                            row.ConstantItem(200).AlignRight().Column(metaCol =>
+                            {
+                                metaCol.Item().Text($"Date: {DateTime.Now:dd-MMM-yyyy hh:mm tt}")
+                                    .FontSize(9.5f)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+
+                                //metaCol.Item().PaddingTop(2).Text($"Total Properties: {totalCount:N0}")
+                                //    .Bold()
+                                //    .FontSize(9.5f)
+                                //    .FontColor(primaryColor);
+                            });
+                        });
+
+                        headerCol.Item().PaddingTop(6).LineHorizontal(1.5f).LineColor(primaryColor);
+                    });
+
+                    // Content
+                    page.Content()
+                        .PaddingVertical(4)
+                        .Column(column =>
+                        {
+                            if (data.Count == 0)
+                            {
+                                column.Item()
+                                    .AlignCenter()
+                                    .Padding(30)
+                                    .Text("No digitization property records found for the selected date range.")
+                                    .FontSize(11)
+                                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            }
+                            else
+                            {
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.ConstantColumn(50); // S.No
+                                        columns.RelativeColumn(2f); // Date
+                                        columns.RelativeColumn(2f); // Count
+                                    });
+
+                                    // Table Header
+                                    table.Header(header =>
+                                    {
+                                        void HeaderCell(string text, bool alignRight = false, bool alignCenter = false)
+                                        {
+                                            var cell = header.Cell()
+                                                .Background(headerBgColor)
+                                                .Border(0.5f)
+                                                .BorderColor(borderColor)
+                                                .PaddingVertical(6)
+                                                .PaddingHorizontal(8);
+
+                                            if (alignRight)
+                                                cell.AlignRight().Text(text).Bold().FontSize(9f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else if (alignCenter)
+                                                cell.AlignCenter().Text(text).Bold().FontSize(9f).FontColor(QuestPDF.Helpers.Colors.White);
+                                            else
+                                                cell.AlignLeft().Text(text).Bold().FontSize(9f).FontColor(QuestPDF.Helpers.Colors.White);
+                                        }
+
+                                        HeaderCell("Sr. No.", alignCenter: true);
+                                        HeaderCell("Date", alignCenter: true);
+                                        HeaderCell("Properties Count", alignRight: true);
+                                    });
+
+                                    // Table Rows
+                                    int srNo = 1;
+                                    foreach (var item in data)
+                                    {
+                                        var isZebra = (srNo % 2 == 0);
+                                        var rowBg = isZebra ? zebraBgColor : QuestPDF.Helpers.Colors.White;
+
+                                        void DataCell(string text, bool alignRight = false, bool alignCenter = false, bool isBold = false)
+                                        {
+                                            var cell = table.Cell()
+                                                .Background(rowBg)
+                                                .Border(0.5f)
+                                                .BorderColor(borderColor)
+                                                .PaddingVertical(5)
+                                                .PaddingHorizontal(8);
+
+                                            if (alignRight)
+                                            {
+                                                var t = cell.AlignRight().Text(text).FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                                                if (isBold) t.Bold();
+                                            }
+                                            else if (alignCenter)
+                                            {
+                                                var t = cell.AlignCenter().Text(text).FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                                                if (isBold) t.Bold();
+                                            }
+                                            else
+                                            {
+                                                var t = cell.AlignLeft().Text(text).FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                                                if (isBold) t.Bold();
+                                            }
+                                        }
+
+                                        DataCell(srNo.ToString(), alignCenter: true);
+                                        DataCell(item.CreatedDate.ToString("dd-MMM-yyyy"), alignCenter: true);
+                                        DataCell(item.Count.ToString("N0"), alignRight: true, isBold: true);
+
+                                        srNo++;
+                                    }
+
+                                    // Summary / Total Row
+                                    table.Cell().ColumnSpan(2)
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(borderColor)
+                                        .PaddingVertical(6)
+                                        .PaddingHorizontal(8)
+                                        .AlignRight()
+                                        .Text("Total")
+                                        .Bold()
+                                        .FontSize(9.5f)
+                                        .FontColor(primaryColor);
+
+                                    table.Cell()
+                                        .Background(QuestPDF.Infrastructure.Color.FromHex("#E8F5E9"))
+                                        .Border(0.5f)
+                                        .BorderColor(borderColor)
+                                        .PaddingVertical(6)
+                                        .PaddingHorizontal(8)
+                                        .AlignRight()
+                                        .Text(totalCount.ToString("N0"))
+                                        .Bold()
+                                        .FontSize(9.5f)
+                                        .FontColor(primaryColor);
+                                });
+                            }
+                        });
+
+                    // Footer
+                    page.Footer().PaddingTop(6).Column(footerCol =>
+                    {
+                        footerCol.Item().LineHorizontal(0.5f).LineColor(borderColor);
+                        footerCol.Item().PaddingTop(3).Row(row =>
+                        {
+                            row.RelativeItem().Text("PSAMB Colonization").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                            row.RelativeItem().AlignRight().Text(text =>
+                            {
+                                text.Span("Page ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                                text.CurrentPageNumber().FontSize(8f).Bold();
+                                text.Span(" of ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                                text.TotalPages().FontSize(8f).Bold();
+                            });
+                        });
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
         }
 
         public async Task<ApiResponse<List<DigitizationPropertyDayWiseDetailsDto>>> GetDigitizationPropertyDayWiseCountDetailsAsync(DateTime fromDate)

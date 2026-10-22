@@ -83,6 +83,9 @@ export class DigitisedSummaryReport implements OnInit {
 
   pageIndex = 0;
   pageSize = 10;
+  totalRecords = 0;
+  isExportingExcel = false;
+  isExportingPdf = false;
 
   // Detail Modal State
   showDetailsModal = false;
@@ -99,12 +102,6 @@ export class DigitisedSummaryReport implements OnInit {
   detailPageIndex = 0;
   detailPageSize = 10;
   copiedPropertyCode: string | null = null;
-
-  @ViewChild('mainPaginator') set paginator(p: MatPaginator | undefined) {
-    if (p) {
-      this.dataSource.paginator = p;
-    }
-  }
 
   @ViewChild('detailPaginator') set detailPaginator(p: MatPaginator | undefined) {
     if (p) {
@@ -160,21 +157,30 @@ export class DigitisedSummaryReport implements OnInit {
   }
 
   search(): void {
+    this.loadData(true);
+  }
+
+  loadData(resetPage: boolean = false): void {
     if (this.filterForm.invalid) {
       this.filterForm.markAllAsTouched();
       return;
     }
 
+    if (resetPage) {
+      this.pageIndex = 0;
+      this.detailCache.clear();
+    }
+
     const { fromDate, toDate } = this.filterForm.getRawValue();
     const formattedFrom = formatDateToYYYYMMDD(fromDate);
     const formattedTo = formatDateToYYYYMMDD(toDate);
+    const pageNumber = this.pageIndex + 1;
 
     this.loading = true;
-    this.pageIndex = 0;
-    this.detailCache.clear();
+    this.cdr.detectChanges();
 
     this.reportService
-      .getDigitizationPropertyDayWiseCountAsync(formattedFrom, formattedTo)
+      .getDigitizationPropertyDayWiseCountAsync(formattedFrom, formattedTo, pageNumber, this.pageSize)
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -183,7 +189,25 @@ export class DigitisedSummaryReport implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
-          const rawList = res?.data ?? (Array.isArray(res) ? res : []);
+          const pagedData = res?.data ?? res;
+          const rawList = Array.isArray(pagedData) ? pagedData : (pagedData?.data ?? []);
+
+          const backendTotal = Number(
+            pagedData?.totalRecords ??
+            pagedData?.TotalRecords ??
+            (rawList.length > 0 ? (rawList[0]?.totalRecords ?? rawList[0]?.TotalRecords) : 0) ??
+            0
+          );
+
+          if (backendTotal > 0) {
+            this.totalRecords = backendTotal;
+          } else if (rawList.length < this.pageSize) {
+            this.totalRecords = this.pageIndex * this.pageSize + rawList.length;
+          } else {
+            // If full page returned and total not provided, allow next page navigation
+            this.totalRecords = (this.pageIndex + 2) * this.pageSize;
+          }
+
           const mappedRows: SummaryRow[] = Array.isArray(rawList)
             ? rawList.map((item: any) => {
                 const dateStr = formatDateToYYYYMMDD(item.createdDate ?? item.CreatedDate);
@@ -196,12 +220,12 @@ export class DigitisedSummaryReport implements OnInit {
             : [];
 
           this.dataSource.data = mappedRows;
-          this.pageIndex = 0;
           this.cdr.detectChanges();
         },
         error: (err: any) => {
           console.error('Error fetching digitization property day-wise count:', err);
           this.dataSource.data = [];
+          this.totalRecords = 0;
           this.cdr.detectChanges();
         },
       });
@@ -314,58 +338,103 @@ export class DigitisedSummaryReport implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
-    this.cdr.detectChanges();
+    this.loadData(false);
   }
 
-  exportExcel(): void {
-    if (this.filterForm.invalid || !this.rows.length) return;
+  exportToExcel(): void {
+    if (this.filterForm.invalid || (!this.rows.length && !this.totalRecords) || this.isExportingExcel) return;
     const { fromDate, toDate } = this.filterForm.getRawValue();
     const formattedFrom = formatDateToYYYYMMDD(fromDate);
     const formattedTo = formatDateToYYYYMMDD(toDate);
 
-    let tableRows = '';
-    this.rows.forEach((r, idx) => {
-      tableRows += `
-        <tr>
-          <td style="border: 1px solid black; text-align: center;">${idx + 1}</td>
-          <td style="border: 1px solid black; text-align: center; mso-number-format: '\\@';">${r.date}</td>
-          <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${r.count}</td>
-        </tr>`;
-    });
+    this.isExportingExcel = true;
+    this.cdr.detectChanges();
 
-    tableRows += `
-      <tr style="font-weight: bold; background-color: #f1f5f9;">
-        <td colspan="2" style="border: 1px solid black; text-align: right;">Total</td>
-        <td style="border: 1px solid black; text-align: right; mso-number-format: '#,##0';">${this.totalCount}</td>
-      </tr>`;
+    this.reportService
+      .exportDigitizationPropertyDayWiseSummary(formattedFrom, formattedTo)
+      .pipe(
+        finalize(() => {
+          this.isExportingExcel = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().split('T')[0];
+          link.download = `DigitizationPropertySummary_${formattedFrom}_to_${formattedTo}.xlsx`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: async (err: any) => {
+          console.error('Error downloading Excel file:', err);
+          let errorMsg = 'Failed to export Excel file. Please try again.';
+          if (err?.error instanceof Blob) {
+            try {
+              const text = await err.error.text();
+              const json = JSON.parse(text);
+              if (json?.message) errorMsg = json.message;
+            } catch {}
+          } else if (err?.message) {
+            errorMsg = err.message;
+          }
+          alert(errorMsg);
+        },
+      });
+  }
 
-    const excelHtml = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office"
-            xmlns:x="urn:schemas-microsoft-com:office:excel"
-            xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <style>
-          table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-          th { border: 1px solid black; font-weight: bold; background-color: #d1e7dd; padding: 6px 10px; }
-          td { padding: 6px 10px; }
-        </style>
-      </head>
-      <body>
-        <table>
-          <thead>
-            <tr>
-              <th style="border: 1px solid black; text-align: center;">S.No</th>
-              <th style="border: 1px solid black; text-align: center;">Date</th>
-              <th style="border: 1px solid black; text-align: right;">Count</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      </body>
-      </html>`;
+  exportToPDF(): void {
+    if (this.filterForm.invalid || (!this.rows.length && !this.totalRecords) || this.isExportingPdf) return;
+    const { fromDate, toDate } = this.filterForm.getRawValue();
+    const formattedFrom = formatDateToYYYYMMDD(fromDate);
+    const formattedTo = formatDateToYYYYMMDD(toDate);
 
-    this.downloadExcelBlob(excelHtml, `Digitization_Property_Summary_${formattedFrom}_to_${formattedTo}.xls`);
+    this.isExportingPdf = true;
+    this.cdr.detectChanges();
+
+    this.reportService
+      .exportDigitizationPropertyDayWiseSummaryPdf(formattedFrom, formattedTo)
+      .pipe(
+        finalize(() => {
+          this.isExportingPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `DigitizationPropertySummary_${formattedFrom}_to_${formattedTo}.pdf`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: async (err: any) => {
+          console.error('Error downloading PDF file:', err);
+          let errorMsg = 'Failed to export PDF file. Please try again.';
+          if (err?.error instanceof Blob) {
+            try {
+              const text = await err.error.text();
+              const json = JSON.parse(text);
+              if (json?.message) errorMsg = json.message;
+            } catch {}
+          } else if (err?.message) {
+            errorMsg = err.message;
+          }
+          alert(errorMsg);
+        },
+      });
+  }
+
+  // Alias for backward compatibility if template calls exportExcel or exportPdf
+  exportExcel(): void {
+    this.exportToExcel();
+  }
+
+  exportPdf(): void {
+    this.exportToPDF();
   }
 
   exportDetailsExcel(): void {
