@@ -1,3 +1,4 @@
+using Backend.Models.DTOs;
 using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -252,6 +253,31 @@ namespace Backend.Controllers
             if (!response.Success)
             {
                 return NotFound(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("SaveProfileChanges")]
+        public async Task<IActionResult> SaveProfileChanges([FromBody] UpdateUserProfileDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest(new { success = false, message = "User ID is required." });
+            }
+
+            if (dto == null)
+            {
+                return BadRequest(new { success = false, message = "Profile data is required." });
+            }
+
+            var response = await _common.SaveProfileChangesAsync(userId, dto);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
             }
 
             return Ok(response);

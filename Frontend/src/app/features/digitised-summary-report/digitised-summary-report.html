@@ -29,7 +29,7 @@
             </div>
 
             <div class="col-auto">
-              <button type="submit" class="btn btn-success fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
+              <button type="submit" class="btn btn-success fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-1 shadow-sm"
                 [disabled]="loading">
                 <span class="spinner-border spinner-border-sm" *ngIf="loading" aria-hidden="true"></span>
                 <i class="fa-solid fa-magnifying-glass" *ngIf="!loading"></i>
@@ -39,10 +39,23 @@
 
             <div class="col-auto">
               <button type="button"
-                class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 d-flex align-items-center gap-1"
-                (click)="exportExcel()" [disabled]="!rows.length || loading" matTooltip="Export"
-                matTooltipPosition="above">
-                <i class="fa-solid fa-file-excel fs-5 text-success"></i>
+                class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+                (click)="exportToExcel()" [disabled]="!rows.length || loading || isExportingExcel || isExportingPdf"
+                matTooltip="Export to Excel" matTooltipPosition="above">
+                <span *ngIf="isExportingExcel" class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isExportingExcel" class="fa-solid fa-file-excel fs-5 text-success"></i>
+                <span class="d-none d-sm-inline">{{ isExportingExcel ? 'Exporting...' : 'Excel' }}</span>
+              </button>
+            </div>
+
+            <div class="col-auto">
+              <button type="button"
+                class="btn btn-outline-secondary fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+                (click)="exportToPDF()" [disabled]="!rows.length || loading || isExportingExcel || isExportingPdf"
+                matTooltip="Export to PDF" matTooltipPosition="above">
+                <span *ngIf="isExportingPdf" class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isExportingPdf" class="fa-regular fa-file-pdf fs-5 text-danger"></i>
+                <span class="d-none d-sm-inline">{{ isExportingPdf ? 'Exporting...' : 'PDF' }}</span>
               </button>
             </div>
 
@@ -151,7 +164,7 @@
     </div>
 
     <div class="border-top" *ngIf="rows.length && !loading">
-      <mat-paginator #mainPaginator [length]="rows.length" [pageSize]="pageSize" [pageIndex]="pageIndex"
+      <mat-paginator [length]="totalRecords" [pageSize]="pageSize" [pageIndex]="pageIndex"
         [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons (page)="onPageChange($event)">
       </mat-paginator>
     </div>

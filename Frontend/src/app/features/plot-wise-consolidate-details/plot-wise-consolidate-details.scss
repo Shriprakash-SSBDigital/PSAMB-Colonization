@@ -119,3 +119,41 @@
     color: #212529;
   }
 }
+
+.btn-export-excel {
+  border-color: #198754;
+  background-color: #ffffff;
+  color: #198754;
+  transition: all 0.15s ease-in-out;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background-color: #e8f5e9 !important;
+    border-color: #198754 !important;
+    color: #198754 !important;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.btn-outline-secondary {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+  color: #475569;
+  transition: all 0.15s ease-in-out;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background-color: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}

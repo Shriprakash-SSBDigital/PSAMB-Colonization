@@ -1,19 +1,42 @@
-<!-- Filter Card -->
-<div class="bg-white rounded-4 p-3 p-lg-4 mb-3 border shadow-sm">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3">
-        <div>
-            <h1 class="h4 fw-bold text-success mb-1">Plot Wise Consolidate Details</h1>
-            <p class="small text-success fw-semibold text-uppercase mb-0">
-                Consolidated details for each plot
-            </p>
-        </div>
+<!-- Heading & Export Actions -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <h1 class="h5 fw-bold text-portal mb-1">Plot Wise Consolidate Details</h1>
+        <p class="small text-muted mb-0">
+            Consolidated details for each plot.
+        </p>
+    </div>
 
-        <form [formGroup]="filterForm" class="col-12 col-lg-3">
-            <label for="mandi" class="form-label small text-success fw-semibold text-uppercase mb-1">
+    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+        <button type="button"
+            class="btn btn-outline-success btn-export-excel fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+            (click)="exportToExcel()" [disabled]="loading || isExportingExcel || !pagedRows.length"
+            matTooltip="Export to Excel" matTooltipPosition="above">
+            <span *ngIf="isExportingExcel" class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
+            <i *ngIf="!isExportingExcel" class="fa-solid fa-file-excel fs-5 text-success"></i>
+            <span class="d-none d-sm-inline">{{ isExportingExcel ? 'Exporting...' : 'Excel' }}</span>
+        </button>
+
+        <button type="button"
+            class="btn btn-outline-secondary fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+            (click)="exportToPdf()" [disabled]="loading || isExportingPdf || !pagedRows.length"
+            matTooltip="Export to PDF" matTooltipPosition="above">
+            <span *ngIf="isExportingPdf" class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+            <i *ngIf="!isExportingPdf" class="fa-regular fa-file-pdf fs-5 text-danger"></i>
+            <span class="d-none d-sm-inline">{{ isExportingPdf ? 'Exporting...' : 'PDF' }}</span>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="bg-white rounded-3 p-3 p-lg-4 mb-3 border shadow-sm">
+    <form [formGroup]="filterForm" class="row g-3">
+        <div class="col-12 col-md-6 col-lg-4">
+            <label for="mandi" class="form-label small fw-semibold text-dark mb-1">
                 Mandi <span class="text-danger">*</span>
             </label>
-            <div class="input-group input-group-xs">
-                <select id="mandi" name="mandi" class="form-select custom-input-color" formControlName="mandi"
+            <div class="input-group">
+                <select id="mandi" name="mandi" class="form-select custom-input-color rounded-3" formControlName="mandi"
                     [class.is-invalid]="mandiControl?.invalid && mandiControl?.touched">
                     <option value="" disabled>{{ isLoadingMandis ? 'Loading Mandis...' : 'Select Mandi' }}</option>
                     <option *ngFor="let m of mandiOptions" [value]="m.value">{{ m.label }}</option>
@@ -23,8 +46,8 @@
             <div class="invalid-feedback d-block" *ngIf="mandiControl?.invalid && mandiControl?.touched">
                 Please select a mandi to view details.
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <!-- Error Alert -->
@@ -56,30 +79,10 @@
 
 <!-- Results -->
 <div class="card border-0 shadow-sm rounded-3 overflow-hidden" *ngIf="mandiControl?.value">
-    <div
-        class="card-header bg-white border-0 d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3 py-3">
-        <!-- Spacer on desktop to perfectly center the title against right-aligned buttons -->
-        <div class="d-none d-lg-block header-spacer"></div>
-
-        <h2 class="h6 fw-semibold text-dark mb-0 text-center flex-grow-1">
+    <div class="card-header bg-white border-0 py-3 text-center">
+        <h2 class="h6 fw-bold text-dark mb-0">
             Report of {{ selectedMandiLabel }} Mandi
         </h2>
-
-        <div class="d-flex gap-2 justify-content-end header-actions">
-            <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
-                (click)="exportToExcel()" [disabled]="loading || isExportingExcel || !pagedRows.length">
-                <i class="bi bi-file-earmark-excel"></i>
-                <span *ngIf="!isExportingExcel">Export to Excel</span>
-                <span *ngIf="isExportingExcel">Exporting...</span>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
-                (click)="exportToPdf()" [disabled]="loading || isExportingPdf || !pagedRows.length">
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span *ngIf="!isExportingPdf">Export to PDF</span>
-                <span *ngIf="isExportingPdf">Exporting...</span>
-            </button>
-
-        </div>
     </div>
 
     <div class="table-responsive table-scroll">

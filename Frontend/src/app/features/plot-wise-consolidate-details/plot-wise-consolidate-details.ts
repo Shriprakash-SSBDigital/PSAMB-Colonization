@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { ReportService } from '../../core/service/ReportService/report.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
@@ -32,7 +33,7 @@ export interface MandiOption {
 @Component({
   selector: 'app-plot-wise-consolidate-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule, PlotDetailsModal],
+  imports: [CommonModule, ReactiveFormsModule, MatPaginatorModule, MatTooltipModule, PlotDetailsModal],
   templateUrl: './plot-wise-consolidate-details.html',
   styleUrl: './plot-wise-consolidate-details.scss',
 })

@@ -18,6 +18,11 @@ interface PropertyVerificationModel {
   applicationStatusId?: number;
   registrationData?: Record<string, unknown>;
 }
+interface PropertyStatusHistoryEntry {
+  status: string;
+  date: string | null;
+  remarks: string | null;
+}
 
 @Component({
   selector: 'app-property-verification',
@@ -43,6 +48,11 @@ export class PropertyVerification implements OnInit {
   propertyList: PropertyVerificationModel[] = [];
   filteredPropertyList: PropertyVerificationModel[] = [];
   pagedPropertyList: PropertyVerificationModel[] = [];
+  selectedHistoryPropertyNo = '';
+  selectedHistory: PropertyStatusHistoryEntry[] = [];
+  selectedHistoryCreatedDate: string | null = null;
+  historyLoading = false;
+  historyError = '';
 
   pageIndex = 0;
   pageSize = 10;
@@ -265,7 +275,52 @@ export class PropertyVerification implements OnInit {
       state: { registrationData: property.registrationData },
     });
   }
+
+  //View history of the property
+  
   viewHistory(property: PropertyVerificationModel): void {
+    this.selectedHistoryPropertyNo = property.propertyNo;
+    this.selectedHistory = [];
+    this.selectedHistoryCreatedDate = null;
+    this.historyError = '';
+    this.historyLoading = true;
+
+    this.service.getPropertyHistory(property.id).subscribe({
+      next: (res: any) => {
+        const historyData = res?.data ?? res;
+        if (!historyData) {
+          this.historyError = 'History could not be loaded.';
+          return;
+        }
+
+        this.selectedHistoryPropertyNo = historyData.propertyCode ?? this.selectedHistoryPropertyNo;
+        this.selectedHistoryCreatedDate = historyData.createdDate ?? null;
+        this.selectedHistory = this.mapStatusHistory(historyData);
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error fetching property history:', err);
+        this.historyLoading = false;
+        this.historyError = 'History could not be loaded.';
+        this.cdr.detectChanges();
+      },
+      complete: () => {
+        this.historyLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private mapStatusHistory(data: any): PropertyStatusHistoryEntry[] {
+    const history = Array.isArray(data)
+      ? data
+      : data.history ?? data.statusHistory ?? data.applicationStatusHistory ?? [];
+
+    return history.map((entry: any) => ({
+      status: entry.statusName ?? entry.applicationStatusName ?? entry.status ?? 'Unknown',
+      date: entry.date ?? entry.createdDate ?? entry.modifiedDate ?? null,
+      remarks: entry.remarks ?? entry.remark ?? entry.objectionRemarks ?? null
+    }));
   }
 
   refreshData(): void {

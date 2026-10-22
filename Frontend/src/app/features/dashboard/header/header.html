@@ -1,18 +1,18 @@
 <nav class="navbar shadow-sm dashboard-header py-2 py-lg-2 d-print-none">
   <div class="container-fluid px-3 px-lg-4 position-relative">
-    <button class="btn sidebar-toggle d-inline-flex align-items-center justify-content-center"
-      type="button" aria-label="Toggle sidebar" (click)="onToggleSidebar()">
-      <i class="fa-solid fa-bars"></i>
+    <div class="navbar-brand dashboard-brand d-flex justify-content-start align-items-center gap-3 ms-0 me-auto text-start">
+      <button type="button" class="dashboard-logo-toggle" (click)="onToggleSidebar()"
+        aria-label="Toggle sidebar" title="Toggle sidebar">
+        <img src="assets/ColonizationLogo.png" width="42" class="rounded-circle flex-shrink-0 dashboard-logo"
+          alt="Toggle sidebar" />
+      <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
-
-    <a class="navbar-brand dashboard-brand d-flex justify-content-center align-items-center gap-3 mx-auto text-center" routerLink="/dashboard">
-      <img src="assets/ColonizationLogo.png" width="42" class="rounded-circle flex-shrink-0 dashboard-logo" alt="Board logo" />
 
       <span class="d-flex flex-column lh-sm">
         <span class="fw-bold text-white dashboard-title">Director Colonization Punjab</span>
         <small class="text-white d-none d-sm-inline sub-title">Property &amp; Auction Portal</small>
       </span>
-    </a>
+    </div>
 
     <button class="navbar-toggler dashboard-menu-toggle" type="button" [attr.aria-expanded]="isUserMenuOpen"
       aria-label="Toggle navigation" (click)="toggleUserMenu($event)">
@@ -23,7 +23,7 @@
       <i class="fa-solid fa-ellipsis-vertical custom-icon d-inline-flex d-md-none"></i>
     </button>
 
-    <div class="dashboard-user-menu dropdown-menu dropdown-menu-end bg-success bg-gradient border border-warning rounded-3 shadow-lg p-2 mt-1"
+    <div class="dashboard-user-menu dropdown-menu dropdown-menu-end bg-success bg-gradient border border-warning rounded-3 shadow-lg p-1"
       [class.show]="isUserMenuOpen">
       <a class="dropdown-item text-white rounded-2 py-2" routerLink="/profile" (click)="closeUserMenu()">
         <span class="me-2 text-warning"><i class="fa-regular fa-user"></i></span>

@@ -45,6 +45,42 @@
   filter: brightness(0) invert(1);
 }
 
+.dashboard-logo-toggle {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dashboard-logo-toggle i {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-white);
+  font-size: 1.25rem;
+}
+
+.dashboard-logo-toggle:hover,
+.dashboard-logo-toggle:focus-visible {
+  background: var(--theme-glass-hover);
+}
+
+.dashboard-logo-toggle:hover .dashboard-logo,
+.dashboard-logo-toggle:focus-visible .dashboard-logo {
+  visibility: hidden;
+}
+
+.dashboard-logo-toggle:hover i,
+.dashboard-logo-toggle:focus-visible i {
+  display: flex;
+}
+
 .dashboard-title {
   line-height: 1.2;
   font-family: 'Poppins', sans-serif;

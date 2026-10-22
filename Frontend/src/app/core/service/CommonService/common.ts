@@ -85,4 +85,8 @@ export class Common {
     GetProfileImageByUserId(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/common/GetProfileImageByUserId`);
   }
+
+  SaveProfileChanges(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/Common/SaveProfileChanges`, payload);
+  }
 }
