@@ -520,14 +520,12 @@
             </p>
             <p class="mb-2">
                 Total Pending Amount Including Installments & Penalties (In ₹):
-                <span class="fw-semibold">₹{{ (getTotalPendingAmount() >= 0 ? 0 : getTotalPendingAmount()) | number:'1.2-2':'en-IN' }}</span>
+                <span class="fw-semibold">₹{{ (getTotalPendingAmount() <= 0 ? 0 : getTotalPendingAmount()) | number:'1.2-2':'en-IN' }}</span>
             </p>
-            @if (getTotalPendingAmount()>=0) {
+            @if (getTotalPendingAmount()<=0) {
             <p class="mb-2">
                 Total Pending Amount (In ₹):
-                <span class="fw-semibold"
-                    [class.text-success]="getTotalDueAmount() >= 0"
-                    [class.text-danger]="getTotalDueAmount() < 0">
+                <span class="fw-bold fs-6">
                     ₹{{ getTotalDueAmount() | number:'1.2-2':'en-IN' }}
                 </span>
             </p>

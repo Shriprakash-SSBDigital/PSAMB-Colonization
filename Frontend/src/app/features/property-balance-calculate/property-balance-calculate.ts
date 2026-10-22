@@ -856,7 +856,7 @@ export class PropertyBalanceCalculate implements OnInit {
     const dueInstallmentsTotalDue = this.getTotal(this.balanceData.dueInstallments, 'totalDueAmount');
     const installmentReceivedTotal = this.getTotal(this.balanceData.installmentReceipts, 'draftAmount');
     const totalPenalityAmount = this.getTotal(this.balanceData.interestAndPenaltyDetails, 'penaltyAmount');
-    return installmentReceivedTotal - (dueInstallmentsTotalDue + totalPenalityAmount);
+    return (dueInstallmentsTotalDue + totalPenalityAmount) - installmentReceivedTotal;
   }
 
   // Total due amount fields shows only when the  getTotalPendingInstallmentsAmount() returns value greter then zero 
@@ -865,6 +865,6 @@ export class PropertyBalanceCalculate implements OnInit {
     if (!this.balanceData) {
       return 0;
     }
-    return this.getTotalPendingAmount() - this.getTotal(this.balanceData.interestAndPenaltyDetails, 'penalInterest');
+    return this.getTotalPendingAmount() + this.getTotal(this.balanceData.interestAndPenaltyDetails, 'penalInterest');
   }
 }
