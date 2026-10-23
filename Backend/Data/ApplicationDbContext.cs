@@ -46,6 +46,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityApplicationUser>
     public DbSet<InstallmentSchedule> InstallmentSchedule { get; set; }
     public DbSet<UserPropertyRegistration> UserPropertyRegistration { get; set; }
     public DbSet<UserDocument> UserDocuments { get; set; }
+    public DbSet<PropertyTimelineHistory> PropertyTimelineHistory { get; set; }
 
 
     public DbSet<HRMSData> HRMSDatas => Set<HRMSData>();

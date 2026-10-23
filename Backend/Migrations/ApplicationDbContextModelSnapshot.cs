@@ -30,7 +30,13 @@ namespace Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserDocumentId"));
 
+                    b.Property<long?>("ApplicantId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
@@ -39,16 +45,19 @@ namespace Backend.Migrations
                     b.Property<int>("DocumentCategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("DocumentNumber")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("DocumentTypeId")
                         .HasColumnType("int");
 
                     b.Property<string>("FileExtension")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("FileSize")
+                    b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("FullPath")
+                    b.Property<string>("FolderPath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -69,11 +78,12 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
+                    b.Property<string>("TempSessionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserDocumentId");
+
+                    b.HasIndex("ApplicantId");
 
                     b.ToTable("UserDocuments");
                 });
@@ -1339,6 +1349,34 @@ namespace Backend.Migrations
                     b.ToTable("PropertyCategoryMaster");
                 });
 
+            modelBuilder.Entity("Backend.Models.Entities.PropertyTimelineHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("StatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PropertyTimelineHistory");
+                });
+
             modelBuilder.Entity("Backend.Models.Entities.PropertyType", b =>
                 {
                     b.Property<int>("PropertyTypeId")
@@ -1715,6 +1753,15 @@ namespace Backend.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Models.DTOs.UserDocument", b =>
+                {
+                    b.HasOne("Backend.Models.Entities.ApplicationUser", "Applicant")
+                        .WithMany()
+                        .HasForeignKey("ApplicantId");
+
+                    b.Navigation("Applicant");
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.PropertyBidderRegistration", b =>

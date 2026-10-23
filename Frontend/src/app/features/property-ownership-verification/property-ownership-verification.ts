@@ -70,7 +70,7 @@ export class PropertyOwnershipVerification implements OnInit {
 
   getUserId(): string {
     try {
-      const sessionStr = sessionStorage.getItem('cp_session') || localStorage.getItem('cp_session');
+      const sessionStr = sessionStorage.getItem('cp_session');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
         if (session?.userId) return String(session.userId);
@@ -82,7 +82,7 @@ export class PropertyOwnershipVerification implements OnInit {
     }
 
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const uid = payload?.UserId || payload?.userId || payload?.id || payload?.ApplicantId || payload?.applicantId || payload?.sub;

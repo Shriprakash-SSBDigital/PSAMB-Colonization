@@ -28,6 +28,18 @@ namespace Backend.Controllers
                 return BadRequest(ModelState);
             }
 
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.UserId))
+                {
+                    dto.UserId = GetUserId();
+                }
+            }
+            catch
+            {
+                // In case request is not authenticated or token missing
+            }
+
             var response = await _service.RegisterPropertyAsync(dto);
             if (!response.Success)
             {
@@ -152,6 +164,15 @@ namespace Backend.Controllers
                 });
             }
 
+            if (string.IsNullOrEmpty(dto.UserId))
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    dto.UserId = userId;
+                }
+            }
+
             var result = await _service.VerifyByClerk(dto);
 
             if (!result.Success)
@@ -159,6 +180,17 @@ namespace Backend.Controllers
                 return BadRequest(result);
             }
 
+            return Ok(result);
+        }
+
+        [HttpGet("GetPropertyTimelineHistory/{propertyId}")]
+        public async Task<IActionResult> GetPropertyTimelineHistory(int propertyId)
+        {
+            var result = await _service.GetPropertyTimelineHistoryAsync(propertyId);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
             return Ok(result);
         }
 
