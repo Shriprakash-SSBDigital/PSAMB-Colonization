@@ -10,15 +10,16 @@
 
       <span class="d-flex flex-column lh-sm">
         <span class="fw-bold text-white dashboard-title">Director Colonization Punjab</span>
-        <small class="text-white d-none d-sm-inline sub-title">Property &amp; Auction Portal</small>
+        <small class="text-white sub-title">Property &amp; Auction Portal</small>
       </span>
     </div>
 
-    <button class="navbar-toggler dashboard-menu-toggle" type="button" [attr.aria-expanded]="isUserMenuOpen"
+    <button class="navbar-toggler dashboard-menu-toggle border-none" type="button" [attr.aria-expanded]="isUserMenuOpen"
       aria-label="Toggle navigation" (click)="toggleUserMenu($event)">
-      <span class="menu-toggle-text d-none d-md-inline-flex align-items-center gap-3">
-         {{ fullName }}
-        <i class="fa-solid fa-chevron-down"></i>
+      <span class="menu-toggle-text d-none d-md-inline-flex align-items-center gap-3 px-2 py-1">
+         <!-- {{ fullName }} -->
+        <!-- <i class="fa-solid fa-chevron-down"></i> -->
+        <i class="fa-solid fa-circle-user fs-2 text-white"></i>
       </span>
       <i class="fa-solid fa-ellipsis-vertical custom-icon d-inline-flex d-md-none"></i>
     </button>
