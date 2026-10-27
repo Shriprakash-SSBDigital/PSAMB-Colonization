@@ -232,10 +232,50 @@
 }
 ::ng-deep .custom-green-popover.p-popover {
     border: 1px solid var(--theme-primary) !important;
-    box-shadow: 0 4px 14px var(--theme-primary) !important;
+    box-shadow: 0 4px 12px var(--theme-primary) !important;
 }
 
 ::ng-deep .custom-green-popover.p-popover::before,
 ::ng-deep .custom-green-popover.p-popover::after {
     border-bottom-color: var(--theme-primary) !important;
+}
+
+::ng-deep .custom-green-popover.p-popover .history-timeline {
+    display: block;
+}
+
+::ng-deep .custom-green-popover.p-popover .history-timeline-content {
+    width: 100%;
+}
+
+::ng-deep .custom-green-popover.p-popover .history-table .timeline-cell {
+    position: relative;
+    width: 44%;
+    padding-left: 28px !important;
+    overflow: visible;
+}
+
+::ng-deep .custom-green-popover.p-popover .history-table tbody .timeline-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 12px;
+    width: 2px;
+    background: var(--theme-primary);
+    opacity: 0.35;
+}
+
+::ng-deep .custom-green-popover.p-popover .history-table .timeline-icon {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 5px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    font-size: 15px;
+    line-height: 16px;
+    background: #fff;
+    transform: translateY(-50%);
 }
