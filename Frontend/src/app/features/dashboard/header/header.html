@@ -1,6 +1,6 @@
 <nav class="navbar shadow-sm dashboard-header py-2 py-lg-2 d-print-none">
   <div class="container-fluid px-3 px-lg-4 position-relative">
-    <div class="navbar-brand dashboard-brand d-flex justify-content-start align-items-center gap-3 ms-0 me-auto text-start">
+    <div class="navbar-brand dashboard-brand dashboard-brand-desktop d-none d-lg-flex justify-content-start align-items-center gap-3 ms-0 me-auto text-start">
       <button type="button" class="dashboard-logo-toggle" (click)="onToggleSidebar()"
         aria-label="Toggle sidebar" title="Toggle sidebar">
         <img src="assets/ColonizationLogo.png" width="42" class="rounded-circle flex-shrink-0 dashboard-logo"
@@ -10,15 +10,32 @@
 
       <span class="d-flex flex-column lh-sm">
         <span class="fw-bold text-white dashboard-title">Director Colonization Punjab</span>
-        <small class="text-white d-none d-sm-inline sub-title">Property &amp; Auction Portal</small>
+        <small class="text-white sub-title">Property &amp; Auction Portal</small>
       </span>
     </div>
 
-    <button class="navbar-toggler dashboard-menu-toggle" type="button" [attr.aria-expanded]="isUserMenuOpen"
+    <!-- Mobile Header for Mobile View -->
+    <button type="button" class="sidebar-toggle dashboard-mobile-sidebar-toggle d-flex d-lg-none align-items-center justify-content-center flex-shrink-0"
+        (click)="onToggleSidebar()" aria-label="Toggle sidebar" title="Toggle sidebar">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+    </button>
+
+    <div class="navbar-brand dashboard-brand dashboard-brand-mobile d-flex d-lg-none align-items-center text-start">
+      <img src="assets/ColonizationLogo.png" width="38" height="38" class="dashboard-mobile-logo flex-shrink-0"
+        alt="Director Colonization Punjab logo" />
+
+      <span class="dashboard-mobile-copy d-flex flex-column lh-sm">
+        <span class="fw-bold text-white dashboard-title">Director Colonization Punjab</span>
+        <small class="text-white sub-title">Property &amp; Auction Portal</small>
+      </span>
+    </div>
+
+   <button class="navbar-toggler dashboard-menu-toggle border-none ms-auto" type="button" [attr.aria-expanded]="isUserMenuOpen"
       aria-label="Toggle navigation" (click)="toggleUserMenu($event)">
-      <span class="menu-toggle-text d-none d-md-inline-flex align-items-center gap-3">
-         {{ fullName }}
-        <i class="fa-solid fa-chevron-down"></i>
+      <span class="menu-toggle-text d-none d-md-inline-flex align-items-center gap-3 px-2 py-1">
+         <!-- {{ fullName }} -->
+        <!-- <i class="fa-solid fa-chevron-down"></i> -->
+        <i class="fa-solid fa-circle-user fs-2 text-white"></i>
       </span>
       <i class="fa-solid fa-ellipsis-vertical custom-icon d-inline-flex d-md-none"></i>
     </button>
