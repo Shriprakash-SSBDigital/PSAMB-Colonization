@@ -230,3 +230,12 @@
     border-radius: .75rem;
     font-size: .8rem;
 }
+::ng-deep .custom-green-popover.p-popover {
+    border: 1px solid var(--theme-primary) !important;
+    box-shadow: 0 4px 14px var(--theme-primary) !important;
+}
+
+::ng-deep .custom-green-popover.p-popover::before,
+::ng-deep .custom-green-popover.p-popover::after {
+    border-bottom-color: var(--theme-primary) !important;
+}

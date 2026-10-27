@@ -129,18 +129,18 @@ export class DataEntryOperatorVerificationView implements OnInit {
       data.sendBackRemarks ??
       data.objectionRemarks ??
       data.comment ??
-      data.Comment ??
+      data.Comment ?? null;
       this.checkVerificationStatus(statusId);
 
-    if (data.timelineHistory && Array.isArray(data.timelineHistory)) {
-      this.history = data.timelineHistory.map((item: any) => ({
-        role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
-        actorName: item.userName || item.userId || 'User',
-        action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
-        remarks: item.remarks || '',
-        date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
-      }));
-    }
+    // if (data.timelineHistory && Array.isArray(data.timelineHistory)) {
+    //   this.history = data.timelineHistory.map((item: any) => ({
+    //     role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
+    //     actorName: item.userName || item.userId || 'User',
+    //     action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
+    //     remarks: item.remarks || '',
+    //     date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
+    //   }));
+    // }
   }
 
   private canCurrentRoleAct(statusId: number | null | undefined): boolean {
