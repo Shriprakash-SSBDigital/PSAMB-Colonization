@@ -48,31 +48,7 @@ export class Propertybidderregn {
   }
 
   getPropertyHistory(id: number): Observable<any> {
-    //dummy data 
-    return of({
-      data: {
-        propertyCode: `PROP-${id}`,
-        createdDate: '2026-07-25T11:42:00',
-        modifiedDate: '2026-07-29T15:20:00',
-        history: [
-          {
-            status: 'Pending',
-            date: '2026-07-25T11:42:00',
-            remarks: null
-          },
-          {
-            status: 'Objection',
-            date: '2026-07-27T10:15:00',
-            remarks: 'Please upload the updated ownership document.'
-          },
-          {
-            status: 'Verified',
-            date: '2026-07-29T15:20:00',
-            remarks: null
-          }
-        ]
-      }
-    });
+    return this.http.get<any>(`${this.baseUrl}/PropertyBidderRegn/GetPropertyTimelineHistory/${id}`);
   }
 
   VerifyByClerk(payload: any): Observable<any> {

@@ -1966,7 +1966,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   }
 
   onSubmit(): void {
-    // debugger
+    debugger
     if (this.registerationForm.invalid) {
       this.registerationForm.markAllAsTouched();
       const invalidControls: string[] = [];
@@ -2024,15 +2024,29 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
     }
 
     let currentUserId: number | null = null;
+    let sessionUserId: string | null = null;
     if (token) {
       try {
         const tokenPayload = JSON.parse(atob(token!.split('.')[1]));
         if (tokenPayload.ApplicantId) {
           currentUserId = Number(tokenPayload.ApplicantId);
         }
+        sessionUserId = tokenPayload?.nameid || tokenPayload?.sub || tokenPayload?.UserId || tokenPayload?.userId || tokenPayload?.IdentityUserId || null;
       } catch (e) {
         // console.error('Error parsing token for currentUserId:', e);
       }
+    }
+
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const sessionObj = JSON.parse(cpSession);
+        if (sessionObj?.userId || sessionObj?.id) {
+          sessionUserId = String(sessionObj.userId || sessionObj.id);
+        }
+      }
+    } catch (e) {
+      // console.error('Error extracting session user id', e);
     }
 
     if (!applicantId && this.propertyData) {
@@ -2145,6 +2159,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
 
       createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy || currentUserId,
       modifiedBy: currentUserId,
+      userId: sessionUserId,
 
       installments: cleanReceipts,
 

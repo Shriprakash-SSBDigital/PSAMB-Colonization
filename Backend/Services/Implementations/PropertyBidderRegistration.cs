@@ -177,6 +177,19 @@ namespace Backend.Services.Implementations
                     await _context.SaveChangesAsync();
                 }
 
+                // Add entry to PropertyTimelineHistory when DEO digitizes property
+                var timeline = new Models.Entities.PropertyTimelineHistory
+                {
+                    PropertyId = entity.Id,
+                    Date = DateTime.UtcNow,
+                    StatusId = entity.ApplicationStatusId ?? 1,
+                    UserId = dto.UserId,
+                    Remarks = null
+                };
+
+                _context.PropertyTimelineHistory.Add(timeline);
+                await _context.SaveChangesAsync();
+
                 return ApiResponse<PropertyBidderRegistrationDto>.Ok(dto, "Property registered successfully");
             }
             catch (Exception ex)
@@ -733,6 +746,18 @@ namespace Backend.Services.Implementations
                     }).ToList();
 
                     _context.InstallmentSchedule.AddRange(newSchedules);
+
+                    var timeline = new Models.Entities.PropertyTimelineHistory
+                    {
+                        PropertyId = entity.Id,
+                        Date = DateTime.UtcNow,
+                        StatusId = entity.ApplicationStatusId ?? 1,
+                        UserId = dto.UserId,
+                        Remarks = null
+                    };
+
+                    _context.PropertyTimelineHistory.Add(timeline);
+                    await _context.SaveChangesAsync();
                 }
 
                 await _context.SaveChangesAsync();
@@ -951,6 +976,9 @@ namespace Backend.Services.Implementations
                             GetString(reader, "Label"),
                         ModifyByName = GetString(reader, "ModifiedUserName"),
 
+                        CreatedDate =
+                            GetDateTime(reader, "CreatedDate"),
+
                         // Initialize
                         Installments = new List<InstallmentDetailsDto>()
                     };
@@ -1020,10 +1048,45 @@ namespace Backend.Services.Implementations
                 }
 
 
+                var propertyIds = list.Select(p => p.Id).ToList();
+                var timelines = new List<PropertyTimelineHistoryDto>();
+
+                if (propertyIds.Any())
+                {
+                    timelines = await (from t in _context.PropertyTimelineHistory
+                                       where propertyIds.Contains(t.PropertyId)
+                                       join s in _context.ApplicationStatusMaster on t.StatusId equals s.ApplicationStatusId into sGroup
+                                       from status in sGroup.DefaultIfEmpty()
+                                       join u in _context.ApplicationUsers on t.UserId equals u.IdentityUserId into uGroup
+                                       from user in uGroup.DefaultIfEmpty()
+                                       orderby t.Date ascending
+                                       select new PropertyTimelineHistoryDto
+                                       {
+                                           Id = t.Id,
+                                           PropertyId = t.PropertyId,
+                                           Date = t.Date,
+                                           StatusId = t.StatusId,
+                                           StatusName = status != null ? status.ApplicationStatusName : (
+                                               t.StatusId == 1 ? "Pending" :
+                                               t.StatusId == 2 ? "Verified by Clerk" :
+                                               t.StatusId == 3 ? "Verified by Assistant" :
+                                               t.StatusId == 7 ? "Sent Back" : ""),
+                                           UserId = t.UserId,
+                                           UserName = user != null 
+                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim() 
+                                               : t.UserId,
+                                           Remarks = t.Remarks
+                                       }).ToListAsync();
+                }
+
                 foreach (var property in list)
                 {
                     property.Installments = installments
                         .Where(i => i.PropertyId == property.Id)
+                        .ToList();
+
+                    property.TimelineHistory = timelines
+                        .Where(t => t.PropertyId == property.Id)
                         .ToList();
                 }
 
@@ -1610,6 +1673,17 @@ namespace Backend.Services.Implementations
 
                 record.ModifiedBy = dto.ModifiedBy;
                 record.ModifiedDate = DateTime.Now;
+
+                var timeline = new Models.Entities.PropertyTimelineHistory
+                {
+                    PropertyId = record.Id,
+                    Date = DateTime.UtcNow,
+                    StatusId = record.ApplicationStatusId,
+                    UserId = !string.IsNullOrEmpty(dto.UserId) ? dto.UserId : dto.ModifiedBy?.ToString(),
+                    Remarks = !string.IsNullOrWhiteSpace(dto.Remarks) ? dto.Remarks : null
+                };
+
+                _context.PropertyTimelineHistory.Add(timeline);
 
                 await _context.SaveChangesAsync();
 
@@ -3471,5 +3545,42 @@ namespace Backend.Services.Implementations
             return response;
         }
 
+        public async Task<ApiResponse<List<PropertyTimelineHistoryDto>>> GetPropertyTimelineHistoryAsync(int propertyId)
+        {
+            try
+            {
+                var timelines = await (from t in _context.PropertyTimelineHistory
+                                       where t.PropertyId == propertyId
+                                       join s in _context.ApplicationStatusMaster on t.StatusId equals s.ApplicationStatusId into sGroup
+                                       from status in sGroup.DefaultIfEmpty()
+                                       join u in _context.ApplicationUsers on t.UserId equals u.IdentityUserId into uGroup
+                                       from user in uGroup.DefaultIfEmpty()
+                                       orderby t.Date ascending
+                                       select new PropertyTimelineHistoryDto
+                                       {
+                                           Id = t.Id,
+                                           PropertyId = t.PropertyId,
+                                           Date = t.Date,
+                                           StatusId = t.StatusId,
+                                           StatusName = status != null ? status.ApplicationStatusName : (
+                                               t.StatusId == 1 ? "Pending" :
+                                               t.StatusId == 2 ? "Verified by Clerk" :
+                                               t.StatusId == 3 ? "Verified by Assistant" :
+                                               t.StatusId == 7 ? "Sent Back" : "Unknown"),
+                                           UserId = t.UserId,
+                                           UserName = user != null 
+                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim() 
+                                               : t.UserId,
+                                           Remarks = t.Remarks
+                                       }).ToListAsync();
+
+                return ApiResponse<List<PropertyTimelineHistoryDto>>.Ok(timelines, "Property timeline history fetched successfully");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<PropertyTimelineHistoryDto>>.Fail(ex.Message);
+            }
         }
+
     }
+}
