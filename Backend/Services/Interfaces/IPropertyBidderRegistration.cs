@@ -30,6 +30,7 @@ namespace Backend.Services.Interfaces
         Task<ApiResponse<List<PlotTypeDto>>> GetPropertyMandiPlotTypesAsync(int mandiId);
         Task<List<AuctionedPlotDto>> GetPlotsByPlotTypeAsync(int mandiId, int plotTypeId);
         Task<ApiResponse<List<PlotSizesDto>>> GetPlotSizebyPlotNo(int mandiId, int plotTypeId, string plotNo);
+        Task<ApiResponse<List<PropertyTimelineHistoryDto>>> GetPropertyTimelineHistoryAsync(int propertyId);
 
     }
 }

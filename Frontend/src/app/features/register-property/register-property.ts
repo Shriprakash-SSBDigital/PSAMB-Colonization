@@ -264,7 +264,7 @@ export class RegisterProperty implements OnInit {
           const match = res.data.find((item: any) =>
             (id && (item.id === id || item.propertyId === id)) ||
             (propertyCode && ((item.allotteeCode || '').trim().toLowerCase() === propertyCode.trim().toLowerCase() ||
-                             (item.propertyCode || '').trim().toLowerCase() === propertyCode.trim().toLowerCase()))
+              (item.propertyCode || '').trim().toLowerCase() === propertyCode.trim().toLowerCase()))
           );
           if (match) {
             this.patchRegistrationData(match);
@@ -436,11 +436,11 @@ export class RegisterProperty implements OnInit {
 
     const proceedToBidderLocationPatch = () => {
       const stateVal = (d.ownerStateID && d.ownerStateID !== 0 && d.ownerStateID !== '0') ? d.ownerStateID :
-                      ((d.allotteeStateId && d.allotteeStateId !== 0 && d.allotteeStateId !== '0') ? d.allotteeStateId :
-                      ((d.state && d.state !== 0 && d.state !== '0') ? d.state : null));
+        ((d.allotteeStateId && d.allotteeStateId !== 0 && d.allotteeStateId !== '0') ? d.allotteeStateId :
+          ((d.state && d.state !== 0 && d.state !== '0') ? d.state : null));
       const districtVal = (d.ownerDistrtictID && d.ownerDistrtictID !== 0 && d.ownerDistrtictID !== '0') ? d.ownerDistrtictID :
-                         ((d.allotteeDistrictId && d.allotteeDistrictId !== 0 && d.allotteeDistrictId !== '0') ? d.allotteeDistrictId :
-                         ((d.ownerDistrict && d.ownerDistrict !== 0 && d.ownerDistrict !== '0') ? d.ownerDistrict : null));
+        ((d.allotteeDistrictId && d.allotteeDistrictId !== 0 && d.allotteeDistrictId !== '0') ? d.allotteeDistrictId :
+          ((d.ownerDistrict && d.ownerDistrict !== 0 && d.ownerDistrict !== '0') ? d.ownerDistrict : null));
 
       const tasks: { districts?: any; cities?: any } = {};
       if (stateVal) tasks.districts = this.commonService.getAllDistrict(stateVal);
@@ -1637,7 +1637,7 @@ export class RegisterProperty implements OnInit {
 
   private getApplicantId(): number {
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const applicantIdClaim = payload?.ApplicantId || payload?.applicantId || payload?.ApplicantID;
@@ -1650,7 +1650,7 @@ export class RegisterProperty implements OnInit {
     }
 
     try {
-      const sessionStr = sessionStorage.getItem('cp_session') || localStorage.getItem('cp_session');
+      const sessionStr = sessionStorage.getItem('cp_session');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
         if (session?.applicantId && !isNaN(Number(session.applicantId)) && Number(session.applicantId) > 0) {
