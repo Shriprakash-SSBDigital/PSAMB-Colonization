@@ -459,64 +459,64 @@ export class VerificationView implements OnInit {
     }
   }
 
- viewDocument(doc: UploadedDocument): void {
-  if (!doc.uploaded || !this.applicantID) {
-    return;
-  }
+  viewDocument(doc: UploadedDocument): void {
+    if (!doc.uploaded || !this.applicantID) {
+      return;
+    }
 
-  // Keep the selected document while API request is in progress
-  this.previewDoc = { ...doc };
-  this.previewDocSafeUrl = null;
+    // Keep the selected document while API request is in progress
+    this.previewDoc = { ...doc };
+    this.previewDocSafeUrl = null;
 
-  // Get the document URL from API using applicant ID
-  this.userService.GetUserDocumentsByUserIDAsync(this.applicantID).subscribe({
-    next: (res: any) => {
-      if (res?.success && res?.data) {
-        const docData = res.data.find(
-          (d: any) => d.key === doc.key
-        );
-
-        if (docData?.fileUrl) {
-
-          // Use the fileUrl returned by API
-          this.previewDoc = {
-            ...doc,
-            fileUrl: docData.fileUrl
-          };
-
-          // Keep the existing PDF preview functionality
-          const previewUrl = this.previewDoc.fileUrl;
-          if (previewUrl && this.isPdf(this.previewDoc)) {
-            this.previewDocSafeUrl =
-              this.sanitizer.bypassSecurityTrustResourceUrl(
-                previewUrl
-              );
-          } else {
-            this.previewDocSafeUrl = null;
-          }
-
-        } else {
-          console.warn(
-            `Document with key "${doc.key}" not found in API response.`
+    // Get the document URL from API using applicant ID
+    this.userService.GetUserDocumentsByUserIDAsync(this.applicantID).subscribe({
+      next: (res: any) => {
+        if (res?.success && res?.data) {
+          const docData = res.data.find(
+            (d: any) => d.key === doc.key
           );
 
-          this.previewDoc = null;
-          this.previewDocSafeUrl = null;
+          if (docData?.fileUrl) {
+
+            // Use the fileUrl returned by API
+            this.previewDoc = {
+              ...doc,
+              fileUrl: docData.fileUrl
+            };
+
+            // Keep the existing PDF preview functionality
+            const previewUrl = this.previewDoc.fileUrl;
+            if (previewUrl && this.isPdf(this.previewDoc)) {
+              this.previewDocSafeUrl =
+                this.sanitizer.bypassSecurityTrustResourceUrl(
+                  previewUrl
+                );
+            } else {
+              this.previewDocSafeUrl = null;
+            }
+
+          } else {
+            console.warn(
+              `Document with key "${doc.key}" not found in API response.`
+            );
+
+            this.previewDoc = null;
+            this.previewDocSafeUrl = null;
+          }
         }
+      },
+
+      error: (err: any) => {
+        console.error(
+          'Error occurred while fetching user documents:',
+          err
+        );
+
+        this.previewDoc = null;
+        this.previewDocSafeUrl = null;
       }
-    },
-
-    error: (err: any) => {
-      console.error(
-        'Error occurred while fetching user documents:',
-        err
-      );
-
-      this.previewDoc = null;
-      this.previewDocSafeUrl = null;
-    }
-  });
-}
+    });
+  }
 
   closePreview(): void {
     this.previewDoc = null;
@@ -645,7 +645,7 @@ export class VerificationView implements OnInit {
     try {
       const storedRole = sessionStorage.getItem('role');
       if (storedRole) return storedRole;
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const cpSession = sessionStorage.getItem('cp_session');
@@ -654,19 +654,19 @@ export class VerificationView implements OnInit {
         const role = session?.role || session?.userRole;
         if (role) return String(role);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     return '';
   }
 
   private getCurrentUserId(): number {
     try {
-      const sessionStr = sessionStorage.getItem('cp_session') || localStorage.getItem('cp_session');
+      const sessionStr = sessionStorage.getItem('cp_session');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
         return session?.userId || session?.id || session?.applicantId || 0;
       }
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return Number(payload?.UserId || payload?.userId || payload?.id || 0);

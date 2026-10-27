@@ -679,6 +679,17 @@ export class DeoVerification implements OnInit, OnChanges {
       this.receiptsList = this.deriveReceiptsList(data);
       this.bidderNamesList = this.deriveBidderNamesList(data);
 
+      const rawTimeline = (data as any)?.timelineHistory || (data as any)?.TimelineHistory;
+      if (rawTimeline && Array.isArray(rawTimeline) && rawTimeline.length > 0) {
+        this.history = rawTimeline.map((item: any) => ({
+          role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
+          actorName: item.userName || item.userId || 'User',
+          action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
+          remarks: item.remarks || '',
+          date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
+        }));
+      }
+
       const proceedToPatch = () => {
         const milestoneTransactionDate = data?.['allotmentTransactionDate'];
         this.form.patchValue({
@@ -980,6 +991,7 @@ export class DeoVerification implements OnInit, OnChanges {
 
     const token = sessionStorage.getItem('token');
     let currentUserId = 0;
+    let sessionUserId: string | null = null;
     if (token) {
       try {
         const tokenPayload = JSON.parse(atob(token.split('.')[1]));
@@ -987,10 +999,21 @@ export class DeoVerification implements OnInit, OnChanges {
         if (rawId) {
           currentUserId = Number(rawId);
         }
+        sessionUserId = tokenPayload?.nameid || tokenPayload?.sub || tokenPayload?.UserId || tokenPayload?.userId || tokenPayload?.IdentityUserId || null;
       } catch (e) {
         console.error('Error parsing token for currentUserId:', e);
       }
     }
+
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const sessionObj = JSON.parse(cpSession);
+        if (sessionObj?.userId || sessionObj?.id) {
+          sessionUserId = String(sessionObj.userId || sessionObj.id);
+        }
+      }
+    } catch (e) { }
 
     const payload = {
       id: this.originalRegistrationDto?.id || 0,
@@ -998,7 +1021,8 @@ export class DeoVerification implements OnInit, OnChanges {
       decision: this.activeDecision,
       modifiedBy: currentUserId,
       modifiedDate: new Date().toISOString(),
-      role: this.userRole
+      role: this.userRole,
+      userId: sessionUserId || (currentUserId ? String(currentUserId) : null)
     };
 
     this.service.VerifyByClerk(payload).subscribe({
@@ -1168,14 +1192,14 @@ export class DeoVerification implements OnInit, OnChanges {
     };
   }
   handleApprove(): void {
-  this.activeDecision = 'approve';
-  this.submitDecision();
-}
-handleSendBack(): void {
-  if (this.activeDecision !== 'sendback') {
-    this.activeDecision = 'sendback';
-  } else {
+    this.activeDecision = 'approve';
     this.submitDecision();
   }
-}
+  handleSendBack(): void {
+    if (this.activeDecision !== 'sendback') {
+      this.activeDecision = 'sendback';
+    } else {
+      this.submitDecision();
+    }
+  }
 }

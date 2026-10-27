@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -301,6 +301,22 @@ namespace Backend.Models.Entities
 
         public int? ModifiedBy { get; set; }
 
+    }
+
+    public class PropertyTimelineHistory
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int PropertyId { get; set; }
+
+        public DateTime? Date { get; set; }
+
+        public int? StatusId { get; set; }
+
+        public string? UserId { get; set; }
+
+        public string? Remarks { get; set; }
     }
 
 }

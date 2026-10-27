@@ -19,6 +19,7 @@ interface PropertyVerificationModel {
   registrationData?: Record<string, unknown>;
 }
 interface PropertyStatusHistoryEntry {
+  userName?: string | null;
   status: string;
   date: string | null;
   remarks: string | null;
@@ -99,7 +100,7 @@ export class PropertyVerification implements OnInit {
   }
 
   GetPendingForClerk(searchCode?: string) {
-
+    debugger
     const roleName = this.getUserRole();
     this.service.GetPendingForClerk(searchCode).subscribe({
       next: (res: any) => {
@@ -146,6 +147,43 @@ export class PropertyVerification implements OnInit {
       return '';
     }
   }
+
+  getUserFullName(): string {
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const sessionObj = JSON.parse(cpSession);
+        if (sessionObj?.fullName) {
+          return sessionObj.fullName.trim();
+        }
+      }
+      const cpMenus = sessionStorage.getItem('cp_menus');
+      if (cpMenus) {
+        const user = JSON.parse(cpMenus);
+        if (user?.profile?.fullName) {
+          return user.profile.fullName.trim();
+        }
+      }
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key) {
+          const val = sessionStorage.getItem(key);
+          if (val && val.includes('fullName')) {
+            try {
+              const parsed = JSON.parse(val);
+              if (parsed?.fullName) {
+                return parsed.fullName.trim();
+              }
+            } catch { }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error getting user full name from session storage:', error);
+    }
+    return '';
+  }
+
   buildFilterOptions(): void {
     this.marketCommitteeList = Array.from(
       new Set(this.propertyList.map(p => p.branch).filter(branch => !!branch && branch !== 'N/A'))
@@ -277,12 +315,21 @@ export class PropertyVerification implements OnInit {
   }
 
   //View history of the property
-  
+
   viewHistory(property: PropertyVerificationModel): void {
     this.selectedHistoryPropertyNo = property.propertyNo;
     this.selectedHistory = [];
-    this.selectedHistoryCreatedDate = null;
+    this.selectedHistoryCreatedDate = property.registrationDate ?? null;
     this.historyError = '';
+
+    const rawTimeline = property.registrationData?.['timelineHistory'] || property.registrationData?.['TimelineHistory'];
+    if (rawTimeline && Array.isArray(rawTimeline) && rawTimeline.length > 0) {
+      this.selectedHistory = this.mapStatusHistory(rawTimeline, property);
+      this.historyLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.historyLoading = true;
 
     this.service.getPropertyHistory(property.id).subscribe({
@@ -293,9 +340,11 @@ export class PropertyVerification implements OnInit {
           return;
         }
 
-        this.selectedHistoryPropertyNo = historyData.propertyCode ?? this.selectedHistoryPropertyNo;
-        this.selectedHistoryCreatedDate = historyData.createdDate ?? null;
-        this.selectedHistory = this.mapStatusHistory(historyData);
+        if (!Array.isArray(historyData)) {
+          this.selectedHistoryPropertyNo = historyData.propertyCode ?? this.selectedHistoryPropertyNo;
+          this.selectedHistoryCreatedDate = historyData.createdDate ?? this.selectedHistoryCreatedDate;
+        }
+        this.selectedHistory = this.mapStatusHistory(historyData, property);
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -311,16 +360,148 @@ export class PropertyVerification implements OnInit {
     });
   }
 
-  private mapStatusHistory(data: any): PropertyStatusHistoryEntry[] {
-    const history = Array.isArray(data)
+  private mapStatusHistory(data: any, property?: PropertyVerificationModel): PropertyStatusHistoryEntry[] {
+    const rawList: any[] = Array.isArray(data)
       ? data
-      : data.history ?? data.statusHistory ?? data.applicationStatusHistory ?? [];
+      : data.history ?? data.statusHistory ?? data.applicationStatusHistory ?? data.timelineHistory ?? data.TimelineHistory ?? [];
 
-    return history.map((entry: any) => ({
-      status: entry.statusName ?? entry.applicationStatusName ?? entry.status ?? 'Unknown',
-      date: entry.date ?? entry.createdDate ?? entry.modifiedDate ?? null,
-      remarks: entry.remarks ?? entry.remark ?? entry.objectionRemarks ?? null
-    }));
+    if (!rawList || rawList.length === 0) {
+      return [{
+        userName: '-',
+        status: 'Pending for Clerk',
+        date: null,
+        remarks: null
+      }];
+    }
+
+    // Sort by id or date ascending
+    const sorted = [...rawList].sort((a: any, b: any) => {
+      const dateA = new Date(a.date || 0).getTime();
+      const dateB = new Date(b.date || 0).getTime();
+      return (a.id || 0) - (b.id || 0) || dateA - dateB;
+    });
+
+    // Split sorted entries into cycles.
+    // A new cycle starts when a statusId === 1 occurs AFTER an objection (statusId === 7).
+    const cycles: any[][] = [];
+    let currentCycle: any[] = [];
+    let hasObjectionInCurrent = false;
+
+    for (const item of sorted) {
+      if (item.statusId === 1 && hasObjectionInCurrent) {
+        cycles.push(currentCycle);
+        currentCycle = [item];
+        hasObjectionInCurrent = false;
+      } else {
+        currentCycle.push(item);
+        if (item.statusId === 7 || item.status === 'Objection' || item.statusName === 'Objection') {
+          hasObjectionInCurrent = true;
+        }
+      }
+    }
+    if (currentCycle.length > 0) {
+      cycles.push(currentCycle);
+    }
+
+    const result: PropertyStatusHistoryEntry[] = [];
+
+    // Process each cycle
+    for (let cIdx = 0; cIdx < cycles.length; cIdx++) {
+      const cycle = cycles[cIdx];
+      const isLatestCycle = (cIdx === cycles.length - 1);
+
+      // 1. Clerk level entries in this cycle
+      const clerkApproved = cycle.find((e: any) =>
+        e.statusId === 2 ||
+        e.status === 'Verified by Clerk' ||
+        e.statusName === 'Verified by Clerk' ||
+        e.statusName === 'Approved by Clerk'
+      );
+      const clerkApprovedIdx = clerkApproved ? cycle.indexOf(clerkApproved) : -1;
+
+      // Clerk objection in this cycle (statusId 7 before clerk approval)
+      const clerkObjection = cycle.find((e: any, idx: number) =>
+        (e.statusId === 7 || e.status === 'Objection' || e.statusName === 'Objection' || e.statusName === 'Sent Back') &&
+        (clerkApprovedIdx === -1 || idx < clerkApprovedIdx)
+      );
+
+      // SA approved in this cycle (statusId 3)
+      const saApproved = cycle.find((e: any) =>
+        e.statusId === 3 ||
+        e.status === 'Verified by Assistant' ||
+        e.statusName === 'Verified by Assistant' ||
+        e.statusName === 'Verified by Senior Assistant' ||
+        e.statusName === 'Approved by Senior Assistant' ||
+        e.statusName === 'Approved by SA'
+      );
+
+      // SA objection in this cycle (statusId 7 after clerk approval)
+      const saObjection = cycle.find((e: any, idx: number) =>
+        (e.statusId === 7 || e.status === 'Objection' || e.statusName === 'Objection' || e.statusName === 'Sent Back') &&
+        (clerkApprovedIdx !== -1 && idx > clerkApprovedIdx)
+      );
+
+      // Check if clerk is approved in this cycle (or in latest cycle if property status says so)
+      const isClerkApprovedInCycle = !!clerkApproved || (isLatestCycle && (
+        property?.applicationStatusId === 2 ||
+        property?.applicationStatusId === 3 ||
+        property?.status === 'Verified'
+      ));
+
+      // --- Clerk Stage in this cycle ---
+      if (clerkApproved) {
+        result.push({
+          userName: clerkApproved.userName || '-',
+          status: 'Verified by Clerk',
+          date: clerkApproved.date ?? clerkApproved.createdDate ?? clerkApproved.modifiedDate ?? null,
+          remarks: clerkApproved.remarks ?? clerkApproved.remark ?? null
+        });
+      } else if (clerkObjection) {
+        result.push({
+          userName: clerkObjection.userName || '-',
+          status: 'Objection by Clerk',
+          date: clerkObjection.date ?? clerkObjection.createdDate ?? clerkObjection.modifiedDate ?? null,
+          remarks: clerkObjection.remarks ?? clerkObjection.remark ?? clerkObjection.objectionRemarks ?? null
+        });
+      } else {
+        // Pending for Clerk in this cycle
+        result.push({
+          userName: '-',
+          status: 'Pending for Clerk',
+          date: null,
+          remarks: null
+        });
+      }
+
+      // --- SA Stage in this cycle (only if Clerk approved in this cycle) ---
+      if (isClerkApprovedInCycle) {
+        if (saApproved) {
+          result.push({
+            userName: saApproved.userName || '-',
+            status: 'Verified by Senior Assistant',
+            date: saApproved.date ?? saApproved.createdDate ?? saApproved.modifiedDate ?? null,
+            remarks: saApproved.remarks ?? saApproved.remark ?? null
+          });
+        } else if (saObjection) {
+          result.push({
+            userName: saObjection.userName || (property?.registrationData as any)?.modifyByName || '-',
+            status: 'Objection by Senior Assistant',
+            date: saObjection.date ?? saObjection.createdDate ?? saObjection.modifiedDate ?? null,
+            remarks: saObjection.remarks ?? saObjection.remark ?? saObjection.objectionRemarks ?? null
+          });
+        } else {
+          // Pending by Senior Assistant in this cycle
+          result.push({
+            userName: '-',
+            status: 'Pending by Senior Assistant',
+            date: null,
+            remarks: null
+          });
+        }
+      }
+    }
+
+    return result;
   }
 
   refreshData(): void {

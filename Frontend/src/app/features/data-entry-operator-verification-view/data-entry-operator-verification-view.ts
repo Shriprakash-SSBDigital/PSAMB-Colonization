@@ -130,8 +130,17 @@ export class DataEntryOperatorVerificationView implements OnInit {
       data.objectionRemarks ??
       data.comment ??
       data.Comment ??
-      null;
-    this.checkVerificationStatus(statusId);
+      this.checkVerificationStatus(statusId);
+
+    if (data.timelineHistory && Array.isArray(data.timelineHistory)) {
+      this.history = data.timelineHistory.map((item: any) => ({
+        role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
+        actorName: item.userName || item.userId || 'User',
+        action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
+        remarks: item.remarks || '',
+        date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
+      }));
+    }
   }
 
   private canCurrentRoleAct(statusId: number | null | undefined): boolean {
@@ -222,7 +231,7 @@ export class DataEntryOperatorVerificationView implements OnInit {
     this.showRemarksReadOnly = (statusId === 7);
   }
 
- submitDecision(): void {
+  submitDecision(): void {
     if (!this.activeDecision) {
       return;
     }
@@ -236,6 +245,7 @@ export class DataEntryOperatorVerificationView implements OnInit {
 
     const token = sessionStorage.getItem('token');
     let currentUserId = 0;
+    let sessionUserId: string | null = null;
     if (token) {
       try {
         const tokenPayload = JSON.parse(atob(token.split('.')[1]));
@@ -243,10 +253,21 @@ export class DataEntryOperatorVerificationView implements OnInit {
         if (rawId) {
           currentUserId = Number(rawId);
         }
+        sessionUserId = tokenPayload?.nameid || tokenPayload?.sub || tokenPayload?.UserId || tokenPayload?.userId || tokenPayload?.IdentityUserId || null;
       } catch (e) {
         console.error('Error parsing token for currentUserId:', e);
       }
     }
+
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const sessionObj = JSON.parse(cpSession);
+        if (sessionObj?.userId || sessionObj?.id) {
+          sessionUserId = String(sessionObj.userId || sessionObj.id);
+        }
+      }
+    } catch (e) { }
 
     const payload = {
       id: this.originalRegistrationDto?.id || 0,
@@ -254,7 +275,8 @@ export class DataEntryOperatorVerificationView implements OnInit {
       decision: this.activeDecision,
       modifiedBy: currentUserId,
       modifiedDate: new Date().toISOString(),
-      role: this.userRole
+      role: this.userRole,
+      userId: sessionUserId || (currentUserId ? String(currentUserId) : null)
     };
 
     this.service.VerifyByClerk(payload).subscribe({

@@ -138,7 +138,7 @@ namespace Backend.Models.Dtos
         public List<InstallmentDetailsDto>? Installments { get; set; }
         public List<InstallmentScheduleDto>? InstallmentSchedules { get; set; }
         public List<InstallmentScheduleDto>? InstallmentNotCompleted { get; set; }
-        public List<InstallmentCalculationDto> InstallmentCalculations { get; set; }
+        public List<InstallmentCalculationDto>? InstallmentCalculations { get; set; }
         public string PlotStatus { get; set; } = string.Empty;
         public int? PropertyCategoryId { get; set; }
         public long? CreatedBy { get; set; }
@@ -152,13 +152,27 @@ namespace Backend.Models.Dtos
         public string? UserId { get; set; }
         public string? RoleName { get; set; }
         public string? FirstName { get; set; }
+        public DateTime? CreatedDate { get; set; }
 
         public int? OwnerStateID { get; set; }
         public int? OwnerDistrtictID { get; set; }
 
         public int? OwnerCityID { get; set; }
         public string? ModifyByName { get; set; }
+        public List<PropertyTimelineHistoryDto>? TimelineHistory { get; set; }
 
+    }
+
+    public class PropertyTimelineHistoryDto
+    {
+        public int Id { get; set; }
+        public int PropertyId { get; set; }
+        public DateTime? Date { get; set; }
+        public int? StatusId { get; set; }
+        public string? StatusName { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? Remarks { get; set; }
     }
 
     public class InstallmentScheduleDto
@@ -209,7 +223,7 @@ namespace Backend.Models.Dtos
         public DateTime? ModifiedDate { get; set; }
         public string? Decision { get; set; }
         public string? Role { get; set; }
-
+        public string? UserId { get; set; }
     }
 
 
