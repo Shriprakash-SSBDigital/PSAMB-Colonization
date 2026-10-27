@@ -189,12 +189,12 @@
 
 <!-- History Popover -->
 
-<p-popover #op [autoZIndex]="true" appendTo="body">
+<p-popover #op [autoZIndex]="true" appendTo="body" styleClass="custom-green-popover">
     <div style="width: 385px;">
         <div class="d-flex align-items-center justify-content-between border-bottom pb-1 mb-1.5">
-            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Verification History</span>
-            <span class="text-secondary" style="font-size: 0.68rem;" *ngIf="selectedHistoryCreatedDate">
-                Created: <strong class="text-dark">{{ selectedHistoryCreatedDate | date:'dd-MM-yyyy' }}</strong>
+            <span class="fw-bold text-success" style="font-size: 0.75rem;">Verification History</span>
+            <span class="text-dark" style="font-size: 0.68rem;" *ngIf="selectedHistoryCreatedDate">
+                Created: <strong class="text-success">{{ selectedHistoryCreatedDate | date:'dd-MM-yyyy' }}</strong>
             </span>
         </div>
 
@@ -202,21 +202,22 @@
         <div class="py-1 text-danger text-center" style="font-size: 0.7rem;" *ngIf="!historyLoading && historyError">{{ historyError }}</div>
 
         <ng-container *ngIf="!historyLoading && !historyError">
-            <div class="table-responsive rounded border">
-                <table class="table table-sm table-hover mb-0 align-middle text-nowrap" style="font-size: 0.70rem;">
+            <div class="history-timeline">
+            <div class="table-responsive rounded border history-timeline-content">
+                <table class="table table-sm table-hover mb-0 align-middle text-nowrap history-table" style="font-size: 0.70rem;">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-2 pe-1 py-1 text-secondary fw-semibold" style="font-size: 0.66rem;">Action By</th>
-                            <th class="px-1 py-1 text-secondary fw-semibold text-center" style="font-size: 0.66rem;">Status</th>
-                            <th class="pe-2 ps-1 py-1 text-secondary fw-semibold text-end" style="font-size: 0.66rem;">Date</th>
+                            <th class="ps-2 pe-1 py-1 text-success fw-semibold" style="font-size: 0.66rem;">Action By</th>
+                            <th class="px-1 py-1 text-success fw-semibold text-center" style="font-size: 0.66rem;">Status</th>
+                            <th class="pe-2 ps-1 py-1 text-success fw-semibold text-end" style="font-size: 0.66rem;">Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         <ng-container *ngFor="let entry of selectedHistory">
                             <tr>
-                                <td class="ps-2 pe-1 py-1 fw-medium text-dark">
+                                <td class="ps-2 pe-1 py-1 fw-medium text-dark timeline-cell">
                                     <div class="d-flex align-items-center gap-1">
-                                        <mat-icon style="font-size: 13px; width: 13px; height: 13px;" [ngClass]="{
+                                        <mat-icon class="timeline-icon" [ngClass]="{
                                             'text-warning': entry.status.includes('Pending'),
                                             'text-danger': entry.status.includes('Object') || entry.status.includes('Sent Back'),
                                             'text-success': !entry.status.includes('Pending') && !entry.status.includes('Object') && !entry.status.includes('Sent Back')
@@ -242,7 +243,6 @@
                                     {{ entry.date ? (entry.date | date:'dd-MM-yyyy') : '-' }}
                                 </td>
                             </tr>
-                            <!-- Remarks right below the row where objection occurred -->
                             <tr *ngIf="entry.remarks">
                                 <td colspan="3" class="px-2 py-1 bg-light text-danger border-top-0" style="font-size: 0.66rem; white-space: normal;">
                                     <strong>Remarks:</strong> {{ entry.remarks }}
@@ -254,6 +254,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </ng-container>
     </div>

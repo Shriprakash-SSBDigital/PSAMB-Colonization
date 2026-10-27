@@ -100,7 +100,7 @@ export class PropertyVerification implements OnInit {
   }
 
   GetPendingForClerk(searchCode?: string) {
-    debugger
+    // debugger
     const roleName = this.getUserRole();
     this.service.GetPendingForClerk(searchCode).subscribe({
       next: (res: any) => {
