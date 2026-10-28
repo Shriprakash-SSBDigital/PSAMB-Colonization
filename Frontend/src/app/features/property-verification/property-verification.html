@@ -159,7 +159,7 @@
                                         <mat-icon>visibility</mat-icon>
                                     </button>
                                     <button type="button" class="btn btn-action-icon"
-                                        (click)="viewHistory(property); op.toggle($event)" matTooltip="History"
+                                        (click)="toggleHistory(property, $event, op)" matTooltip="History"
                                         matTooltipPosition="above">
                                         <mat-icon>history</mat-icon>
                                     </button>
@@ -189,7 +189,8 @@
 
 <!-- History Popover -->
 
-<p-popover #op [autoZIndex]="true" appendTo="body" styleClass="custom-green-popover">
+<p-popover #op [autoZIndex]="true" [dismissable]="true" appendTo="body"
+    styleClass="custom-green-popover" (onHide)="onHistoryPopoverHide()">
     <div style="width: 385px;">
         <div class="d-flex align-items-center justify-content-between border-bottom pb-1 mb-1.5">
             <span class="fw-bold text-success" style="font-size: 0.75rem;">Verification History</span>
