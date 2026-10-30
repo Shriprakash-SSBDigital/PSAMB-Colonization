@@ -1966,7 +1966,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   }
 
   onSubmit(): void {
-    debugger
+    // debugger
     if (this.registerationForm.invalid) {
       this.registerationForm.markAllAsTouched();
       const invalidControls: string[] = [];
