@@ -113,6 +113,9 @@ namespace Backend.Models.Entities
         public int? OwnerCityID { get; set; }
         public bool IsUser { get; set; } = false;
         public int? VerificationUserEndStatusId { get; set; }
+        // Penalty Order Date
+        public DateTime? PenaltyOrderDate { get; set; }
+        public int PenaltyRateInorder { get; set; }
 
     }
     public class PlotSizeMaster
