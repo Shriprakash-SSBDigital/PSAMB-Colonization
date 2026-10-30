@@ -1254,6 +1254,12 @@ namespace Backend.Migrations
                     b.Property<string>("PANNo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("PenaltyOrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PenaltyRateInorder")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PlanId")
                         .HasColumnType("int");
 
