@@ -630,7 +630,7 @@
                   formControlName="penaltyRateInorder">
                   <option value="" disabled>Select Penalty Rate</option>
                   @for (rate of penaltyRates; track rate) {
-                    <option [value]="rate">{{ rate }}%</option>
+                    <option [value]="rate">{{ rate }}</option>
                   }
                 </select>
                 </div>
@@ -1263,7 +1263,7 @@
                       </div>
                       <div class="col-sm-6">
                         <label class="form-label small text-dark fw-semibold">Penality Rate (%)</label>
-                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRateInorder')?.value !== null && registerationForm.get('penaltyRateInorder')?.value !== undefined ? (registerationForm.get('penaltyRateInorder')?.value + '%') : '—' }}</p>
+                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRateInorder')?.value !== null && registerationForm.get('penaltyRateInorder')?.value !== undefined ? (registerationForm.get('penaltyRateInorder')?.value) : '—' }}</p>
                       </div>
                     </div>
                   </div>
