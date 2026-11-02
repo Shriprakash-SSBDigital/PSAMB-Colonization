@@ -742,7 +742,7 @@ namespace Backend.Services.Implementations
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = (int?)(dto.CreatedBy ?? dto.ApplicantId ?? 0),
                         ModifiedDate = DateTime.UtcNow,
-                        ModifiedBy = (int?)(dto.ModifiedBy ?? 0)
+                        ModifiedBy = dto.ModifiedBy
                     }).ToList();
 
                     _context.InstallmentSchedule.AddRange(newSchedules);
