@@ -161,6 +161,10 @@ namespace Backend.Models.Dtos
         public string? ModifyByName { get; set; }
         public List<PropertyTimelineHistoryDto>? TimelineHistory { get; set; }
 
+        // Penalty Order Date
+        public DateTime? PenaltyOrderDate { get; set; }
+        public int PenaltyRateInorder {  get; set; }
+
     }
 
     public class PropertyTimelineHistoryDto
