@@ -234,9 +234,18 @@
     border: 1px solid var(--theme-primary) !important;
     box-shadow: 0 4px 12px var(--theme-primary) !important;
 }
-
-::ng-deep .custom-green-popover.p-popover::before,
-::ng-deep .custom-green-popover.p-popover::after {
+/* For the popover open to upside styles */
+::ng-deep .custom-green-popover.p-popover.p-popover-flipped::after {
+    border-top-color: var(--theme-primary) !important;
+}
+::ng-deep .custom-green-popover.p-popover.p-popover-flipped::before {
+    border-top-color: var(--theme-primary) !important;
+}
+/* For the popover open to downside styles */
+::ng-deep .custom-green-popover.p-popover:not(.p-popover-flipped)::after {
+    border-bottom-color: var(--theme-primary) !important;
+}
+::ng-deep .custom-green-popover.p-popover:not(.p-popover-flipped)::before {
     border-bottom-color: var(--theme-primary) !important;
 }
 

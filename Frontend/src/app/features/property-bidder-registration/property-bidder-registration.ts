@@ -57,6 +57,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   bidderTypes: any[] = [];
   plans: any[] = [];
   relations = ['Son of (S/o)', 'Daughter of (D/o)', 'Wife of (W/o)'];
+  penaltyRates = Array.from({ length: 11 }, (_, rate) => rate);
   auctionPropertyTypes: any[] = [];
   installments = ['Installment 1', 'Installment 2', 'Installment 3', 'Installment 4', 'Installment 5', 'Installment 6'];
   paidStatuses = ['Pending', 'Fully Paid', 'Partially Paid'];
@@ -173,6 +174,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: [''],
       formTxnDate: [''],
       formPaidAmount: [''],
+      penaltyOrderDate: [null],
+      penaltyRateInorder: [0],
 
       emdTxnId: [''],
       emdDate: [''],
@@ -1539,6 +1542,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
         formTransactionId: d.formTransactionId,
         formTxnDate: d.formTxnDate ? d.formTxnDate.split('T')[0] : '',
         formPaidAmount: d.formPaidAmount,
+        penaltyOrderDate: d.penaltyOrderDate ? d.penaltyOrderDate.split('T')[0] : null,
+        penaltyRateInorder: Number(d.penaltyRateInorder ?? 0),
         emdTxnId: d.emdTxnId,
         emdDate: d.emdDate ? d.emdDate.split('T')[0] : '',
         allotmentTxnId: d.allotmentTxnId ?? d.AllotmentTxnId,
@@ -2144,6 +2149,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: formRaw.formTransactionId,
       formTxnDate: formRaw.formTxnDate,
       formPaidAmount: formRaw.formPaidAmount,
+      penaltyOrderDate: formRaw.penaltyOrderDate || null,
+      penaltyRateInorder: Number(formRaw.penaltyRateInorder ?? 0),
 
       emdTxnId: formRaw.emdTxnId,
       emdDate: formRaw.emdDate,
@@ -2181,7 +2188,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
     const numericFields = [
       'id', 'Id', 'propertyId', 'PropertyId',
       'districtId', 'mandiId', 'branchId', 'propertyCategoryId', 'bidderTypeId', 'plotTypeId', 'planId', 'propertyTypeId',
-      'reservePrice', 'finalBidPrice', 'formPaidAmount', 'emdAmount', 'allotmentAmount',
+      'reservePrice', 'finalBidPrice', 'formPaidAmount', 'penaltyRateInorder', 'emdAmount', 'allotmentAmount',
       'dueAmount', 'totalDueWithInterest', 'accumulatedInterest', 'applicantId', 'ApplicantId',
       'createdBy', 'CreatedBy', 'modifiedBy', 'ModifiedBy', 'ownerStateID', 'ownerDistrtictID', 'ownerCityID'
     ];
@@ -2292,6 +2299,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: '',
       formTxnDate: '',
       formPaidAmount: '',
+      penaltyOrderDate: null,
+      penaltyRateInorder: 0,
       emdTxnId: '',
       emdDate: '',
       emdAmount: '',
