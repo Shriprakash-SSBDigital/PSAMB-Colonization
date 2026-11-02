@@ -83,7 +83,7 @@ namespace Backend.Services.Implementations
                         existing.ModifiedDate = DateTime.UtcNow;
                         if (dto.ApplicantId.HasValue && dto.ApplicantId.Value > 0)
                         {
-                            existing.ModifiedBy = dto.ApplicantId.Value;
+                            existing.ModifiedBy = Convert.ToString(dto.ApplicantId.Value);
                         }
 
                         if (!string.IsNullOrWhiteSpace(dto.UploadAllotmentLetter)) existing.UploadAllotmentLetter = dto.UploadAllotmentLetter;

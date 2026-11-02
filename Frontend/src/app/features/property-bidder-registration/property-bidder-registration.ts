@@ -1966,7 +1966,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   }
 
   onSubmit(): void {
-    debugger
+    // debugger
     if (this.registerationForm.invalid) {
       this.registerationForm.markAllAsTouched();
       const invalidControls: string[] = [];
@@ -2157,8 +2157,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       dueAmount: formRaw.dueAmount,
       totalDueWithInterest: formRaw.totalDueWithInterest,
 
-      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy || currentUserId,
-      modifiedBy: currentUserId,
+      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy,
+      modifiedBy: sessionUserId,
       userId: sessionUserId,
 
       installments: cleanReceipts,

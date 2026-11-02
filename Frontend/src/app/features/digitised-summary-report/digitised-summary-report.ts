@@ -80,6 +80,7 @@ export class DigitisedSummaryReport implements OnInit {
   displayedColumns: string[] = ['index', 'date', 'count', 'action'];
   dataSource = new MatTableDataSource<SummaryRow>([]);
   loading = false;
+  hasSearched = false;
 
   pageIndex = 0;
   pageSize = 10;
@@ -111,15 +112,13 @@ export class DigitisedSummaryReport implements OnInit {
 
   filterForm = this.fb.group(
     {
-      fromDate: [this.defaultFromDate(), Validators.required],
-      toDate: [formatDateToYYYYMMDD(new Date()), Validators.required],
+      fromDate: ['', Validators.required],
+      toDate: ['', Validators.required],
     },
     { validators: dateRangeValidator }
   );
 
-  ngOnInit(): void {
-    this.search();
-  }
+  ngOnInit(): void {}
 
   get f() {
     return this.filterForm.controls;
@@ -176,6 +175,7 @@ export class DigitisedSummaryReport implements OnInit {
     const formattedTo = formatDateToYYYYMMDD(toDate);
     const pageNumber = this.pageIndex + 1;
 
+    this.hasSearched = true;
     this.loading = true;
     this.cdr.detectChanges();
 
@@ -486,10 +486,4 @@ export class DigitisedSummaryReport implements OnInit {
     link.click();
     URL.revokeObjectURL(url);
   }
-
-  private defaultFromDate(): string {
-    const d = new Date();
-    d.setDate(d.getDate() - 90);
-    return formatDateToYYYYMMDD(d);
-  }
-}
+}

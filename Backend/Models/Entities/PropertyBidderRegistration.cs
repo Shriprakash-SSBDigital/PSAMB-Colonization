@@ -101,7 +101,7 @@ namespace Backend.Models.Entities
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public long? CreatedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
-        public long? ModifiedBy { get; set; }
+        public string? ModifiedBy { get; set; }
 
         public int? ApplicationStatusId { get; set; }
         public string? PlotStatus{ get; set; }
@@ -302,7 +302,7 @@ namespace Backend.Models.Entities
 
         public DateTime? ModifiedDate { get; set; }
 
-        public int? ModifiedBy { get; set; }
+        public string? ModifiedBy { get; set; }
 
     }
 
