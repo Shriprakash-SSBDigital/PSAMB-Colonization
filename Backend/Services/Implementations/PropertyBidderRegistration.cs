@@ -120,7 +120,9 @@ namespace Backend.Services.Implementations
                     CreatedBy = dto.CreatedBy ?? dto.ApplicantId ?? 0,
                     OwnerStateID = dto.OwnerStateID,
                     OwnerDistrtictID = dto.OwnerDistrtictID,
-                    OwnerCityID = dto.OwnerCityID
+                    OwnerCityID = dto.OwnerCityID,
+                    PenaltyOrderDate= dto.PenaltyOrderDate,
+                    PenaltyRateInorder = dto.PenaltyRateInorder
                 };
 
                 _context.PropertyBidderRegistration.Add(entity);
@@ -271,7 +273,9 @@ namespace Backend.Services.Implementations
                         Remarks = x.Remarks,
                         OwnerStateID = x.OwnerStateID,
                         OwnerDistrtictID = x.OwnerDistrtictID,
-                        OwnerCityID = x.OwnerCityID
+                        OwnerCityID = x.OwnerCityID,
+                        PenaltyOrderDate = x.PenaltyOrderDate,
+                        PenaltyRateInorder = x.PenaltyRateInorder
 
                     })
                     .FirstOrDefaultAsync();
@@ -425,7 +429,9 @@ namespace Backend.Services.Implementations
                            OwnerStateID = x.OwnerStateID,
                            OwnerDistrtictID = x.OwnerDistrtictID,
                            OwnerCityID = x.OwnerCityID,
-                           Remarks = x.Remarks
+                           Remarks = x.Remarks,
+                           PenaltyOrderDate = x.PenaltyOrderDate,
+                           PenaltyRateInorder = x.PenaltyRateInorder
                        }
                        ).FirstOrDefaultAsync();
 
@@ -692,6 +698,8 @@ namespace Backend.Services.Implementations
                 entity.ModifiedDate = DateTime.UtcNow;
                 entity.ModifiedBy = dto.ModifiedBy;
                 entity.AllotmentTransactionDate = dto.AllotmentTransactionDate;
+                entity.PenaltyOrderDate = dto.PenaltyOrderDate;
+                entity.PenaltyRateInorder = dto.PenaltyRateInorder;
 
                 await _context.SaveChangesAsync();
 
@@ -2841,6 +2849,15 @@ namespace Backend.Services.Implementations
                 //      ? Convert.ToInt32(row["BiddingType"])
                 //      : null;
 
+                response.PenaltyOrderDate =row["PenaltyOrderDate"] != DBNull.Value
+                     ? Convert.ToDateTime(row["PenaltyOrderDate"])
+                     : null;
+
+                response.PenaltyRateInorder =
+                 row["PenaltyRateInorder"] != DBNull.Value
+                     ? Convert.ToInt32(row["PenaltyRateInorder"])
+                     : 0;
+
             }
 
 
@@ -3392,6 +3409,156 @@ namespace Backend.Services.Implementations
 
 
 
+            //if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
+            //{
+            //    var schedules = response.InstallmentSchedules
+            //        .Where(x => x.CalculatedDueDate.HasValue)
+            //        .OrderBy(x => x.CalculatedDueDate)
+            //        .ToList();
+
+            //    var receipts = response.Installments
+            //        .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1)
+            //        .OrderBy(x => x.ReceiptDate)
+            //        .ToList();
+
+            //    int receiptIndex = 0;
+
+            //    decimal extraBalanceAmount = 0m;
+            //    DateTime previousReceiptDate = DateTime.MinValue;
+
+            //    // Recalculate results from scratch.
+            //    response.InstallmentCalculations.Clear();
+            //    response.InstallmentNotCompleted.Clear();
+
+            //    foreach (var schedule in schedules)
+            //    {
+            //        DateTime dueDate = schedule.CalculatedDueDate!.Value.Date;
+
+            //        decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
+
+            //        if (installmentAmount <= 0m)
+            //            continue;
+
+            //        decimal receivedAmount = extraBalanceAmount;
+            //        decimal penalityAmount = 0m;
+            //        decimal DueAmount = installmentAmount;
+
+            //        int delayDays = 0;
+            //        int PenalityRateInPercent = 10;
+
+            //        int penalInterestRate =
+            //            response.AllotmentDate.HasValue &&
+            //            response.AllotmentDate.Value.Year >= 1992
+            //                ? 12
+            //                : 6;
+
+            //        DateTime receiptDate = extraBalanceAmount > 0m
+            //            ? previousReceiptDate
+            //            : DateTime.MinValue;
+
+            //        // The previous surplus must not be counted again.
+            //        extraBalanceAmount = 0m;
+
+            //        // Calculate penalty for an existing carried balance.
+            //        if (receiptDate != DateTime.MinValue)
+            //        {
+            //            delayDays = Math.Max(0, (receiptDate - dueDate).Days);
+
+            //            penalityAmount = delayDays > 0
+            //                ? Math.Round(
+            //                    installmentAmount * PenalityRateInPercent / 100m, 2)
+            //                : 0m;
+
+            //            DueAmount = installmentAmount + penalityAmount;
+            //        }
+
+            //        // Keep consuming receipts until the installment is fully paid.
+            //        while (receivedAmount < DueAmount &&
+            //               receiptIndex < receipts.Count)
+            //        {
+            //            var receipt = receipts[receiptIndex++];
+
+            //            decimal nextReceivedAmount = receipt.DraftAmount ?? 0m;
+
+            //            if (nextReceivedAmount <= 0m)
+            //                continue;
+
+            //            receivedAmount += nextReceivedAmount;
+
+            //            receiptDate = receipt.ReceiptDate!.Value.Date;
+            //            previousReceiptDate = receiptDate;
+
+            //            delayDays = Math.Max(0, (receiptDate - dueDate).Days);
+
+            //            penalityAmount = delayDays > 0
+            //                ? Math.Round(
+            //                    installmentAmount * PenalityRateInPercent / 100m, 2)
+            //                : 0m;
+
+            //            DueAmount = installmentAmount + penalityAmount;
+            //        }
+
+            //        // INSTALLMENT NOT COMPLETED
+            //        if (receivedAmount < DueAmount)
+            //        {
+            //            response.InstallmentNotCompleted.Add(
+            //                new InstallmentScheduleDto
+            //                {
+            //                    Id = schedule.Id,
+            //                    PropertyId = schedule.PropertyId,
+            //                    PropertyCode = schedule.PropertyCode,
+            //                    InstallmentNo = schedule.InstallmentNo,
+            //                    CalculatedDueDate = schedule.CalculatedDueDate,
+            //                    BasePrincipal = schedule.BasePrincipal,
+            //                    Interest = schedule.Interest,
+            //                    TotalEstimatedAmount = schedule.TotalEstimatedAmount,
+            //                    IsActive = schedule.IsActive
+            //                });
+
+            //            // Do not transfer this partial payment to the next
+            //            // installment. It has already been consumed by this one.
+            //            extraBalanceAmount = 0m;
+            //            continue;
+            //        }
+
+            //        // INSTALLMENT COMPLETED
+            //        decimal penalInterest = Math.Round(
+            //            installmentAmount * delayDays * penalInterestRate / 36500m,
+            //            2);
+
+            //        decimal extraAmount = receivedAmount - DueAmount;
+
+            //        response.InstallmentCalculations.Add(new InstallmentCalculationDto
+            //            {
+            //                InstallmentId = schedule.Id,
+            //                InstallmentNo = schedule.InstallmentNo,
+            //                DueDate = dueDate,
+            //                ReceiptDate = receiptDate,
+            //                InstallmentAmount = installmentAmount,
+            //                ReceivedAmount = receivedAmount,
+            //                DelayDays = delayDays,
+            //                PenalInterest = penalInterest,
+            //                PenaltyRateInPercent = PenalityRateInPercent,
+            //                PenalityAmount = Math.Round(penalityAmount, 2),
+            //                ExtraAmount = Math.Round(extraAmount, 2)
+            //            });
+
+            //        // Carry forward only the actual surplus.
+            //        extraBalanceAmount = extraAmount;
+            //    }
+
+            //    // Receipts left after all installment schedules are completed.
+            //    decimal remainingReceiptAmount = extraBalanceAmount;
+
+            //    for (int i = receiptIndex; i < receipts.Count; i++)
+            //    {
+            //        remainingReceiptAmount += receipts[i].DraftAmount ?? 0m;
+            //    }
+
+            //}
+
+
+            /* Calculation first penalty calculate */
             if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
             {
                 var schedules = response.InstallmentSchedules
@@ -3404,6 +3571,32 @@ namespace Backend.Services.Implementations
                     .OrderBy(x => x.ReceiptDate)
                     .ToList();
 
+                DateTime? orderDatePenalty = response.PenaltyOrderDate;
+                int rateInorder = response.PenaltyRateInorder;
+
+                DateTime penaltyOrderDate = DateTime.MinValue;
+                int penaltyPercentRateInorder = rateInorder;
+                decimal TotalPenaltyAppliedAmount = 0m;
+
+                if(orderDatePenalty != null)
+                {
+                    penaltyOrderDate = orderDatePenalty.Value;
+                }
+
+                if(penaltyOrderDate != DateTime.MinValue)
+                {
+                    foreach (var schedule in schedules)
+                    {
+                        DateTime dueDate = schedule.CalculatedDueDate!.Value.Date;
+
+                        decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
+
+                        decimal penaltyapplied = (installmentAmount * penaltyPercentRateInorder) / 100;
+
+                        TotalPenaltyAppliedAmount += penaltyapplied;
+
+                    }
+                }
                 int receiptIndex = 0;
 
                 decimal extraBalanceAmount = 0m;
@@ -3423,11 +3616,12 @@ namespace Backend.Services.Implementations
                         continue;
 
                     decimal receivedAmount = extraBalanceAmount;
-                    decimal penalityAmount = 0m;
+                    decimal penalityAmount = TotalPenaltyAppliedAmount;
+                    TotalPenaltyAppliedAmount = 0m;
                     decimal DueAmount = installmentAmount;
 
                     int delayDays = 0;
-                    int PenalityRateInPercent = 10;
+                   // int PenalityRateInPercent = 10;
 
                     int penalInterestRate =
                         response.AllotmentDate.HasValue &&
@@ -3447,10 +3641,10 @@ namespace Backend.Services.Implementations
                     {
                         delayDays = Math.Max(0, (receiptDate - dueDate).Days);
 
-                        penalityAmount = delayDays > 0
-                            ? Math.Round(
-                                installmentAmount * PenalityRateInPercent / 100m, 2)
-                            : 0m;
+                        //penalityAmount = delayDays > 0
+                        //    ? Math.Round(
+                        //        installmentAmount * PenalityRateInPercent / 100m, 2)
+                        //    : 0m;
 
                         DueAmount = installmentAmount + penalityAmount;
                     }
@@ -3473,12 +3667,12 @@ namespace Backend.Services.Implementations
 
                         delayDays = Math.Max(0, (receiptDate - dueDate).Days);
 
-                        penalityAmount = delayDays > 0
-                            ? Math.Round(
-                                installmentAmount * PenalityRateInPercent / 100m, 2)
-                            : 0m;
+                        //penalityAmount = delayDays > 0
+                        //    ? Math.Round(
+                        //        installmentAmount * PenalityRateInPercent / 100m, 2)
+                        //    : 0m;
 
-                        DueAmount = installmentAmount + penalityAmount;
+                       // DueAmount = installmentAmount + penalityAmount;
                     }
 
                     // INSTALLMENT NOT COMPLETED
@@ -3511,21 +3705,20 @@ namespace Backend.Services.Implementations
 
                     decimal extraAmount = receivedAmount - DueAmount;
 
-                    response.InstallmentCalculations.Add(
-                        new InstallmentCalculationDto
-                        {
-                            InstallmentId = schedule.Id,
-                            InstallmentNo = schedule.InstallmentNo,
-                            DueDate = dueDate,
-                            ReceiptDate = receiptDate,
-                            InstallmentAmount = installmentAmount,
-                            ReceivedAmount = receivedAmount,
-                            DelayDays = delayDays,
-                            PenalInterest = penalInterest,
-                            PenaltyRateInPercent = PenalityRateInPercent,
-                            PenalityAmount = Math.Round(penalityAmount, 2),
-                            ExtraAmount = Math.Round(extraAmount, 2)
-                        });
+                    response.InstallmentCalculations.Add(new InstallmentCalculationDto
+                    {
+                        InstallmentId = schedule.Id,
+                        InstallmentNo = schedule.InstallmentNo,
+                        DueDate = dueDate,
+                        ReceiptDate = receiptDate,
+                        InstallmentAmount = installmentAmount,
+                        ReceivedAmount = receivedAmount,
+                        DelayDays = delayDays,
+                        PenalInterest = penalInterest,
+                        PenaltyRateInPercent = penaltyPercentRateInorder,
+                        PenalityAmount = Math.Round(penalityAmount, 2),
+                        ExtraAmount = Math.Round(extraAmount, 2)
+                    });
 
                     // Carry forward only the actual surplus.
                     extraBalanceAmount = extraAmount;
@@ -3540,7 +3733,6 @@ namespace Backend.Services.Implementations
                 }
 
             }
-
 
             return response;
         }
