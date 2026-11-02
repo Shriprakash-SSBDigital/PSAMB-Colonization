@@ -2164,8 +2164,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       dueAmount: formRaw.dueAmount,
       totalDueWithInterest: formRaw.totalDueWithInterest,
 
-      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy || currentUserId,
-      modifiedBy: currentUserId,
+      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy,
+      modifiedBy: sessionUserId,
       userId: sessionUserId,
 
       installments: cleanReceipts,
