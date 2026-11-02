@@ -142,7 +142,7 @@ namespace Backend.Models.Dtos
         public string PlotStatus { get; set; } = string.Empty;
         public int? PropertyCategoryId { get; set; }
         public long? CreatedBy { get; set; }
-        public long? ModifiedBy { get; set; }
+        public string? ModifiedBy { get; set; }
         public string? Label { get; set; }
         public string? DistrictName { get; set; }
         public string? BranchName { get; set; }
@@ -160,6 +160,10 @@ namespace Backend.Models.Dtos
         public int? OwnerCityID { get; set; }
         public string? ModifyByName { get; set; }
         public List<PropertyTimelineHistoryDto>? TimelineHistory { get; set; }
+
+        // Penalty Order Date
+        public DateTime? PenaltyOrderDate { get; set; }
+        public int PenaltyRateInorder {  get; set; }
 
     }
 
@@ -219,7 +223,7 @@ namespace Backend.Models.Dtos
     {
         public int Id { get; set; }
         public string Remarks { get; set; }
-        public long? ModifiedBy { get; set; }
+        public string? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public string? Decision { get; set; }
         public string? Role { get; set; }

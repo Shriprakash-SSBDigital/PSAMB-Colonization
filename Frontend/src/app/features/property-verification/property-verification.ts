@@ -2,6 +2,8 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
+import { finalize } from 'rxjs';
+import { Popover } from 'primeng/popover';
 
 interface PropertyVerificationModel {
   id: number;
@@ -54,11 +56,15 @@ export class PropertyVerification implements OnInit {
   selectedHistoryCreatedDate: string | null = null;
   historyLoading = false;
   historyError = '';
+  isHistoryPopoverOpen = false;
 
   pageIndex = 0;
   pageSize = 10;
 
-
+  private historyCache = new Map<number, any>();
+  private historyRequests = new Set<number>();
+  private activeHistoryPropertyId: number | null = null;
+  private historyLoadingPropertyId: number | null = null;
 
   ngOnInit(): void {
     this.GetPendingForClerk();
@@ -316,49 +322,115 @@ export class PropertyVerification implements OnInit {
 
   //View history of the property
 
-  viewHistory(property: PropertyVerificationModel): void {
+toggleHistory(property: PropertyVerificationModel, event: Event, popover: Popover): void {
+  const propertyId = property.id;
+
+  if (popover.overlayVisible && this.activeHistoryPropertyId === propertyId) {
+    popover.hide();
+    return;
+  }
+
+  this.activeHistoryPropertyId = propertyId;
+  this.isHistoryPopoverOpen = true;
     this.selectedHistoryPropertyNo = property.propertyNo;
-    this.selectedHistory = [];
     this.selectedHistoryCreatedDate = property.registrationDate ?? null;
     this.historyError = '';
+  popover.show(event);
 
-    const rawTimeline = property.registrationData?.['timelineHistory'] || property.registrationData?.['TimelineHistory'];
-    if (rawTimeline && Array.isArray(rawTimeline) && rawTimeline.length > 0) {
+  // 1. Use timeline history already available in registrationData.
+  const rawTimeline =
+ property.registrationData?.['timelineHistory'] ||
+ property.registrationData?.['TimelineHistory'];
+    if (Array.isArray(rawTimeline) && rawTimeline.length > 0) {
+    this.historyCache.set(propertyId, rawTimeline);
       this.selectedHistory = this.mapStatusHistory(rawTimeline, property);
       this.historyLoading = false;
+    this.historyLoadingPropertyId = null;
+    this.cdr.detectChanges();
+    return;
+  }
+
+  // 2. Use cached history if already loaded.
+  if (this.historyCache.has(propertyId)) {
+    const cachedHistory = this.historyCache.get(propertyId);
+
+    this.selectedHistory = this.mapStatusHistory(cachedHistory, property);
+    this.historyLoading = false;
+    this.historyLoadingPropertyId = null;
       this.cdr.detectChanges();
       return;
     }
 
+  // 3. Prevent duplicate API requests for the same property.
+  if (this.historyRequests.has(propertyId)) {
     this.historyLoading = true;
+    this.historyLoadingPropertyId = propertyId;
+    return;
+  }
 
-    this.service.getPropertyHistory(property.id).subscribe({
+  this.selectedHistory = [];
+  this.historyLoading = true;
+  this.historyLoadingPropertyId = propertyId;
+  this.historyRequests.add(propertyId);
+
+ this.service.getPropertyHistory(propertyId)
+    .pipe(
+      finalize(() => {
+        this.historyRequests.delete(propertyId);
+        if (this.historyLoadingPropertyId === propertyId) {
+          this.historyLoading = false;
+          this.historyLoadingPropertyId = null;
+        }
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
       next: (res: any) => {
         const historyData = res?.data ?? res;
+
         if (!historyData) {
-          this.historyError = 'History could not be loaded.';
+          if (this.isHistoryPopoverOpen && this.activeHistoryPropertyId === propertyId) {
+            this.historyError = 'History could not be loaded.';
+          }
           return;
         }
 
         if (!Array.isArray(historyData)) {
-          this.selectedHistoryPropertyNo = historyData.propertyCode ?? this.selectedHistoryPropertyNo;
-          this.selectedHistoryCreatedDate = historyData.createdDate ?? this.selectedHistoryCreatedDate;
+          this.selectedHistoryPropertyNo =
+            historyData.propertyCode ?? this.selectedHistoryPropertyNo;
+          this.selectedHistoryCreatedDate =
+            historyData.createdDate ?? this.selectedHistoryCreatedDate;
         }
-        this.selectedHistory = this.mapStatusHistory(historyData, property);
-        this.cdr.detectChanges();
+
+        // 4. Cache the successful response.
+        this.historyCache.set(propertyId, historyData);
+        if (!this.isHistoryPopoverOpen || this.activeHistoryPropertyId !== propertyId) {
+          return;
+        }
+
+     this.selectedHistory = this.mapStatusHistory(
+        historyData,
+         property
+        );
       },
+
       error: (err: any) => {
         console.error('Error fetching property history:', err);
-        this.historyLoading = false;
+        if (this.isHistoryPopoverOpen && this.activeHistoryPropertyId === propertyId) {
         this.historyError = 'History could not be loaded.';
-        this.cdr.detectChanges();
-      },
-      complete: () => {
-        this.historyLoading = false;
-        this.cdr.detectChanges();
+      }
       }
     });
   }
+
+onHistoryPopoverHide(): void {
+  this.isHistoryPopoverOpen = false;
+  this.activeHistoryPropertyId = null;
+  this.historyLoading = false;
+  this.historyLoadingPropertyId = null;
+  this.cdr.detectChanges();
+}
+
 
   private mapStatusHistory(data: any, property?: PropertyVerificationModel): PropertyStatusHistoryEntry[] {
     const rawList: any[] = Array.isArray(data)
