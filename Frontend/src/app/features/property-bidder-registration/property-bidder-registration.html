@@ -626,8 +626,8 @@
                 </div>
                 <div class="col-sm-6 col-lg-6">
                   <label class="form-label small text-dark fw-semibold text-uppercase">Penality Rate (%)</label>
-                  <select id="PenaltyRateInorder" class="form-select bg-light rounded-3 custom-input-color"
-                  formControlName="PenaltyRateInorder">
+                  <select id="penaltyRateInorder" class="form-select bg-light rounded-3 custom-input-color"
+                  formControlName="penaltyRateInorder">
                   <option value="" disabled>Select Penalty Rate</option>
                   @for (rate of penaltyRates; track rate) {
                     <option [value]="rate">{{ rate }}%</option>
@@ -1263,7 +1263,7 @@
                       </div>
                       <div class="col-sm-6">
                         <label class="form-label small text-dark fw-semibold">Penality Rate (%)</label>
-                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRate')?.value ? (registerationForm.get('penaltyRate')?.value + '%') : '—' }}</p>
+                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRateInorder')?.value !== null && registerationForm.get('penaltyRateInorder')?.value !== undefined ? (registerationForm.get('penaltyRateInorder')?.value + '%') : '—' }}</p>
                       </div>
                     </div>
                   </div>
