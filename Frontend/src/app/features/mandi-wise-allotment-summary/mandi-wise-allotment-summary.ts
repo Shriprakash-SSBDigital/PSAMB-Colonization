@@ -59,7 +59,7 @@ type SortKey = keyof AllotmentRow;
   styleUrl: './mandi-wise-allotment-summary.scss',
 })
 export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
-  form!: FormGroup;
+  form: FormGroup;
 
   districts: LookupItem[] = [];
   committees: LookupItem[] = [];
@@ -165,12 +165,6 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     private propertyService: Propertybidderregn,
     private mandiWiseService: MandiWiseService
   ) {
-    this.filterForm = this.fb.group({
-      mandi: ['', Validators.required],
-    });
-  }
-
-  ngOnInit(): void {
     this.form = this.fb.group({
       districtId: [null],
       branchId: [null],
@@ -179,6 +173,12 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
       toDate: [null],
     });
 
+    this.filterForm = this.fb.group({
+      mandi: ['', Validators.required],
+    });
+  }
+
+  ngOnInit(): void {
     this.mandiSearch$
       .pipe(
         debounceTime(300),
