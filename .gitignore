@@ -52,3 +52,5 @@ Desktop.ini
 /Backend/Properties/PublishProfiles/FolderProfile.pubxml
 /Frontend/dist.zip
 /Backend/Properties/PublishProfiles
+
+global.json
