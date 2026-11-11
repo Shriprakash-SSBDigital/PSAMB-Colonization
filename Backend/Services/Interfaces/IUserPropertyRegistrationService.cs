@@ -13,6 +13,8 @@ namespace Backend.Services.Interfaces
         Task<ApiResponse<bool>> VerifyByClerkForUser(ClerkVerificationDto dto);
         Task<ApiResponse<List<UserDocumentResponseDto>>> GetUserDocumentsByUserIDAsync(int applicantID);
         Task<ApiResponse<List<UserPropertyRegistrationDto>>> GetAllUserRegisterPropertyById(string userid);
+        Task<ApiResponse<List<AllotteeCodeDto>>> GetVerifiedAllotteeCodesAsync(string userId);
+
 
 
     }

@@ -1509,8 +1509,8 @@ namespace Backend.Migrations
                     b.Property<string>("ConveyanceDeed")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment.development';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -44,4 +44,12 @@ export class Userservice {
   GetUserDocumentsByUserIDAsync(applicantID: number): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/UserPropertyRegistration/GetUserDocumentsByUserIDAsync?applicantID=${applicantID}`);
   }
+
+  GetVerifiedAllotteeCodes(userId: string): Observable<any> {
+    return this.http
+      .get<any>(`${this.baseUrl}/UserPropertyRegistration/GetVerifiedAllotteeCodes?userId=${encodeURIComponent(userId)}`)
+
+  }
+
+
 }

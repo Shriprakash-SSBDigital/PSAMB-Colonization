@@ -145,7 +145,7 @@ namespace Backend.Services.Implementations
                     DistrictId = dto.DistrictId,
                     AllotteeCode = dto.PropertyCode,
                     PlotTypeId = dto.PlotTypeId,
-                    CreatedBy = dto.ApplicantId ?? 0,
+                    CreatedBy = dto.CreatedBy,
                     PlotSize = dto.PlotSize,
                     PlotNo = dto.PlotNo,
                     AllotteeName = dto.CurrentOwnerName,
@@ -381,7 +381,7 @@ namespace Backend.Services.Implementations
                         // Verification Status
                         Status =  reader["Status"] == DBNull.Value? null : Convert.ToInt32(reader["Status"]),
 
-                        CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : Convert.ToInt32(reader["CreatedBy"]),
+                        CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : Convert.ToString(reader["CreatedBy"]),
 
                         CreatedDate = reader["CreatedDate"] == DBNull.Value  ? null : Convert.ToDateTime(reader["CreatedDate"]),
                         OwnerStateName = reader["OwnerState"] == DBNull.Value
@@ -651,9 +651,9 @@ namespace Backend.Services.Implementations
                         //    ? row["AllotteeCode"]?.ToString()
                         //    : response.PropertyCode;
 
-                        response.ApplicantId = table.Columns.Contains("ApplicantId") && row["ApplicantId"] != DBNull.Value
-                            ? Convert.ToInt32(row["ApplicantId"])
-                            : (table.Columns.Contains("CreatedBy") && row["CreatedBy"] != DBNull.Value ? Convert.ToInt32(row["CreatedBy"]) : null);
+                        //response.ApplicantId = table.Columns.Contains("ApplicantId") && row["ApplicantId"] != DBNull.Value
+                        //    ? Convert.ToInt32(row["ApplicantId"])
+                        //    : (table.Columns.Contains("CreatedBy") && row["CreatedBy"] != DBNull.Value ? Convert.ToInt32(row["CreatedBy"]) : null);
 
 
                         response.MandiId = table.Columns.Contains("MandiId") && row["MandiId"] != DBNull.Value
@@ -745,7 +745,7 @@ namespace Backend.Services.Implementations
                             : null;
 
                         response.CreatedBy = table.Columns.Contains("CreatedBy") && row["CreatedBy"] != DBNull.Value
-                            ? Convert.ToInt32(row["CreatedBy"])
+                            ? Convert.ToString(row["CreatedBy"])
                             : null;
 
                         response.CreatedDate = table.Columns.Contains("CreatedDate") && row["CreatedDate"] != DBNull.Value
@@ -822,6 +822,35 @@ namespace Backend.Services.Implementations
                 return ApiResponse<List<UserPropertyRegistrationDto>>.Fail(
                     $"Error while fetching registered properties: {ex.Message}"
                 );
+            }
+        }
+
+        public async Task<ApiResponse<List<AllotteeCodeDto>>> GetVerifiedAllotteeCodesAsync(string userId)
+        {
+            try
+            {
+                var result = await _context.UserPropertyRegistration
+                    .Where(x => x.CreatedBy == userId && x.Status == 3)
+                    .Select(x => new AllotteeCodeDto
+                    {
+                        AllotteeCode = x.AllotteeCode
+                    })
+                    .Distinct()
+                    .ToListAsync();
+
+                if (!result.Any())
+                {
+                    return ApiResponse<List<AllotteeCodeDto>>
+                        .Fail("No verified allottee codes found.");
+                }
+
+                return ApiResponse<List<AllotteeCodeDto>>
+                    .Ok(result, "Verified allottee codes fetched successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<AllotteeCodeDto>>
+                    .Fail($"Error fetching allottee codes: {ex.Message}");
             }
         }
     }
