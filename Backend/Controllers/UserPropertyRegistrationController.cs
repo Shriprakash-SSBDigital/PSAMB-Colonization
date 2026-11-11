@@ -120,5 +120,13 @@ namespace Backend.Controllers
             return Ok(response);
         }
 
+        [HttpGet("GetVerifiedAllotteeCodes")]
+        public async Task<IActionResult> GetVerifiedAllotteeCodes()
+        {
+            var userId = GetUserId();
+            var response = await _service.GetVerifiedAllotteeCodesAsync(userId);
+            return Ok(response);
+        }
+
     }
 }

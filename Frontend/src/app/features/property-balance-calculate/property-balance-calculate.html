@@ -41,6 +41,7 @@
               id="allotteeCodeSelect"
               class="form-select bg-light rounded-3 custom-input-color"
               formControlName="allotteeCode"
+              (change)="onAllotteeCodeSelect($event)"
               [class.is-invalid]="isInvalid('allotteeCode')">
               <option value="" disabled selected>Select allottee code</option>
               @if (isLoadingAllotteeCodes) {

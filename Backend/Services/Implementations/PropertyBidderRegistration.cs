@@ -3612,11 +3612,19 @@ namespace Backend.Services.Implementations
 
                     decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
 
+                    decimal penalityAmount = 0m;
+
                     if (installmentAmount <= 0m)
                         continue;
 
+                    if (penaltyOrderDate != DateTime.MinValue)
+                    {
+                         decimal penalty = (installmentAmount * penaltyPercentRateInorder) / 100;
+                        penalityAmount = penalty;
+                    }
+
                     decimal receivedAmount = extraBalanceAmount;
-                    decimal penalityAmount = TotalPenaltyAppliedAmount;
+                    decimal TotalpenalityAmount = TotalPenaltyAppliedAmount;
                     TotalPenaltyAppliedAmount = 0m;
                     decimal DueAmount = installmentAmount;
 
@@ -3717,6 +3725,7 @@ namespace Backend.Services.Implementations
                         PenalInterest = penalInterest,
                         PenaltyRateInPercent = penaltyPercentRateInorder,
                         PenalityAmount = Math.Round(penalityAmount, 2),
+                        TotalPenalityAmount = Math.Round(TotalpenalityAmount, 2),
                         ExtraAmount = Math.Round(extraAmount, 2)
                     });
 

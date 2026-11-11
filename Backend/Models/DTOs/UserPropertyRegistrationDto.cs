@@ -29,7 +29,7 @@ namespace Backend.Models.DTOs
         public string? AadhaarNumber { get; set; }
         public string? PanNumber { get; set; }
         public int? Status { get; set; }
-        public int? CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
         public string? DistrictName { get; set; }
         public string? BranchName { get; set; }
@@ -62,5 +62,10 @@ namespace Backend.Models.DTOs
     public class PlotSizesDto
     {
         public string? PlotSize { get; set; }
+    }
+
+    public class AllotteeCodeDto
+    {
+        public string? AllotteeCode { get; set; }
     }
 }
