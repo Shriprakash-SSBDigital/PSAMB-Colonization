@@ -29,7 +29,7 @@
             </div>
 
             <div class="col-auto">
-              <button type="submit" class="btn btn-success fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-1 shadow-sm"
+              <button type="submit" class="btn bg-success text-white fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-1 shadow-sm"
                 [disabled]="loading">
                 <span class="spinner-border spinner-border-sm" *ngIf="loading" aria-hidden="true"></span>
                 <i class="fa-solid fa-magnifying-glass" *ngIf="!loading"></i>
@@ -210,7 +210,7 @@
                 <div class="input-group input-group-sm" style="max-width: 260px;">
                   <span class="input-group-text bg-light border-end-0"><i
                       class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                  <input type="text" class="form-control border-start-0" placeholder="Search Property Code..."
+                  <input type="text" class="form-control border-start custom-input-color" placeholder="Search Property Code..."
                     [value]="detailSearchTerm" (input)="onDetailSearch($event)">
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-success btn-export-excel rounded-2 px-2 py-1"

@@ -1,4 +1,4 @@
-<main class="registration-page min-vh-100 py-3 py-lg-4">
+﻿<main class="registration-page min-vh-100 py-3 py-lg-4">
   <div class="registration-container container-xxl">
     <form [formGroup]="registerationForm" (ngSubmit)="onSubmit()" novalidate>
       <div class="row g-4 mb-4">
@@ -315,10 +315,17 @@
               <div class="col-md-4">
                 <label for="auctionDate" class="form-label small text-dark fw-semibold text-uppercase">Auction Date
                   &amp; Time <span class="text-danger">*</span></label>
-                <input id="auctionDate" type="datetime-local"
+                <input id="auctionDate" type="datetime-local" [max]="todayLocal"
                   class="form-control bg-light rounded-3 custom-input-color uppercase" formControlName="auctionDate"
                   [class.is-invalid]="isInvalid('auctionDate')" />
-                @if (isInvalid('auctionDate')) { <div class="invalid-feedback">Auction date &amp; time is required.
+                @if (isInvalid('auctionDate')) {
+               <div class="invalid-feedback d-block">
+                @if (getControl('auctionDate')?.hasError('required')) {
+                Auction date &amp; time is required.
+                }
+                @else if (getControl('auctionDate')?.hasError('futureDate')) {
+                Future Dates and Times are not allowed.
+                }
                 </div> }
               </div>
 
@@ -605,9 +612,16 @@
                     Date <span class="text-danger">*</span>
                   </label>
                   <input type="date" class="form-control bg-white custom-input-color uppercase"
-                    formControlName="allotmentDate" [class.is-invalid]="isInvalid('allotmentDate')" />@if
-                  (isInvalid('allotmentDate')) { <div class="invalid-feedback">Allotment date is required.
-                  </div> }
+                    formControlName="allotmentDate" [max]="today" [class.is-invalid]="isInvalid('allotmentDate')" />@if
+                  (isInvalid('allotmentDate')) {  
+                    <div class="invalid-feedback d-block">
+                @if (getControl('allotmentDate')?.hasError('required')) {
+                Allotment date is required.
+                }
+                @else if (getControl('allotmentDate')?.hasError('futureDate')) {
+                Future Dates are not allowed.
+                }
+                  </div> } 
                 </div>
               </div>
             </div>
@@ -622,7 +636,7 @@
                 <div class="col-sm-6 col-lg-6">
                   <label class="form-label small text-dark fw-semibold text-uppercase">Penality Order Date</label>
                  <input type="date" class="form-control bg-white custom-input-color uppercase"
-                        formControlName="penaltyOrderDate" />
+                        formControlName="penaltyOrderDate" [max]="today" />
                 </div>
                 <div class="col-sm-6 col-lg-6">
                   <label class="form-label small text-dark fw-semibold text-uppercase">Penality Rate (%)</label>
@@ -630,7 +644,7 @@
                   formControlName="penaltyRateInorder">
                   <option value="" disabled>Select Penalty Rate</option>
                   @for (rate of penaltyRates; track rate) {
-                    <option [value]="rate">{{ rate }}%</option>
+                    <option [value]="rate">{{ rate }}</option>
                   }
                 </select>
                 </div>
@@ -655,7 +669,7 @@
                     </div>
                     <div class="col-sm-4"><label class="form-label small text-dark fw-semibold">Txn Date</label><input
                         type="date" class="form-control bg-white custom-input-color uppercase"
-                        formControlName="formTxnDate" [class.is-invalid]="isInvalid('formTxnDate')" />@if
+                        formControlName="formTxnDate" [max]="today" [class.is-invalid]="isInvalid('formTxnDate')" />@if
                       (isInvalid('formTxnDate')) { <div class="invalid-feedback">Enter the date as
                         DD/MM/YYYY.</div> }</div>
                     <div class="col-sm-4"><label class="form-label small text-dark fw-semibold">Paid Amount
@@ -681,7 +695,7 @@
                       </div> } -->
                     </div>
                     <div class="col-sm-4"><label class="form-label small text-dark fw-semibold">EMD Date</label><input
-                        type="date" class="form-control bg-white custom-input-color uppercase" formControlName="emdDate"
+                        type="date" class="form-control bg-white custom-input-color uppercase" formControlName="emdDate" [max]="today"
                         [class.is-invalid]="isInvalid('emdDate')" />
                       <!-- @if
                       (isInvalid('emdDate')) { 
@@ -713,7 +727,7 @@
                 </div>
                 <div class="col-sm-4"><label class="form-label small text-dark fw-semibold">Transaction
                     Date </label><input type="date" class="form-control bg-white custom-input-color uppercase"
-                    formControlName="allotmentTransactionDate"
+                    formControlName="allotmentTransactionDate" [max]="today"
                     [class.is-invalid]="isInvalid('allotmentTransactionDate')" />
                   <!-- @if
                   (isInvalid('allotmentTransactionDate')) { <div class="invalid-feedback">Enter the date as DD/MM/YYYY.
@@ -869,7 +883,7 @@
                         <td>
                           @if (row.get('isEditing')?.value) {
                           <input type="date" class="form-control form-control-sm font-monospace"
-                            formControlName="receiptDate" />
+                            formControlName="receiptDate" [max]="today" />
                           } @else {
                           <span class="font-monospace text-dark">{{ row.get('receiptDate')?.value | date:'dd/MM/yyyy'
                             }}</span>
@@ -878,7 +892,7 @@
                          <td>
                           @if (row.get('isEditing')?.value) {
                           <input type="date" class="form-control form-control-sm font-monospace"
-                            formControlName="treasuryReceiptDate" />
+                            formControlName="treasuryReceiptDate" [max]="today" />
                           } @else {
                           <span class="font-monospace text-dark">{{ row.get('treasuryReceiptDate')?.value | date:'dd/MM/yyyy'
                             }}</span>
@@ -904,7 +918,7 @@
                         <td>
                           @if (row.get('isEditing')?.value) {
                           <input type="date" class="form-control form-control-sm font-monospace"
-                            formControlName="draftDate" />
+                            formControlName="draftDate" [max]="today" />
                           } @else {
                           <span class="font-monospace text-dark">{{ row.get('draftDate')?.value | date:'dd/MM/yyyy'
                             }}</span>
@@ -1263,7 +1277,7 @@
                       </div>
                       <div class="col-sm-6">
                         <label class="form-label small text-dark fw-semibold">Penality Rate (%)</label>
-                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRateInorder')?.value !== null && registerationForm.get('penaltyRateInorder')?.value !== undefined ? (registerationForm.get('penaltyRateInorder')?.value + '%') : '—' }}</p>
+                        <p class="mb-0 text-dark fw-medium">{{ registerationForm.get('penaltyRateInorder')?.value !== null && registerationForm.get('penaltyRateInorder')?.value !== undefined ? (registerationForm.get('penaltyRateInorder')?.value) : '—' }}</p>
                       </div>
                     </div>
                   </div>

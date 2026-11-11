@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+﻿import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { Common } from '../../core/service/CommonService/common';
+import { DateUtils } from '../../core/utils/date.utils';
 
 export interface Receipt {
   receiptNo: string;
@@ -41,6 +42,14 @@ export interface InstallmentScheduleView {
   styleUrl: './property-bidder-registration.scss',
 })
 export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges {
+  getControl(arg0: string): AbstractControl | null {
+    return this.registerationForm.get(arg0);
+  }
+
+  readonly today = DateUtils.todayAsDateString();
+  get todayLocal(): string {
+    return DateUtils.todayAsDatetimeLocalString();
+  }
 
   registerationForm!: FormGroup;
 
@@ -149,7 +158,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       assetVerified: [false],
       isCourtCase: [false],
       isAuctioned: [false],
-      auctionDate: [''],
+      auctionDate: ['',[ Validators.required, DateUtils.noFutureDate(true)]],
       bidderTypeId: [''],
       email: ['', [Validators.email]],
       bidderName: [''],
@@ -181,7 +190,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       emdDate: [''],
       emdAmount: [''],
       //25% form values 
-      allotmentDate: ['', Validators.required],
+      allotmentDate: ['', [Validators.required, DateUtils.noFutureDate()]],
       allotmentTxnId: [''],
       allotmentTransactionDate: [''],
       //allotement form fields 
@@ -2396,6 +2405,10 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
           control.setValidators([Validators.pattern(/^XXXXXXXX\d{4}$/)]);
         } else if (controlName === 'mobileNo') {
           control.setValidators([Validators.required, Validators.pattern(/^[6-9]\d{9}$/), Validators.minLength(10), Validators.maxLength(10)]);
+        } else if (controlName === 'auctionDate') {
+          control.setValidators([Validators.required, DateUtils.noFutureDate(true)]);
+        } else if (controlName === 'allotmentDate') {
+          control.setValidators([Validators.required, DateUtils.noFutureDate()]);
         } else {
           control.setValidators(Validators.required);
         }
