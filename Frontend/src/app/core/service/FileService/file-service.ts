@@ -26,7 +26,7 @@ export class FileService {
     //   4 = Property Document
    
     // DocumentTypeId (Category 2 – Identification):
-    //   1 = Aadhaar Card, 2 = Voter Card, 3 = Passport, 4 = Other Gov. Photo ID
+    //   1 = Aadhaar Card, 2 = Voter Card, 3 = Passport, 4 = Other Gov. Photo ID, 5 = PAN Card
    
     // DocumentTypeId (Category 3 – Address):
     //   1 = Aadhaar Card, 2 = Passport, 3 = Electricity Bill, 4 = Water Bill, 5 = Rent Agreement, 6 = Registry Deed

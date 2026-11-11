@@ -85,6 +85,11 @@ export class RegisterProperty implements OnInit {
     legalHeirCertificate: 8,
   };
 
+  readonly identificationDocumentMap: Record<string, number> = {
+    aadhaarProof: 1,
+    panProof: 5,
+  };
+
   uploadingStates: Record<string, boolean> = {};
   uploadedDocData: Record<string, { userDocumentId: number; storedFileName: string; relativePath: string; fileUrl: string }> = {};
 
@@ -122,10 +127,10 @@ export class RegisterProperty implements OnInit {
         ownerDistrict: ['', Validators.required],
         city: ['', Validators.required],
         address: ['', Validators.required],
-        aadhaarNumber: ['', [Validators.required, Validators.pattern(/^XXXXXXXX \d{0,4}$/)]],
-        // aadhaarProof: [null, [Validators.required, this.fileTypeValidator()]],
+        aadhaarNumber: ['', Validators.pattern(/^\d{12}$/)],
+        aadhaarProof: [null],
         panNo: [''],
-        // passportProof: [null, this.fileTypeValidator()],
+        passportProof: [null],
         ...documentControls,
       },
       { validators: this.atLeastOneDocumentValidator() },
@@ -229,7 +234,7 @@ export class RegisterProperty implements OnInit {
       this.cities = [];
       this.bidderDistricts = [];
       if (stateId) {
-        this.loadDistricts();
+        this.loadOwnerDistricts(stateId);
       }
     });
 
@@ -362,7 +367,7 @@ export class RegisterProperty implements OnInit {
         ownerDistrict: d.ownerDistrtictID || d.allotteeDistrictId || d.ownerDistrict || '',
         city: d.ownerCityID || d.allotteeCityId || d.city || '',
         address: d.address || d.allotteeAddress || '',
-        aadhaarNumber: d.aadhaarNumber || d.aadharNumber || d.aadhaarNo || '',
+        aadhaarNumber: this.normalizeAadhaarValue(d.aadhaarNumber || d.aadharNumber || d.aadhaarNo || ''),
         panNo: d.panNumber || d.panNo || '',
       };
 
@@ -500,10 +505,11 @@ export class RegisterProperty implements OnInit {
       }
     };
 
-    if (!this.districts || this.districts.length === 0) {
-      this.service.getPropertyDistricts().subscribe({
+    const stateId = d.ownerStateID || d.allotteeStateId || d.state;
+    if (stateId) {
+      this.commonService.getAllDistrict(stateId).subscribe({
         next: (res: any) => {
-          this.districts = res?.data || res || [];
+          this.bidderDistricts = res?.data || res || [];
           startCascading();
         },
         error: () => {
@@ -593,7 +599,7 @@ export class RegisterProperty implements OnInit {
           ownerDistrict: d.ownerDistrtictID || d.ownerDistrict || '',
           city: d.ownerCityID || d.city || '',
           address: d.address || '',
-          aadhaarNumber: d.aadhaarNo || d.aadhaarNumber || '',
+          aadhaarNumber: this.normalizeAadhaarValue(d.aadhaarNo || d.aadhaarNumber || ''),
           panNo: d.panNo || d.panNumber || '',
         };
 
@@ -838,7 +844,7 @@ export class RegisterProperty implements OnInit {
   }
 
   get filteredOwnerDistricts(): any[] {
-    const list = this.bidderDistricts.length ? this.bidderDistricts : this.districts;
+    const list = this.bidderDistricts;
     if (!this.ownerDistrictSearchText?.trim()) {
       return list;
     }
@@ -1179,7 +1185,7 @@ export class RegisterProperty implements OnInit {
   getSelectedOwnerDistrictName(): string {
     const value = this.propertyForm?.get('ownerDistrict')?.value;
     if (value === undefined || value === null || value === '') return '';
-    const list = this.bidderDistricts.length ? this.bidderDistricts : this.districts;
+    const list = this.bidderDistricts;
     const selected = list?.find(d => String(d.districtId || d.id || d) === String(value));
     return selected ? (selected.districtName || selected.name || selected) : '';
   }
@@ -1251,6 +1257,19 @@ export class RegisterProperty implements OnInit {
       },
       error: (err: any) => {
         // console.error('Error fetching states:', err);
+      }
+    });
+  }
+
+  loadOwnerDistricts(stateId: any, callback?: () => void): void {
+    this.commonService.getAllDistrict(stateId).subscribe({
+      next: (res: any) => {
+        this.bidderDistricts = res?.data || res || [];
+        if (callback) callback();
+      },
+      error: () => {
+        this.bidderDistricts = [];
+        if (callback) callback();
       }
     });
   }
@@ -1452,24 +1471,26 @@ export class RegisterProperty implements OnInit {
     }
   }
 
-  maskInput(event: Event) {
+  private normalizeAadhaarValue(value: unknown): string {
+    return String(value ?? '').replace(/\D/g, '').slice(0, 12);
+  }
+
+  onAadhaarInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    let value = input.value;
+    const digits = this.normalizeAadhaarValue(input.value);
+    this.propertyForm.get('aadhaarNumber')?.setValue(digits, { emitEvent: false });
+    input.value = digits;
+  }
 
-    // Strip out the prefix temporarily to see what the user typed
-    let digits = value.replace(/^XXXXXXXX\s?/, '').replace(/\D/g, '');
+  showAadhaarInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.value = this.normalizeAadhaarValue(this.propertyForm.get('aadhaarNumber')?.value);
+  }
 
-    // Limit the actual typed digits to 4
-    if (digits.length > 4) {
-      digits = digits.substring(0, 4);
-    }
-
-    // Combine the mask with the typed digits
-    const maskedValue = 'XXXXXXXX' + ' ' + digits;
-
-    // Update the form control and input display value
-    this.propertyForm.get('aadhaarNumber')?.setValue(maskedValue, { emitEvent: false });
-    input.value = maskedValue;
+  maskAadhaarInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = this.normalizeAadhaarValue(this.propertyForm.get('aadhaarNumber')?.value);
+    input.value = digits ? `XXXXXXXX ${digits.slice(-4)}` : '';
   }
 
   isInvalid(controlName: string): boolean {
@@ -1500,20 +1521,40 @@ export class RegisterProperty implements OnInit {
       docKey = controlName.replace(/File$/, '');
     }
 
-    if (file && docKey && this.documentTypeMap[docKey]) {
+    if (file && docKey && (this.documentTypeMap[docKey] || this.identificationDocumentMap[docKey])) {
       const selectedControl = this.propertyForm.get(`${docKey}Selected`);
       if (selectedControl && !selectedControl.value) {
         selectedControl.setValue(true);
       }
 
       this.uploadingStates[docKey] = true;
-      const typeId = this.documentTypeMap[docKey];
+      const isIdentificationDocument = !!this.identificationDocumentMap[docKey];
+      const typeId = this.identificationDocumentMap[docKey] || this.documentTypeMap[docKey];
+      const documentNumber = docKey === 'aadhaarProof'
+        ? this.normalizeAadhaarValue(this.propertyForm.get('aadhaarNumber')?.value)
+        : docKey === 'panProof'
+          ? String(this.propertyForm.get('panNo')?.value || '').trim().toUpperCase()
+          : '';
+
+      if (docKey === 'aadhaarProof' && !/^\d{12}$/.test(documentNumber)) {
+        control?.setValue(null);
+        input.value = '';
+        this.toastr.warning('Enter a valid 12 digit Aadhaar number before uploading the card.', 'Aadhaar Number Required');
+        return;
+      }
+
+      if (docKey === 'panProof' && !documentNumber) {
+        control?.setValue(null);
+        input.value = '';
+        this.toastr.warning('Enter the PAN number before uploading the card.', 'PAN Number Required');
+        return;
+      }
 
       const payload: FileUploadPayload = {
         file,
-        documentCategoryId: 4, // Property Document
+        documentCategoryId: isIdentificationDocument ? 2 : 4,
         documentTypeId: typeId,
-        documentNumber: '',
+        documentNumber,
         sessionId: this.sessionId,
       };
 
@@ -1527,7 +1568,11 @@ export class RegisterProperty implements OnInit {
               relativePath: response.data.relativePath,
               fileUrl: response.data.fileUrl || response.data.relativePath,
             };
-            const docLabel = this.documents.find(d => d.key === docKey)?.label || 'Document';
+            const docLabel = docKey === 'aadhaarProof'
+              ? 'Aadhaar Card'
+              : docKey === 'panProof'
+                ? 'PAN Card'
+                : this.documents.find(d => d.key === docKey)?.label || 'Document';
             this.toastr.success(`${docLabel} uploaded successfully.`, 'Upload Success');
           } else {
             this.toastr.error(response?.message || 'File upload failed.', 'Upload Error');
@@ -1585,7 +1630,7 @@ export class RegisterProperty implements OnInit {
       ownerDistrtictID: formValue.ownerDistrict ? Number(formValue.ownerDistrict) : null,
       ownerCityID: formValue.city ? Number(formValue.city) : null,
       address: formValue.address || '',
-      aadhaarNumber: formValue.aadhaarNumber ? String(formValue.aadhaarNumber).trim() : '',
+      aadhaarNumber: this.normalizeAadhaarValue(formValue.aadhaarNumber),
       panNumber: formValue.panNo ? String(formValue.panNo).trim() : '',
       propertyCode: formValue.allotteeCode || this.propertyData?.propertyCode || this.propertyData?.allotteeCode || '',
       // applicantId: this.getApplicantId(),
