@@ -473,6 +473,28 @@ namespace Backend.Services.Implementations
                         into cityGroup
                     from city in cityGroup.DefaultIfEmpty()
 
+                    join ud in _context.UserDocuments
+                     .Where(d => d.DocumentCategoryId == 2
+                                 && d.DocumentTypeId== 1
+                                 && !d.IsDeleted)
+                     on application.ApplicantId equals ud.ApplicantId
+                     into udd
+                    from ud in udd.DefaultIfEmpty()
+
+
+                    join profileph in _context.UserDocuments
+                     .Where(d => d.DocumentCategoryId == 1
+                                 && d.DocumentTypeId == 0
+                                 && !d.IsDeleted)
+                     on application.ApplicantId equals profileph.ApplicantId
+                     into pudd
+                    from profileph in pudd.DefaultIfEmpty()
+
+                    join sid in _context.UserDocuments
+                     on application.ApplicantId equals sid.ApplicantId
+                     into sidd
+                    from sid in sidd.DefaultIfEmpty()
+
                     where application.IdentityUserId == userId
                           && !application.IsDeleted
 
@@ -481,7 +503,13 @@ namespace Backend.Services.Implementations
                         ApplicationUser = application,
                         State = state,
                         District = district,
-                        City = city
+                        City = city,
+                        AadhaarRelativePath = ud != null ? ud.RelativePath : null,
+                        AadhaarFolderPath = ud != null ? ud.FolderPath : null,
+                        AadhaarNumber = ud != null ? ud.DocumentNumber : null,
+                        ProfileRelativePath = profileph != null ? profileph.RelativePath : null,
+                        ProfileFolderPath = profileph != null ? profileph.FolderPath : null,
+                        userSessionId = sid.TempSessionId
                     }
                 ).FirstOrDefaultAsync();
 
@@ -497,6 +525,7 @@ namespace Backend.Services.Implementations
                 {
                     ApplicantId = applicationUser.ApplicantId,
                     IdentityUserId = applicationUser.IdentityUserId,
+                    userSessionId = user.userSessionId,
 
                     FirstName = applicationUser.FirstName,
                     LastName = applicationUser.LastName,
@@ -520,8 +549,17 @@ namespace Backend.Services.Implementations
                     IsDeleted = applicationUser.IsDeleted,
                     IsActive = applicationUser.IsActive,
 
+                    // AADHAR CARD NUMBER
+                    IdentDocNumber = user.AadhaarNumber,
+                    IdentDocPath = user.AadhaarRelativePath,
+                    IdentDocFolderPath = user.AadhaarFolderPath,
+                    ProfileDocPath = user.ProfileRelativePath,
+                    ProfileDocFolderPath = user.ProfileFolderPath,
+
+                    
                     CreatedDate = applicationUser.CreatedDate,
-                    CreatedBy = applicationUser.CreatedBy
+                    CreatedBy = applicationUser.CreatedBy,
+
                 };
 
                 return ApiResponse<ApplicationUserProfileDto>.Ok(
