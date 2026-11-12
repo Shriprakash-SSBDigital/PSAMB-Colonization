@@ -3,6 +3,7 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { CountUp } from '../../shared/directives/count-up';
 
 interface Announcement {
   id: number;
@@ -32,7 +33,7 @@ interface PhotoItem {
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, NgOptimizedImage, MatIconModule, MatButtonModule],
+  imports: [CommonModule, NgOptimizedImage, MatIconModule, MatButtonModule, CountUp],
   templateUrl: './home-page.html',
   styleUrl: './home-page.css',
 })

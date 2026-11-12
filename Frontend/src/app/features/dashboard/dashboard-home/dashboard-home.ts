@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MenuService, SubMenuItem } from '../../../core/service/MenuService/menu.service';
+import { CountUp } from '../../../shared/directives/count-up';
 
 export interface DashboardStats {
   totalProperties: number;
@@ -19,7 +20,7 @@ export interface DashboardStats {
 
 @Component({
   selector: 'app-dashboard-home',
-  imports: [CommonModule, RouterModule, MatButtonModule, MatCardModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, MatCardModule, MatIconModule, CountUp],
   standalone: true,
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.scss',

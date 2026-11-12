@@ -12,6 +12,7 @@ import {
   ValidatorFn
 } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from '../../../../environments/environment';
 
 // Custom validator: passwords must match
 export function passwordsMatchValidator(): ValidatorFn {
@@ -481,7 +482,14 @@ export class Profile implements OnInit {
       next: (response: any) => {
         if (response?.success && response?.data) {
           const imageData = response.data;
-        this.avatarUrl = imageData.base64Image ?? '';
+          const filePath = imageData.filePath as string | undefined;
+
+          if (filePath) {
+            const relativePath = filePath
+              .replace(/^.*ColonizationDocuments[\\/]/i, '')
+              .replace(/\\/g, '/');
+            this.avatarUrl = `${environment.documentBaseUrl}/ColonizationDocuments/${relativePath}`;
+          }
         this.profileSessionId = imageData.tempSessionId ?? '';
         }
         this.cdr.detectChanges();
