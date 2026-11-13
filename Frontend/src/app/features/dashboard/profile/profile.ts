@@ -40,6 +40,7 @@ export class Profile implements OnInit {
 
   avatarUrl: string = '';
   isUploading = false;
+  isSaving = false;
   uploadedPhotoFileName = '';
   uploadedDocumentId: number = 0;
   profileSessionId: string = '';
@@ -48,6 +49,14 @@ export class Profile implements OnInit {
   isLoadingProfile = false;
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
+
+  // Dropdown lists for state, district, city
+  stateList: any[] = [];
+  districtList: any[] = [];
+  cityList: any[] = [];
+  isLoadingStates = false;
+  isLoadingDistricts = false;
+  isLoadingCities = false;
 
   private initialFormState: any;
 
@@ -65,6 +74,7 @@ export class Profile implements OnInit {
     this.buildProfileForm();
     this.buildPasswordForm();
     this.initialFormState = this.profileForm.getRawValue();
+    this.loadStates();
     this.loadProfileFromApi();
     this.openChangePasswordMenu();
     this.getProfileImage();
@@ -73,8 +83,9 @@ export class Profile implements OnInit {
   private buildProfileForm(): void {
     this.profileForm = this.fb.group({
       name: ['', [Validators.required]],
-      email: [''],
-      mobile: [''],
+      // Email and mobile are read-only
+      email: [{ value: '', disabled: true }],
+      mobile: [{ value: '', disabled: true }],
       altMobile: [
         '',
         [Validators.pattern(/^[0-9]{10}$/)]
@@ -82,9 +93,10 @@ export class Profile implements OnInit {
       fatherName: ['', [Validators.required]],
       motherName: ['', [Validators.required]],
       address: ['', [Validators.required]],
-      city: ['', [Validators.required]],
-      district: ['', [Validators.required]],
-      state: ['', [Validators.required]],
+      // Dropdowns store numeric IDs
+      state: [null, [Validators.required]],
+      district: [null, [Validators.required]],
+      city: [null, [Validators.required]],
       pincode: [
         '',
         [
@@ -114,7 +126,55 @@ export class Profile implements OnInit {
     return this.passwordForm.controls;
   }
 
-  /** Calls getProfileDetailsByUserId API and patches form with all profile data */
+  /** Loads all states into the state dropdown */
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.commonService.getAllStates().subscribe({
+      next: (res: any) => {
+        this.isLoadingStates = false;
+        this.stateList = res?.data ?? res ?? [];
+        this.cdr.detectChanges();
+      },
+      error: () => { this.isLoadingStates = false; }
+    });
+  }
+
+  /** State dropdown changed — load districts, reset district & city */
+  onStateChange(stateId: any): void {
+    this.districtList = [];
+    this.cityList = [];
+    this.profileForm.patchValue({ district: null, city: null }, { emitEvent: false });
+    if (!stateId) return;
+
+    this.isLoadingDistricts = true;
+    this.commonService.getAllDistrict(stateId).subscribe({
+      next: (res: any) => {
+        this.isLoadingDistricts = false;
+        this.districtList = res?.data ?? res ?? [];
+        this.cdr.detectChanges();
+      },
+      error: () => { this.isLoadingDistricts = false; }
+    });
+  }
+
+  /** District dropdown changed — load cities, reset city */
+  onDistrictChange(districtId: any): void {
+    this.cityList = [];
+    this.profileForm.patchValue({ city: null }, { emitEvent: false });
+    if (!districtId) return;
+
+    this.isLoadingCities = true;
+    this.commonService.GetAllCityByDistrictID(districtId).subscribe({
+      next: (res: any) => {
+        this.isLoadingCities = false;
+        this.cityList = res?.data ?? res ?? [];
+        this.cdr.detectChanges();
+      },
+      error: () => { this.isLoadingCities = false; }
+    });
+  }
+
+  /** Calls getProfileDetailsByUserId API and patches form, then cascade-loads dropdowns */
   private loadProfileFromApi(): void {
     this.isLoadingProfile = true;
     this.commonService.getProfileDetailsByUserId().subscribe({
@@ -126,6 +186,10 @@ export class Profile implements OnInit {
         if (!res?.success || !d) {
           return;
         }
+
+        const stateId    = d.individualStateId    ?? null;
+        const districtId = d.individualDistrictId ?? null;
+        const cityId     = d.individualCityId     ?? null;
 
         // Merge firstName + lastName into full name
         const fullName = [d.firstName, d.lastName]
@@ -142,20 +206,51 @@ export class Profile implements OnInit {
           .filter((n: string) => n && n.trim())
           .join(' ');
 
+        // Patch all scalar fields
         this.profileForm.patchValue({
           name: fullName,
           email: d.email ?? '',
           mobile: d.mobileNo ?? '',
+          altMobile: d.altMobile ?? '',
           fatherName: fatherName,
           motherName: motherName,
           address: d.individualPlotStreetLandmark ?? '',
-          state: d.stateName ?? '',
-          district: d.districtName ?? '',
-          city: d.cityName ?? '',
           pincode: d.individualPinCode ?? ''
         }, { emitEvent: false });
 
-        this.initialFormState = this.profileForm.getRawValue();
+        // Cascade-load dropdowns and pre-select the saved state → district → city
+        if (stateId) {
+          this.profileForm.patchValue({ state: stateId }, { emitEvent: false });
+          this.isLoadingDistricts = true;
+          this.commonService.getAllDistrict(stateId).subscribe({
+            next: (dRes: any) => {
+              this.isLoadingDistricts = false;
+              this.districtList = dRes?.data ?? dRes ?? [];
+              if (districtId) {
+                this.profileForm.patchValue({ district: districtId }, { emitEvent: false });
+                this.isLoadingCities = true;
+                this.commonService.GetAllCityByDistrictID(districtId).subscribe({
+                  next: (cRes: any) => {
+                    this.isLoadingCities = false;
+                    this.cityList = cRes?.data ?? cRes ?? [];
+                    if (cityId) {
+                      this.profileForm.patchValue({ city: cityId }, { emitEvent: false });
+                    }
+                    this.initialFormState = this.profileForm.getRawValue();
+                    this.cdr.detectChanges();
+                  },
+                  error: () => { this.isLoadingCities = false; }
+                });
+              } else {
+                this.initialFormState = this.profileForm.getRawValue();
+                this.cdr.detectChanges();
+              }
+            },
+            error: () => { this.isLoadingDistricts = false; }
+          });
+        } else {
+          this.initialFormState = this.profileForm.getRawValue();
+        }
       },
       error: (err: any) => {
         this.isLoadingProfile = false;
@@ -303,22 +398,56 @@ export class Profile implements OnInit {
       return;
     }
 
+    const raw = this.profileForm.getRawValue();
+
+    // Split full name into first / last
+    const nameParts = (raw.name ?? '').trim().split(/\s+/);
+    const firstName = nameParts[0] ?? '';
+    const lastName = nameParts.slice(1).join(' ');
+
+    // Split father name into first / last
+    const fatherParts = (raw.fatherName ?? '').trim().split(/\s+/);
+    const fatherHusbandFirstName = fatherParts[0] ?? '';
+    const fatherHusbandLastName = fatherParts.slice(1).join(' ');
+
+    // Split mother name into first / last
+    const motherParts = (raw.motherName ?? '').trim().split(/\s+/);
+    const motherFirstName = motherParts[0] ?? '';
+    const motherLastName = motherParts.slice(1).join(' ');
+
     const payload = {
-      ...this.profileForm.getRawValue(),
-      avatarUrl: this.avatarUrl,
-      photoFileName: this.uploadedPhotoFileName,
-      photoDocumentId: this.uploadedDocumentId
+      name: raw.name ?? '',
+      firstName,
+      lastName,
+      altMobile: raw.altMobile ?? '',
+      fatherName: raw.fatherName ?? '',
+      fatherHusbandFirstName,
+      fatherHusbandLastName,
+      motherName: raw.motherName ?? '',
+      motherFirstName,
+      motherLastName,
+      individualPlotStreetLandmark: raw.address ?? '',
+      individualStateId: raw.state ?? 0,
+      individualDistrictId: raw.district ?? 0,
+      individualCityId: raw.city ?? 0,
+      individualPinCode: raw.pincode ?? ''
     };
-    this.initialFormState = this.profileForm.getRawValue();
-    this.showSuccess();
-  }
 
-  show() {
-    this.toastr.error('Error message', 'Major Error');
-  }
-
-  showSuccess() {
-    this.toastr.success('Profile updated successfully!', 'Success');
+    this.isSaving = true;
+    this.commonService.SaveProfileChanges(payload).subscribe({
+      next: (res: any) => {
+        this.isSaving = false;
+        this.initialFormState = this.profileForm.getRawValue();
+        this.toastr.success(res?.message || 'Profile updated successfully!', 'Success');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.isSaving = false;
+        const msg = err?.error?.message || err?.error || 'Failed to save profile. Please try again.';
+        this.toastr.error(typeof msg === 'string' ? msg : 'Failed to save profile. Please try again.', 'Error');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   getEmailforChangePassword(): string {

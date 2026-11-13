@@ -129,18 +129,18 @@ export class DataEntryOperatorVerificationView implements OnInit {
       data.sendBackRemarks ??
       data.objectionRemarks ??
       data.comment ??
-      data.Comment ??
-      this.checkVerificationStatus(statusId);
+      data.Comment ?? null;
+    this.checkVerificationStatus(statusId);
 
-    if (data.timelineHistory && Array.isArray(data.timelineHistory)) {
-      this.history = data.timelineHistory.map((item: any) => ({
-        role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
-        actorName: item.userName || item.userId || 'User',
-        action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
-        remarks: item.remarks || '',
-        date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
-      }));
-    }
+    // if (data.timelineHistory && Array.isArray(data.timelineHistory)) {
+    //   this.history = data.timelineHistory.map((item: any) => ({
+    //     role: item.statusName || (item.statusId === 1 ? 'DEO' : item.statusId === 2 ? 'Clerk' : 'Senior Assistant'),
+    //     actorName: item.userName || item.userId || 'User',
+    //     action: item.statusId === 2 || item.statusId === 3 ? 'Approved' : (item.statusId === 7 ? 'Sent Back' : 'Submitted'),
+    //     remarks: item.remarks || '',
+    //     date: item.date ? new Date(item.date).toLocaleString('en-IN') : ''
+    //   }));
+    // }
   }
 
   private canCurrentRoleAct(statusId: number | null | undefined): boolean {
@@ -244,20 +244,20 @@ export class DataEntryOperatorVerificationView implements OnInit {
     this.submitting = true;
 
     const token = sessionStorage.getItem('token');
-    let currentUserId = 0;
+    // let currentUserId = 0;
     let sessionUserId: string | null = null;
-    if (token) {
-      try {
-        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        const rawId = tokenPayload.ApplicantId || tokenPayload.UserId || tokenPayload.id;
-        if (rawId) {
-          currentUserId = Number(rawId);
-        }
-        sessionUserId = tokenPayload?.nameid || tokenPayload?.sub || tokenPayload?.UserId || tokenPayload?.userId || tokenPayload?.IdentityUserId || null;
-      } catch (e) {
-        console.error('Error parsing token for currentUserId:', e);
-      }
-    }
+    // if (token) {
+    //   try {
+    //     const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+    //     const rawId = tokenPayload.ApplicantId || tokenPayload.UserId || tokenPayload.id;
+    //     // if (rawId) {
+    //     //   currentUserId = Number(rawId);
+    //     // }
+    //     sessionUserId = tokenPayload?.nameid || tokenPayload?.sub || tokenPayload?.UserId || tokenPayload?.userId || tokenPayload?.IdentityUserId || null;
+    //   } catch (e) {
+    //     console.error('Error parsing token for currentUserId:', e);
+    //   }
+    // }
 
     try {
       const cpSession = sessionStorage.getItem('cp_session');
@@ -273,10 +273,10 @@ export class DataEntryOperatorVerificationView implements OnInit {
       id: this.originalRegistrationDto?.id || 0,
       remarks: this.remarksControl?.value || '',
       decision: this.activeDecision,
-      modifiedBy: currentUserId,
+      modifiedBy: sessionUserId,
       modifiedDate: new Date().toISOString(),
       role: this.userRole,
-      userId: sessionUserId || (currentUserId ? String(currentUserId) : null)
+      // userId: sessionUserId || (currentUserId ? String(currentUserId) : null)
     };
 
     this.service.VerifyByClerk(payload).subscribe({

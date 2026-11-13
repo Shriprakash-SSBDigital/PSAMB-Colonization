@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-plot-details-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatTooltipModule],
   templateUrl: './plot-details-modal.html',
   styleUrl: './plot-details-modal.scss',
 })

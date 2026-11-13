@@ -129,9 +129,17 @@
 
             <div class="col-md-4">
               <label class="form-label">State</label>
-              <input type="text" class="form-control minimal-input"
-                     [class.is-invalid]="f['state'].invalid && f['state'].touched"
-                     formControlName="state">
+              <select class="form-select minimal-input"
+                      [class.is-invalid]="f['state'].invalid && f['state'].touched"
+                      formControlName="state"
+                      (change)="onStateChange(f['state'].value)">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingStates ? 'Loading...' : 'Select State' }}
+                </option>
+                <option *ngFor="let s of stateList" [ngValue]="s.stateId ?? s.id ?? s.StateId">
+                  {{ s.stateName ?? s.name ?? s.StateName }}
+                </option>
+              </select>
               @if (f['state'].invalid && f['state'].touched) {
                 <div class="text-danger small mt-1">
                   @if (f['state'].errors?.['required']) {
@@ -143,9 +151,18 @@
 
             <div class="col-md-4">
               <label class="form-label">District</label>
-              <input type="text" class="form-control minimal-input"
-                     [class.is-invalid]="f['district'].invalid && f['district'].touched"
-                     formControlName="district">
+              <select class="form-select minimal-input"
+                      [class.is-invalid]="f['district'].invalid && f['district'].touched"
+                      formControlName="district"
+                      [attr.disabled]="(!f['state'].value || isLoadingDistricts) ? true : null"
+                      (change)="onDistrictChange(f['district'].value)">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingDistricts ? 'Loading...' : 'Select District' }}
+                </option>
+                <option *ngFor="let d of districtList" [ngValue]="d.districtId ?? d.id ?? d.DistrictId">
+                  {{ d.districtName ?? d.name ?? d.DistrictName }}
+                </option>
+              </select>
               @if (f['district'].invalid && f['district'].touched) {
                 <div class="text-danger small mt-1">
                   @if (f['district'].errors?.['required']) {
@@ -157,9 +174,17 @@
 
             <div class="col-md-4">
               <label class="form-label">City</label>
-              <input type="text" class="form-control minimal-input"
-                     [class.is-invalid]="f['city'].invalid && f['city'].touched"
-                     formControlName="city">
+              <select class="form-select minimal-input"
+                      [class.is-invalid]="f['city'].invalid && f['city'].touched"
+                      formControlName="city"
+                      [attr.disabled]="(!f['district'].value || isLoadingCities) ? true : null">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingCities ? 'Loading...' : 'Select City' }}
+                </option>
+                <option *ngFor="let c of cityList" [ngValue]="c.cityId ?? c.id ?? c.CityId">
+                  {{ c.cityName ?? c.name ?? c.CityName }}
+                </option>
+              </select>
               @if (f['city'].invalid && f['city'].touched) {
                 <div class="text-danger small mt-1">
                   @if (f['city'].errors?.['required']) {
@@ -186,8 +211,13 @@
             </div>
 
             <div class="col-12 mt-3 pt-3 border-top d-flex justify-content-center justify-content-sm-end">
-              <button type="submit" class="btn btn-success px-4 py-2 w-100 w-sm-auto" [disabled]="profileForm.invalid">
-                Save Changes
+              <button type="submit" class="btn btn-success px-4 py-2 w-100 w-sm-auto"
+                [disabled]="profileForm.invalid || isSaving">
+                @if (isSaving) {
+                  <i class="fa-solid fa-spinner fa-spin me-1"></i>Saving...
+                } @else {
+                  Save Changes
+                }
               </button>
             </div>
           </div>

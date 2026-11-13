@@ -590,8 +590,16 @@ export class VerificationView implements OnInit {
     }
 
     this.submitting = true;
-    const userId = this.getCurrentUserId();
-
+    let sessionUserId: string | null = null;
+    try {
+      const cpSession = sessionStorage.getItem('cp_session');
+      if (cpSession) {
+        const sessionObj = JSON.parse(cpSession);
+        if (sessionObj?.userId || sessionObj?.id) {
+          sessionUserId = String(sessionObj.userId || sessionObj.id);
+        }
+      }
+    } catch (e) { }
     let normalizedRole = this.userRole;
     const rLower = (this.userRole || '').toLowerCase();
     if (rLower.includes('senior assistant') || rLower.includes('senior_assistant')) {
@@ -605,7 +613,7 @@ export class VerificationView implements OnInit {
       Decision: decision,
       Remarks: remarks || '',
       Role: normalizedRole,
-      ModifiedBy: userId > 0 ? userId : null,
+      ModifiedBy: sessionUserId,
     };
 
     this.userService.VerifyByClerkForUser(payload).subscribe({

@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+﻿import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { Common } from '../../core/service/CommonService/common';
+import { DateUtils } from '../../core/utils/date.utils';
 
 export interface Receipt {
   receiptNo: string;
@@ -41,6 +42,14 @@ export interface InstallmentScheduleView {
   styleUrl: './property-bidder-registration.scss',
 })
 export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges {
+  getControl(arg0: string): AbstractControl | null {
+    return this.registerationForm.get(arg0);
+  }
+
+  readonly today = DateUtils.todayAsDateString();
+  get todayLocal(): string {
+    return DateUtils.todayAsDatetimeLocalString();
+  }
 
   registerationForm!: FormGroup;
 
@@ -57,6 +66,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   bidderTypes: any[] = [];
   plans: any[] = [];
   relations = ['Son of (S/o)', 'Daughter of (D/o)', 'Wife of (W/o)'];
+  penaltyRates = Array.from({ length: 11 }, (_, rate) => rate);
   auctionPropertyTypes: any[] = [];
   installments = ['Installment 1', 'Installment 2', 'Installment 3', 'Installment 4', 'Installment 5', 'Installment 6'];
   paidStatuses = ['Pending', 'Fully Paid', 'Partially Paid'];
@@ -148,7 +158,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       assetVerified: [false],
       isCourtCase: [false],
       isAuctioned: [false],
-      auctionDate: [''],
+      auctionDate: ['',[ Validators.required, DateUtils.noFutureDate(true)]],
       bidderTypeId: [''],
       email: ['', [Validators.email]],
       bidderName: [''],
@@ -173,12 +183,14 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: [''],
       formTxnDate: [''],
       formPaidAmount: [''],
+      penaltyOrderDate: [null],
+      penaltyRateInorder: [0],
 
       emdTxnId: [''],
       emdDate: [''],
       emdAmount: [''],
       //25% form values 
-      allotmentDate: ['', Validators.required],
+      allotmentDate: ['', [Validators.required, DateUtils.noFutureDate()]],
       allotmentTxnId: [''],
       allotmentTransactionDate: [''],
       //allotement form fields 
@@ -1539,6 +1551,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
         formTransactionId: d.formTransactionId,
         formTxnDate: d.formTxnDate ? d.formTxnDate.split('T')[0] : '',
         formPaidAmount: d.formPaidAmount,
+        penaltyOrderDate: d.penaltyOrderDate ? d.penaltyOrderDate.split('T')[0] : null,
+        penaltyRateInorder: Number(d.penaltyRateInorder ?? 0),
         emdTxnId: d.emdTxnId,
         emdDate: d.emdDate ? d.emdDate.split('T')[0] : '',
         allotmentTxnId: d.allotmentTxnId ?? d.AllotmentTxnId,
@@ -1966,7 +1980,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
   }
 
   onSubmit(): void {
-    debugger
+    // debugger
     if (this.registerationForm.invalid) {
       this.registerationForm.markAllAsTouched();
       const invalidControls: string[] = [];
@@ -2144,6 +2158,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: formRaw.formTransactionId,
       formTxnDate: formRaw.formTxnDate,
       formPaidAmount: formRaw.formPaidAmount,
+      penaltyOrderDate: formRaw.penaltyOrderDate || null,
+      penaltyRateInorder: Number(formRaw.penaltyRateInorder ?? 0),
 
       emdTxnId: formRaw.emdTxnId,
       emdDate: formRaw.emdDate,
@@ -2157,8 +2173,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       dueAmount: formRaw.dueAmount,
       totalDueWithInterest: formRaw.totalDueWithInterest,
 
-      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy || currentUserId,
-      modifiedBy: currentUserId,
+      createdBy: this.propertyData?.createdBy || this.propertyData?.CreatedBy,
+      modifiedBy: sessionUserId,
       userId: sessionUserId,
 
       installments: cleanReceipts,
@@ -2181,7 +2197,7 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
     const numericFields = [
       'id', 'Id', 'propertyId', 'PropertyId',
       'districtId', 'mandiId', 'branchId', 'propertyCategoryId', 'bidderTypeId', 'plotTypeId', 'planId', 'propertyTypeId',
-      'reservePrice', 'finalBidPrice', 'formPaidAmount', 'emdAmount', 'allotmentAmount',
+      'reservePrice', 'finalBidPrice', 'formPaidAmount', 'penaltyRateInorder', 'emdAmount', 'allotmentAmount',
       'dueAmount', 'totalDueWithInterest', 'accumulatedInterest', 'applicantId', 'ApplicantId',
       'createdBy', 'CreatedBy', 'modifiedBy', 'ModifiedBy', 'ownerStateID', 'ownerDistrtictID', 'ownerCityID'
     ];
@@ -2292,6 +2308,8 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
       formTransactionId: '',
       formTxnDate: '',
       formPaidAmount: '',
+      penaltyOrderDate: null,
+      penaltyRateInorder: 0,
       emdTxnId: '',
       emdDate: '',
       emdAmount: '',
@@ -2387,6 +2405,10 @@ export class PropertyBidderRegistration implements OnInit, OnDestroy, OnChanges 
           control.setValidators([Validators.pattern(/^XXXXXXXX\d{4}$/)]);
         } else if (controlName === 'mobileNo') {
           control.setValidators([Validators.required, Validators.pattern(/^[6-9]\d{9}$/), Validators.minLength(10), Validators.maxLength(10)]);
+        } else if (controlName === 'auctionDate') {
+          control.setValidators([Validators.required, DateUtils.noFutureDate(true)]);
+        } else if (controlName === 'allotmentDate') {
+          control.setValidators([Validators.required, DateUtils.noFutureDate()]);
         } else {
           control.setValidators(Validators.required);
         }

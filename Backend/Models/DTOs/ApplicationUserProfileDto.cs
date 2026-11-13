@@ -4,6 +4,7 @@ namespace Backend.Models.DTOs
     {
         public long ApplicantId { get; set; }
         public string? IdentityUserId { get; set; }
+        public string? userSessionId { get; set; }
         public int? CategoryId { get; set; }
         public int? Gender { get; set; }
         public DateTime DateOfBirth { get; set; }
@@ -20,6 +21,7 @@ namespace Backend.Models.DTOs
         public int? IdentDocTypeId { get; set; }
         public string? IdentDocNumber { get; set; }
         public string? IdentDocPath { get; set; }
+        public string? IdentDocFolderPath { get; set; }
 
         public string? PANNumber { get; set; }
         public string? PANDocPath { get; set; }
@@ -39,6 +41,8 @@ namespace Backend.Models.DTOs
         public string? AddrDocNumber { get; set; }
         public string? AddrDocPath { get; set; }
 
+        public string? ProfileDocPath { get; set; }
+        public string? ProfileDocFolderPath { get; set; }
         public string? FirmName { get; set; }
         public string? GSTNumber { get; set; }
         public string? MandiPropertyCode { get; set; }

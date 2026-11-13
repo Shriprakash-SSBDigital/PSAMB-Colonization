@@ -164,7 +164,8 @@ namespace Backend.Services.Implementations
                     1 => "AadhaarCard",
                     2 => "VoterCard",
                     3 => "Passport",
-                    4 => "GovernmentIssuedPhotoIDCard",   // Driving License etc.
+                    4 => "GovernmentIssuedPhotoIDCard",// Driving License etc.
+                    5 => "PanCard",
                     _ => throw new ArgumentException("Invalid identity document type.")
                 };
             }

@@ -35,8 +35,7 @@ export class PropertyBalanceCalculate implements OnInit {
 
   // Role and user-specific allottee codes
   isUser = false;
-  allotteeCodes: any[] = [
-    { allotteeCode: '' }, ];
+  allotteeCodes: any[] = [];
   isLoadingAllotteeCodes = false;
 
   showResults = false;
@@ -157,12 +156,70 @@ export class PropertyBalanceCalculate implements OnInit {
     return false;
   }
 
-  loadUserAllotteeCodes(): void {
-    // Temporary options while API is in progress
-    this.allotteeCodes = [];
-    this.isLoadingAllotteeCodes = false;
-    this.cdr.detectChanges();
+  private getSessionUserId(): string {
+    try {
+      const sessionStr = sessionStorage.getItem('cp_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        const uId = session?.userId ?? session?.id;
+        if (uId !== undefined && uId !== null && String(uId).trim() !== '') {
+          return String(uId).trim();
+        }
+      }
+    } catch (e) { }
+
+    // try {
+    //   const token = sessionStorage.getItem('token');
+    //   if (token) {
+    //     const payload = JSON.parse(atob(token.split('.')[1]));
+    //     const tokenUserId = payload?.nameid || payload?.sub || payload?.UserId || payload?.userId || payload?.IdentityUserId || payload?.id;
+    //     if (tokenUserId !== undefined && tokenUserId !== null && String(tokenUserId).trim() !== '') {
+    //       return String(tokenUserId).trim();
+    //     }
+    //   }
+    // } catch (e) { }
+
+    const regUserId = sessionStorage.getItem('userId');
+    if (regUserId && String(regUserId).trim() !== '') {
+      return String(regUserId).trim();
+    }
+
+    return '';
   }
+
+
+  loadUserAllotteeCodes(): void {
+    const userId = this.getSessionUserId();
+
+    if (!userId) {
+      this.allotteeCodes = [];
+      this.isLoadingAllotteeCodes = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isLoadingAllotteeCodes = true;
+
+    this.userService.GetVerifiedAllotteeCodes(userId).subscribe({
+      next: (res: any) => {
+        this.isLoadingAllotteeCodes = false;
+
+        this.allotteeCodes = (res?.data ?? []).map((item: any) => ({
+          allotteeCode: item.allotteeCode
+        }));
+
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.isLoadingAllotteeCodes = false;
+        this.allotteeCodes = [];
+
+        console.error('Error fetching verified allottee codes:', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
 
   onAllotteeCodeSelect(event?: any): void {
     const selectedCode = (
@@ -741,20 +798,20 @@ export class PropertyBalanceCalculate implements OnInit {
       ? (plotTypeObj.plotType ?? plotTypeObj.plotTypeName ?? plotTypeObj.name ?? '')
       : (d.plotType ?? d.plotTypeName ?? '');
 
-   // Filter by amountTypeId: 1 = Initial 25% deposit, others = Installment receipts
+    // Filter by amountTypeId: 1 = Initial 25% deposit, others = Installment receipts
     const initialDepositItems = sorted.filter((item: any) => Number(item.amountTypeId) === 1);
-        const initialDeposits: any[] = initialDepositItems.map((item: any) => ({
-        receiptNo: item.receiptNo ?? '',
-        receiptDate: this.formatDate(item.receiptDate),
-        draftChequeRtgsNo: item.draftNo ?? '',
-        draftChequeRtgsDate: this.formatDate(item.draftDate),
-        paymentMode: item.paymentMode ?? '-',
-        bank: item.draftBank ?? '-',
-        amount: Number(item.draftAmount) || 0
+    const initialDeposits: any[] = initialDepositItems.map((item: any) => ({
+      receiptNo: item.receiptNo ?? '',
+      receiptDate: this.formatDate(item.receiptDate),
+      draftChequeRtgsNo: item.draftNo ?? '',
+      draftChequeRtgsDate: this.formatDate(item.draftDate),
+      paymentMode: item.paymentMode ?? '-',
+      bank: item.draftBank ?? '-',
+      amount: Number(item.draftAmount) || 0
     }));
 
-      const installmentReceiptItems = sorted.filter((item: any) => Number(item.amountTypeId) !== 1);
-      const installmentReceipts = installmentReceiptItems.map((r: any) => ({
+    const installmentReceiptItems = sorted.filter((item: any) => Number(item.amountTypeId) !== 1);
+    const installmentReceipts = installmentReceiptItems.map((r: any) => ({
       receiptNo: r.receiptNo ?? '',
       receiptDate: this.formatDate(r.receiptDate),
       draftNo: r.draftNo ?? '',

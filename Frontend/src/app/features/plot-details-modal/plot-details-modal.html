@@ -307,6 +307,12 @@
 
             <!-- Modal Footer -->
             <div class="modal-footer py-2 px-3 border-top bg-light">
+                <button type="button"
+                    class="btn btn-outline-secondary fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
+                    matTooltip="Export to PDF" matTooltipPosition="above">
+                    <i class="fa-regular fa-file-pdf fs-5 text-danger"></i>
+                    <span class="d-none d-sm-inline">PDF</span>
+                </button>
                 <button type="button" class="btn btn-outline-secondary fw-semibold"
                     data-bs-dismiss="modal" (click)="onModalClose()">Close</button>
             </div>

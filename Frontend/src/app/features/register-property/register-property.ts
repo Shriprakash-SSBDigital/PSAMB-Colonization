@@ -397,8 +397,8 @@ export class RegisterProperty implements OnInit {
       this.propertyForm.patchValue(patchValues, { emitEvent: false });
       this.cdr.detectChanges();
 
-      const applicantId = d.applicantId || d.createdBy || this.getApplicantId();
-      if (applicantId && Number(applicantId) > 0) {
+      const applicantId = d.applicantId || d.createdBy;
+      if (applicantId) {
         this.userService.GetUserDocumentsByUserIDAsync(Number(applicantId)).subscribe({
           next: (res: any) => {
             if (res?.success && Array.isArray(res.data)) {
@@ -1588,7 +1588,7 @@ export class RegisterProperty implements OnInit {
       aadhaarNumber: formValue.aadhaarNumber ? String(formValue.aadhaarNumber).trim() : '',
       panNumber: formValue.panNo ? String(formValue.panNo).trim() : '',
       propertyCode: formValue.allotteeCode || this.propertyData?.propertyCode || this.propertyData?.allotteeCode || '',
-      applicantId: this.getApplicantId(),
+      // applicantId: this.getApplicantId(),
       planId: this.propertyData?.planId || null,
       verificationUserEndStatusId: 1,
 
@@ -1601,7 +1601,8 @@ export class RegisterProperty implements OnInit {
       saleDeed: (formValue.saleDeedSelected && (this.uploadedDocData['saleDeed'] || formValue.saleDeedFile)) ? '1' : '0',
       transferOrder: (formValue.transferOrderSelected && (this.uploadedDocData['transferOrder'] || formValue.transferOrderFile)) ? '1' : '0',
       upload1: (formValue.legalHeirCertificateSelected && (this.uploadedDocData['legalHeirCertificate'] || formValue.legalHeirCertificateFile)) ? '1' : '0',
-
+      // createdBy sirf add ke time pe hi jayega (not in edit)
+      ...(!this.isEditMode ? { createdBy: this.getSessionUserId() } : {}),
       sessionId: this.sessionId,
       documentIds: uploadedIds
     };
@@ -1633,6 +1634,41 @@ export class RegisterProperty implements OnInit {
           // console.error('Error in UserPropertyRegistration:', err);
         }
       });
+  }
+
+  private getSessionUserId(): string {
+    try {
+      const sessionStr = sessionStorage.getItem('cp_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        const uId = session?.userId ?? session?.id;
+        if (uId !== undefined && uId !== null && String(uId).trim() !== '') {
+          return String(uId).trim();
+        }
+      }
+    } catch (e) {
+      // console.error('Error parsing session for userId:', e);
+    }
+
+    try {
+      const token = sessionStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const tokenUserId = payload?.nameid || payload?.sub || payload?.UserId || payload?.userId || payload?.IdentityUserId || payload?.id;
+        if (tokenUserId !== undefined && tokenUserId !== null && String(tokenUserId).trim() !== '') {
+          return String(tokenUserId).trim();
+        }
+      }
+    } catch (e) {
+      // console.error('Error decoding token for userId:', e);
+    }
+
+    const regUserId = sessionStorage.getItem('registered_user_id') || sessionStorage.getItem('userId');
+    if (regUserId && String(regUserId).trim() !== '') {
+      return String(regUserId).trim();
+    }
+
+    return '';
   }
 
   private getApplicantId(): number {

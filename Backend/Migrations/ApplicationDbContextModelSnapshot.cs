@@ -848,8 +848,8 @@ namespace Backend.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("int");
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -1230,8 +1230,8 @@ namespace Backend.Migrations
                     b.Property<string>("MobileNo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -1253,6 +1253,12 @@ namespace Backend.Migrations
 
                     b.Property<string>("PANNo")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PenaltyOrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PenaltyRateInorder")
+                        .HasColumnType("int");
 
                     b.Property<int?>("PlanId")
                         .HasColumnType("int");
@@ -1503,8 +1509,8 @@ namespace Backend.Migrations
                     b.Property<string>("ConveyanceDeed")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -1530,8 +1536,8 @@ namespace Backend.Migrations
                     b.Property<int?>("MandiId")
                         .HasColumnType("int");
 
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
