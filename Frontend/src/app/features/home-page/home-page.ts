@@ -1,9 +1,10 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CountUp } from '../../shared/directives/count-up';
+import { Common } from '../../core/service/CommonService/common';
 
 interface Announcement {
   id: number;
@@ -37,7 +38,13 @@ interface PhotoItem {
   templateUrl: './home-page.html',
   styleUrl: './home-page.css',
 })
-export class HomePage {
+export class HomePage implements OnInit {
+  totalProperties = 0;
+  soldProperties = 0;
+  unsoldProperties = 0;
+
+  constructor(private common: Common, private cdr: ChangeDetectorRef) {}
+
   announcements: Announcement[] = [
     // { id: 1, title: 'Tender Document for Hiring Vehicles', isNew: true, url: 'https://emandikaran-pb.in/files/HiringVehicles.pdf' },
     { id: 2, title: 'Notification Regarding Fruit Items', isNew: true, url: 'https://emandikaran-pb.in/files/Notification-Regarding-Fruit-Items.pdf' },
@@ -105,6 +112,41 @@ export class HomePage {
   isLeaderModalOpen = false;
   selectedLeaderId: string | null = null;
   selectedLeaderData: any = null;
+
+  ngOnInit(): void {
+    const storedSummary = sessionStorage.getItem('property_summary');
+    if (storedSummary) {
+      try {
+        this.applyPropertySummary(JSON.parse(storedSummary));
+        return;
+      } catch (error) {
+        console.error('Failed to read cached property summary:', error);
+        sessionStorage.removeItem('property_summary');
+      }
+    }
+
+    this.common.GetPropertySummary().subscribe({
+      next: (response) => {
+        if (!response?.success || !response.responseData) {
+          return;
+        }
+
+        const summary = response.responseData;
+        this.applyPropertySummary(summary);
+        sessionStorage.setItem('property_summary', JSON.stringify(summary));
+      },
+      error: (error) => {
+        console.error('Failed to load property summary:', error);
+      }
+    });
+  }
+
+  private applyPropertySummary(summary: any): void {
+    this.totalProperties = summary?.totalProperties ?? 0;
+    this.soldProperties = summary?.soldProperties ?? 0;
+    this.unsoldProperties = summary?.unsoldProperties ?? 0;
+    this.cdr.detectChanges();
+  }
 
   leadershipMessages: Record<string, any> = {
     cm: {

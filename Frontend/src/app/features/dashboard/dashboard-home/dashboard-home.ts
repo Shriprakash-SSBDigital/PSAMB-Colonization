@@ -28,14 +28,14 @@ export interface DashboardStats {
 export class DashboardHome implements OnInit {
   isLoggedIn = true;
 
-  totalProperties = 29360;
-  soldProperties = 21557;
-  unsoldProperties = 2739;
-  digitizedProperties = 21557;
-  forfeitedProperties = 15;
+  totalProperties = 0;
+  soldProperties = 0;
+  unsoldProperties = 0;
+  digitizedProperties = 0;
+  forfeitedProperties = 0;
   monthlyCollection = 4285000;
   monthlyDues = 1840000;
-  ndcIssuedTillDate = 348;
+  ndcIssuedTillDate = 0;
 
   collection = '42,85,000';
   dues = '18,40,000';
@@ -78,6 +78,8 @@ export class DashboardHome implements OnInit {
         this.cdr.detectChanges();
       }
     });
+    // Load property summary from session storage if available
+    this.loadPropertySummaryFromSession();
   }
   getUserRoles(): string[] {
     const roles: string[] = [];
@@ -202,5 +204,26 @@ export class DashboardHome implements OnInit {
 
   private flattenServices(menus: any[]): SubMenuItem[] {
     return menus?.flatMap((menu) => (menu.subMenus ?? []).map((sub: SubMenuItem) => sub)) ?? [];
+  }
+
+  private loadPropertySummaryFromSession(): void {
+    const storedSummary = sessionStorage.getItem('property_summary');
+    if (!storedSummary) {
+      return;
+    }
+
+    try {
+      const summary = JSON.parse(storedSummary);
+      this.totalProperties = summary.totalProperties ?? this.totalProperties;
+      this.soldProperties = summary.soldProperties ?? this.soldProperties;
+      this.unsoldProperties = summary.unsoldProperties ?? this.unsoldProperties;
+      this.digitizedProperties = summary.digitizedProperties ?? this.digitizedProperties;
+      this.forfeitedProperties = summary.forfeitedProperties ?? this.forfeitedProperties;
+      this.ndcIssuedTillDate = summary.ndcIssued ?? this.ndcIssuedTillDate;
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Failed to read cached property summary:', error);
+      sessionStorage.removeItem('property_summary');
+    }
   }
 }
