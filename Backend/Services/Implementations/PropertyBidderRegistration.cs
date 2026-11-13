@@ -3654,7 +3654,7 @@ namespace Backend.Services.Implementations
                         //        installmentAmount * PenalityRateInPercent / 100m, 2)
                         //    : 0m;
 
-                        DueAmount = installmentAmount + penalityAmount;
+                        DueAmount = installmentAmount + TotalpenalityAmount;
                     }
 
                     // Keep consuming receipts until the installment is fully paid.
