@@ -7,6 +7,7 @@ import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnServi
 import { Userservice } from '../../core/service/UserService/userservice';
 import { Common } from '../../core/service/CommonService/common';
 import { FileService, FileUploadPayload } from '../../core/service/FileService/file-service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register-property',
@@ -129,8 +130,8 @@ export class RegisterProperty implements OnInit {
         address: ['', Validators.required],
         aadhaarNumber: ['', Validators.pattern(/^\d{12}$/)],
         aadhaarProof: [null],
-        panNo: [''],
-        passportProof: [null],
+        panNo: ['', Validators.pattern(/^[A-Z]{5}\d{4}[A-Z]$/i)],
+        panProof: [null],
         ...documentControls,
       },
       { validators: this.atLeastOneDocumentValidator() },
@@ -292,7 +293,6 @@ export class RegisterProperty implements OnInit {
           email:            d.email     || '',
           address:          d.individualPlotStreetLandmark || '',
           aadhaarNumber:    this.normalizeAadhaarValue(d.identDocNumber || ''),
-          panNo:            d.panNumber || '',
         };
 
         const stateId    = d.individualStateId    ?? null;
@@ -1537,16 +1537,25 @@ export class RegisterProperty implements OnInit {
       return;
     }
     if (filePath) {
-      let fullUrl = filePath;
-      if (!filePath.startsWith('http://') && !filePath.startsWith('https://')) {
-        const apiBase = this.commonService.baseUrl.replace(/\/api\/?$/, '');
-        const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
-        fullUrl = `${apiBase}/${cleanPath}`;
-      }
-      window.open(fullUrl, '_blank');
+      window.open(this.getDocumentUrl(filePath), '_blank');
     } else {
       this.toastr.info('No document available to view.', 'Info');
     }
+  }
+
+  private getDocumentUrl(filePath: string): string {
+    let normalizedPath = filePath.replace(/\\/g, '/');
+    const documentRoot = 'colonizationdocuments/';
+    const rootIndex = normalizedPath.toLowerCase().indexOf(documentRoot);
+
+    if (rootIndex >= 0) {
+      normalizedPath = normalizedPath.substring(rootIndex + documentRoot.length);
+    } else if (/^https?:\/\//i.test(normalizedPath)) {
+      normalizedPath = new URL(normalizedPath).pathname.replace(/^\/+/, '');
+    }
+
+    normalizedPath = normalizedPath.replace(/^\/+/, '');
+    return `${environment.documentBaseUrl.replace(/\/+$/, '')}/ColonizationDocuments/${normalizedPath}`;
   }
 
   private normalizeAadhaarValue(value: unknown): string {
@@ -1619,16 +1628,18 @@ export class RegisterProperty implements OnInit {
           : '';
 
       if (docKey === 'aadhaarProof' && !/^\d{12}$/.test(documentNumber)) {
+        this.uploadingStates[docKey] = false;
         control?.setValue(null);
         input.value = '';
         this.toastr.warning('Enter a valid 12 digit Aadhaar number before uploading the card.', 'Aadhaar Number Required');
         return;
       }
 
-      if (docKey === 'panProof' && !documentNumber) {
+      if (docKey === 'panProof' && !/^[A-Z]{5}\d{4}[A-Z]$/i.test(documentNumber)) {
+        this.uploadingStates[docKey] = false;
         control?.setValue(null);
         input.value = '';
-        this.toastr.warning('Enter the PAN number before uploading the card.', 'PAN Number Required');
+        this.toastr.warning('Enter a valid PAN number before uploading the card.', 'PAN Number Required');
         return;
       }
 
