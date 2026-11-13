@@ -443,7 +443,7 @@
 
             <div class="col-md-6 col-xl-3">
               <label for="aadhaarNumber" class="form-label small text-dark fw-semibold text-uppercase">Aadhaar Number</label>
-              <input id="aadhaarNumber" maxlength="12" inputmode="numeric"
+              <input #aadhaarNumberInput id="aadhaarNumber" maxlength="12" inputmode="numeric"
                 class="form-control bg-light rounded-3 custom-input-color"
                 placeholder="Enter Aadhaar number" formControlName="aadhaarNumber"
                 (input)="onAadhaarInput($event)" (focus)="showAadhaarInput($event)"

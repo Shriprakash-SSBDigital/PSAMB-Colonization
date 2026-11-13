@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -16,6 +16,8 @@ import { environment } from '../../../environments/environment';
   styleUrl: './register-property.scss',
 })
 export class RegisterProperty implements OnInit {
+
+  @ViewChild('aadhaarNumberInput') private aadhaarNumberInput?: ElementRef<HTMLInputElement>;
 
   readonly allowedFileTypes = '.jpeg,.jpg,.png,.pdf';
 
@@ -304,6 +306,7 @@ export class RegisterProperty implements OnInit {
         }
 
         this.propertyForm.patchValue(patchValues, { emitEvent: false });
+        this.maskPatchedAadhaar();
 
         //  Aadhaar card document: set uploadedDocData so the view-eye button appears
         if (d.identDocPath) {
@@ -478,6 +481,7 @@ export class RegisterProperty implements OnInit {
       });
 
       this.propertyForm.patchValue(patchValues, { emitEvent: false });
+      this.maskPatchedAadhaar();
       this.cdr.detectChanges();
 
       const applicantId = d.applicantId || d.createdBy;
@@ -682,6 +686,7 @@ export class RegisterProperty implements OnInit {
         };
 
         this.propertyForm.patchValue(patchValues, { emitEvent: false });
+        this.maskPatchedAadhaar();
         this.cdr.detectChanges();
         this.toastr.success('Record found and loaded successfully.', 'Success');
       };
@@ -1578,6 +1583,16 @@ export class RegisterProperty implements OnInit {
     const input = event.target as HTMLInputElement;
     const digits = this.normalizeAadhaarValue(this.propertyForm.get('aadhaarNumber')?.value);
     input.value = digits ? `XXXXXXXX ${digits.slice(-4)}` : '';
+  }
+
+  private maskPatchedAadhaar(): void {
+    setTimeout(() => {
+      const input = this.aadhaarNumberInput?.nativeElement;
+      const digits = this.normalizeAadhaarValue(this.propertyForm.get('aadhaarNumber')?.value);
+      if (input) {
+        input.value = digits ? `XXXXXXXX ${digits.slice(-4)}` : '';
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {
