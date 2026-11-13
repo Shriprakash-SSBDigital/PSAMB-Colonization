@@ -72,7 +72,7 @@ export class RegisterProperty implements OnInit {
   addrDocPath: string | null = null;
   propertyTypes: any[] = [];
 
-  sessionId: string = crypto.randomUUID();
+  sessionId = '';
 
   readonly documentTypeMap: Record<string, number> = {
     allotmentLetter: 1,
@@ -249,6 +249,7 @@ export class RegisterProperty implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['mode'] === 'edit') {
         this.isEditMode = true;
+        this.loadProfileAndPatchOwnerInfo(false);
         if (params['id']) {
           this.editingId = Number(params['id']);
         }
@@ -258,6 +259,83 @@ export class RegisterProperty implements OnInit {
         } else if (params['propertyCode']) {
           this.fetchAndPatchRegistration(params['propertyCode'], this.editingId);
         }
+      } else {
+        // New registration: pre-fill owner info from profile
+        this.loadProfileAndPatchOwnerInfo();
+      }
+    });
+  }
+
+  // Loads the logged-in user's profile and pre-fills the editable owner information.
+  private loadProfileAndPatchOwnerInfo(patchOwnerInfo = true): void {
+    this.commonService.getProfileDetailsByUserId().subscribe({
+      next: (res: any) => {
+        const d = res?.data;
+        if (!res?.success || !d) return;
+        this.sessionId = String(d.userSessionId ?? '').trim();
+
+        if (!patchOwnerInfo) return;
+
+        // Name & contact 
+        const fullName = [d.firstName, d.lastName]
+          .filter((n: string) => n && n.trim())
+          .join(' ');
+
+        const fatherName = [d.fatherHusbandFirstName, d.fatherHusbandLastName]
+          .filter((n: string) => n && n.trim())
+          .join(' ');
+
+        const patchValues: any = {
+          currentOwnerName: fullName    || '',
+          guardianName:     fatherName  || '',
+          mobileNumber:     d.mobileNo  || '',
+          email:            d.email     || '',
+          address:          d.individualPlotStreetLandmark || '',
+          aadhaarNumber:    this.normalizeAadhaarValue(d.identDocNumber || ''),
+          panNo:            d.panNumber || '',
+        };
+
+        const stateId    = d.individualStateId    ?? null;
+        const districtId = d.individualDistrictId ?? null;
+        const cityId     = d.individualCityId     ?? null;
+
+        if (stateId) {
+          patchValues['state'] = stateId;
+        }
+
+        this.propertyForm.patchValue(patchValues, { emitEvent: false });
+
+        //  Aadhaar card document: set uploadedDocData so the view-eye button appears
+        if (d.identDocPath) {
+          this.aadhaarDocPath = d.identDocPath;
+          this.uploadedDocData['aadhaarProof'] = {
+            userDocumentId: 0,
+            storedFileName: d.identDocPath.split('/').pop() || 'aadhaar.jpg',
+            relativePath:   d.identDocPath,
+            fileUrl:        d.identDocPath,
+          };
+        }
+
+        if (stateId) {
+          this.loadOwnerDistricts(stateId, () => {
+            if (districtId) {
+              this.propertyForm.get('ownerDistrict')?.setValue(districtId, { emitEvent: false });
+              this.loadCities(districtId, () => {
+                if (cityId) {
+                  this.propertyForm.get('city')?.setValue(cityId, { emitEvent: false });
+                }
+                this.cdr.detectChanges();
+              });
+            } else {
+              this.cdr.detectChanges();
+            }
+          });
+        } else {
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err: any) => {
+        // console.error('Could not pre-fill owner info from profile:', err);
       }
     });
   }
@@ -1508,7 +1586,6 @@ export class RegisterProperty implements OnInit {
   }
 
   onFileChange(event: Event, controlName: string, docKey?: string): void {
-    // debugger
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     const control = this.propertyForm.get(controlName);
@@ -1522,6 +1599,11 @@ export class RegisterProperty implements OnInit {
     }
 
     if (file && docKey && (this.documentTypeMap[docKey] || this.identificationDocumentMap[docKey])) {
+      if (!this.sessionId) {
+        this.toastr.error('User session is not available. Please try again.', 'Upload Error');
+        return;
+      }
+
       const selectedControl = this.propertyForm.get(`${docKey}Selected`);
       if (selectedControl && !selectedControl.value) {
         selectedControl.setValue(true);
@@ -1764,7 +1846,6 @@ export class RegisterProperty implements OnInit {
     this.panDocPath = null;
     this.passportDocPath = null;
     this.addrDocPath = null;
-    this.sessionId = crypto.randomUUID();
     this.uploadedDocData = {};
     this.uploadingStates = {};
   }

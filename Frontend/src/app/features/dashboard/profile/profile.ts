@@ -40,6 +40,7 @@ export class Profile implements OnInit {
   showConfirmPassword = false;
 
   avatarUrl: string = '';
+  initialAvatarUrl: string = '';
   isUploading = false;
   isSaving = false;
   uploadedPhotoFileName = '';
@@ -48,6 +49,7 @@ export class Profile implements OnInit {
   email: string = '';
   userName = '';
   isLoadingProfile = false;
+  profileDetails: any = null;
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
 
@@ -78,7 +80,6 @@ export class Profile implements OnInit {
     this.loadStates();
     this.loadProfileFromApi();
     this.openChangePasswordMenu();
-    this.getProfileImage();
   }
 
   private buildProfileForm(): void {
@@ -175,17 +176,34 @@ export class Profile implements OnInit {
     });
   }
 
-  /** Calls getProfileDetailsByUserId API and patches form, then cascade-loads dropdowns */
+  //  Calls getProfileDetailsByUserId API, updates form & image/session data, then cascade-loads dropdowns
   private loadProfileFromApi(): void {
     this.isLoadingProfile = true;
     this.commonService.getProfileDetailsByUserId().subscribe({
       next: (res: any) => {
         this.isLoadingProfile = false;
         const d = res?.data;
-        console.log('data', d);
 
         if (!res?.success || !d) {
           return;
+        }
+
+        this.profileDetails = d;
+        this.profileSessionId = d.userSessionId ?? '';
+
+        // Extract profile image from profileDocPath (or fallback to photoPath)
+        const imagePath = d.profileDocPath || d.photoPath;
+        if (imagePath) {
+          if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+            this.avatarUrl = imagePath;
+          } else {
+            const relativePath = imagePath
+              .replace(/^.*ColonizationDocuments[\\/]/i, '')
+              .replace(/\\/g, '/')
+              .replace(/^\/+/, '');
+            this.avatarUrl = `${environment.documentBaseUrl}/ColonizationDocuments/${relativePath}`;
+          }
+          this.initialAvatarUrl = this.avatarUrl;
         }
 
         const stateId    = d.individualStateId    ?? null;
@@ -385,7 +403,7 @@ export class Profile implements OnInit {
 
   resetForm(): void {
     this.profileForm.reset(this.initialFormState);
-    this.avatarUrl = '';
+    this.avatarUrl = this.initialAvatarUrl;
     this.uploadedPhotoFileName = '';
     this.uploadedDocumentId = 0;
     this.passwordModalOpen = false;
@@ -472,30 +490,6 @@ export class Profile implements OnInit {
           email: this.email,
           mobile: profile.phoneNumber ?? profile.mobileNo ?? ''
         }, { emitEvent: false });
-      }
-    });
-  }
-
-  // Get profile image
-  getProfileImage(): void {
-    this.commonService.GetProfileImageByUserId().subscribe({
-      next: (response: any) => {
-        if (response?.success && response?.data) {
-          const imageData = response.data;
-          const filePath = imageData.filePath as string | undefined;
-
-          if (filePath) {
-            const relativePath = filePath
-              .replace(/^.*ColonizationDocuments[\\/]/i, '')
-              .replace(/\\/g, '/');
-            this.avatarUrl = `${environment.documentBaseUrl}/ColonizationDocuments/${relativePath}`;
-          }
-        this.profileSessionId = imageData.tempSessionId ?? '';
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err: any) => {
-        console.error('Error fetching profile image:', err);
       }
     });
   }

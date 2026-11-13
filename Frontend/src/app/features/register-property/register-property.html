@@ -457,9 +457,18 @@
               <div class="d-flex justify-content-between align-items-center">
                 <label for="aadhaarProof" class="form-label small text-dark fw-semibold text-uppercase">Upload Aadhaar Card</label>
               </div>
+              <div class="d-flex align-items-center gap-2">
               <input id="aadhaarProof" type="file" class="form-control bg-light rounded-3 custom-input-color"
                 [accept]="allowedFileTypes" (change)="onFileChange($event, 'aadhaarProof', 'aadhaarProof')"
                 [class.is-invalid]="isInvalid('aadhaarProof')" />
+                @if (uploadedDocData['aadhaarProof']?.fileUrl || uploadedDocData['aadhaarProof']?.relativePath) {
+                  <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
+                    (click)="viewDocument(uploadedDocData['aadhaarProof']?.fileUrl || uploadedDocData['aadhaarProof']?.relativePath, 'aadhaarProof')"
+                    title="View Aadhaar Card">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                }
+              </div>
               @if (isInvalid('aadhaarProof')) { <div class="invalid-feedback d-block">JPEG, JPG, PNG or PDF files only.
               </div> }
             </div>
