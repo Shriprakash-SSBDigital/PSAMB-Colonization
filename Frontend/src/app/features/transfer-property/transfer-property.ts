@@ -18,9 +18,6 @@ import {
   Validators,
 } from '@angular/forms';
 
-/* ------------------------------------------------------------------ */
-/* Models                                                              */
-/* ------------------------------------------------------------------ */
 export interface CurrentAllottee {
   allotteeCode: string;
   name: string;
@@ -78,9 +75,6 @@ type DocumentGroup = FormGroup<{
   file: FormControl<File | null>;
 }>;
 
-/* ------------------------------------------------------------------ */
-/* Configuration (no API involved)                                     */
-/* ------------------------------------------------------------------ */
 const DEFAULT_DOCUMENT_TYPES: DocumentType[] = [
   { id: 'ndc', label: 'NDC Certificate' },
   { id: 'allotment-letter', label: 'Allotment Letter' },
@@ -101,10 +95,6 @@ const DEFAULT_PLOT_TYPES: SelectOption[] = [
   { value: 'industrial', label: 'Industrial' },
 ];
 
-/**
- * TEMPORARY placeholder so the screen renders while the backend is not ready.
- * Delete this and bind the real data through the `currentAllottee` input.
- */
 const TEMP_CURRENT_ALLOTTEE: CurrentAllottee = {
   allotteeCode: 'ALT-000000',
   name: 'Sample Allottee',
@@ -140,15 +130,11 @@ const DOCUMENT_RULE: FileRule = {
 };
 
 const PHOTO_KEY = 'photo';
-const SUBMIT_DELAY_MS = 800; // UI-only simulation of "processing"
+const SUBMIT_DELAY_MS = 800;
 
-/* ------------------------------------------------------------------ */
-/* Validators                                                          */
-/* ------------------------------------------------------------------ */
 const PERSON_NAME = /^[\p{L}][\p{L} .'-]*$/u;
 const PLOT_NUMBER = /^[A-Za-z0-9][A-Za-z0-9 \-\/]*$/;
 
-/** Rejects values that contain only spaces. */
 function notBlank(control: AbstractControl): ValidationErrors | null {
   const v = control.value;
   return typeof v === 'string' && v.length > 0 && v.trim() === '' ? { blank: true } : null;
@@ -197,13 +183,11 @@ export class TransferProperty {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Optional: bind real data later. Falls back to the temporary placeholder. */
   readonly currentAllottee = input<CurrentAllottee | null>(TEMP_CURRENT_ALLOTTEE);
   readonly documentTypes = input<DocumentType[]>(DEFAULT_DOCUMENT_TYPES);
   readonly ownershipTypes = input<SelectOption[]>(DEFAULT_OWNERSHIP_TYPES);
   readonly plotTypes = input<SelectOption[]>(DEFAULT_PLOT_TYPES);
 
-  /** UI events only; no network calls anywhere in this component. */
   readonly submitted = output<TransferSubmission>();
   readonly cancelled = output<void>();
 
@@ -492,14 +476,17 @@ export class TransferProperty {
     this.objectUrls.clear();
   }
 
-  private formatDate(value: string | Date): string {
+  formatDate(value: any): string {
+    if (!value) return '';
     const d = new Date(value);
-    return Number.isNaN(d.getTime())
-      ? String(value ?? '')
-      : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (isNaN(d.getTime())) return String(value);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
   }
 
-  private formatAmount(value: number): string {
-    return Number.isFinite(value) ? value.toLocaleString('en-IN') : String(value ?? '');
+  formatAmount(value: number): string {
+    return Number.isFinite(value) ? '₹' + value.toLocaleString('en-IN') : String(value ?? '');
   }
 }
