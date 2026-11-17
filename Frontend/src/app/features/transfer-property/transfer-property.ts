@@ -134,41 +134,11 @@ const SUBMIT_DELAY_MS = 800;
 
 const PERSON_NAME = /^[\p{L}][\p{L} .'-]*$/u;
 const PLOT_NUMBER = /^[A-Za-z0-9][A-Za-z0-9 \-\/]*$/;
+const AADHAAR_PATTERN = /^\d{12}$/;
 
 function notBlank(control: AbstractControl): ValidationErrors | null {
   const v = control.value;
   return typeof v === 'string' && v.length > 0 && v.trim() === '' ? { blank: true } : null;
-}
-
-// Verhoeff checksum tables (used by Aadhaar).
-const VERHOEFF_D = [
-  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 6, 7, 8, 9, 5],
-  [2, 3, 4, 0, 1, 7, 8, 9, 5, 6], [3, 4, 0, 1, 2, 8, 9, 5, 6, 7],
-  [4, 0, 1, 2, 3, 9, 5, 6, 7, 8], [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
-  [6, 5, 9, 8, 7, 1, 0, 4, 3, 2], [7, 6, 5, 9, 8, 2, 1, 0, 4, 3],
-  [8, 7, 6, 5, 9, 3, 2, 1, 0, 4], [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-];
-const VERHOEFF_P = [
-  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 5, 7, 6, 2, 8, 3, 0, 9, 4],
-  [5, 8, 0, 3, 7, 9, 6, 1, 4, 2], [8, 9, 1, 6, 0, 4, 3, 5, 2, 7],
-  [9, 4, 5, 3, 1, 2, 6, 8, 7, 0], [4, 2, 8, 6, 5, 7, 3, 9, 0, 1],
-  [2, 7, 9, 3, 8, 0, 6, 4, 1, 5], [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
-];
-
-function passesVerhoeff(num: string): boolean {
-  let c = 0;
-  const digits = num.split('').reverse().map(Number);
-  digits.forEach((d, i) => {
-    c = VERHOEFF_D[c][VERHOEFF_P[i % 8][d]];
-  });
-  return c === 0;
-}
-
-/** 12 digits, cannot start with 0 or 1, and must pass the checksum. */
-function aadhaarValidator(control: AbstractControl): ValidationErrors | null {
-  const v = control.value as string;
-  if (!v) return null;
-  return /^[2-9]\d{11}$/.test(v) && passesVerhoeff(v) ? null : { aadhaar: true };
 }
 
 @Component({
@@ -224,7 +194,12 @@ export class TransferProperty {
       address: ['', [Validators.required, notBlank, Validators.minLength(10), Validators.maxLength(300)]],
       ownershipShare: [null as number | null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
       ownershipType: ['', Validators.required],
-      aadhaarNumber: ['', [Validators.required, aadhaarValidator]],
+      aadhaarNumber: ['', [
+        Validators.required,
+        Validators.minLength(12),
+        Validators.maxLength(12),
+        Validators.pattern(AADHAAR_PATTERN),
+      ]],
       photo: new FormControl<File | null>(null, Validators.required),
     }),
     documents: this.fb.array<DocumentGroup>([]),
@@ -233,27 +208,6 @@ export class TransferProperty {
 
   readonly newAllottee = this.form.controls.newAllottee;
   readonly documents = this.form.controls.documents;
-
-  readonly detailFields = computed(() => {
-    const a = this.currentAllottee();
-    if (!a) return [];
-    return [
-      { label: 'Allottee Code', value: a.allotteeCode },
-      { label: 'Name of Allottee', value: a.name },
-      { label: "Allottee's Father/Husband Name", value: a.fatherHusbandName },
-      { label: 'Auction Date', value: this.formatDate(a.auctionDate) },
-      { label: 'Allotment Date', value: this.formatDate(a.allotmentDate) },
-      { label: 'Allotment Amount (Rs.)', value: this.formatAmount(a.allotmentAmount) },
-      { label: 'Mandi Name', value: a.mandiName },
-      { label: 'Plot Type', value: a.plotType },
-      { label: 'Plot Number', value: a.plotNumber },
-      { label: 'Size of Plot', value: a.plotSize },
-      { label: 'Ownership Share', value: `${a.ownershipShare}` },
-      { label: 'Ownership Type', value: a.ownershipType },
-    ];
-  });
-
-  readonly address = computed(() => this.currentAllottee()?.address ?? '');
 
   readonly availableDocuments = computed(() => {
     const picked = new Set(this.selectedIds());
@@ -267,11 +221,6 @@ export class TransferProperty {
     });
   }
 
-  /* ---------------------------- Section A / B ---------------------------- */
-
-  loadCurrentAllottee(): CurrentAllottee | null {
-    return this.currentAllottee();
-  }
 
   openTransferForm(): void {
     this.submitSuccess.set(false);
@@ -300,7 +249,6 @@ export class TransferProperty {
     };
   }
 
-  /** Keeps only digits while typing (used for the Aadhaar field). */
   digitsOnly(event: Event): void {
     const input = event.target as HTMLInputElement;
     const cleaned = input.value.replace(/\D/g, '');
@@ -309,8 +257,6 @@ export class TransferProperty {
       this.newAllottee.controls.aadhaarNumber.setValue(cleaned);
     }
   }
-
-  /* ---------------------------- Section C ---------------------------- */
 
   addDocument(typeId: string): void {
     if (!typeId || this.selectedIds().includes(typeId)) return;
@@ -382,14 +328,11 @@ export class TransferProperty {
     return this.documents.controls.every((g) => !!g.controls.file.value);
   }
 
-  /* ---------------------------- Validation messages ---------------------------- */
-
   errorMessage(ctrl: AbstractControl | null, label: string): string | null {
     if (!ctrl || !ctrl.invalid || !(ctrl.touched || ctrl.dirty)) return null;
     const e = ctrl.errors ?? {};
     if (e['required'] || e['requiredTrue']) return `${label} is required.`;
     if (e['blank']) return `${label} cannot be blank.`;
-    if (e['aadhaar']) return 'Enter a valid 12-digit Aadhaar number.';
     if (e['minlength']) return `${label} must be at least ${e['minlength'].requiredLength} characters.`;
     if (e['maxlength']) return `${label} must be at most ${e['maxlength'].requiredLength} characters.`;
     if (e['min'] || e['max']) return `${label} must be between 0.01 and 100.`;
@@ -400,8 +343,6 @@ export class TransferProperty {
   isInvalid(ctrl: AbstractControl | null): boolean {
     return !!ctrl && ctrl.invalid && (ctrl.touched || ctrl.dirty);
   }
-
-  /* ---------------------------- Section D ---------------------------- */
 
   resetForm(): void {
     this.revokeAll();
@@ -432,8 +373,6 @@ export class TransferProperty {
       })),
     };
 
-    // UI-only: simulate processing so the loading state can be seen.
-    // When the API is ready, replace this timer with the service call.
     this.submitting.set(true);
     this.submitTimer = setTimeout(() => {
       this.submitting.set(false);
@@ -443,8 +382,6 @@ export class TransferProperty {
       this.showTransferForm.set(false);
     }, SUBMIT_DELAY_MS);
   }
-
-  /* ---------------------------- Helpers ---------------------------- */
 
   private clearFile(key: string, control?: AbstractControl<File | null>): void {
     this.revoke(key);

@@ -15,7 +15,7 @@
     }
 
     <section class="card border-0 rounded-3 shadow-sm mb-3">
-        <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-2">
+        <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
             <h2 class="h6 fw-semibold mb-0 text-white">Property Details</h2>
         </div>
 
@@ -67,7 +67,7 @@
     @if (showTransferForm()) {
     <form id="pt-transfer-form" [formGroup]="form" (ngSubmit)="handleSubmit()" novalidate>
         <div class="card border-0 rounded-3 shadow-sm mb-3" formGroupName="newAllottee">
-            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-2">
+            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
                 <h2 class="h6 fw-semibold mb-0 text-white">New Allottee Details</h2>
             </div>
 
@@ -151,7 +151,7 @@
                         </div>
                     </div>
 
-                    <div class="col-6">
+                    <div class="col-12 col-md-6">
                         <label class="form-label" for="na-photo">
                             Profile Photograph <span class="text-danger" aria-hidden="true">*</span>
                         </label>
@@ -203,7 +203,7 @@
         </div>
 
         <div class="card border-0 rounded-3 shadow-sm mb-3">
-            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-2">
+            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
                 <h2 class="h6 fw-semibold mb-0 text-white">Upload Supporting Documents</h2>
             </div>
 
