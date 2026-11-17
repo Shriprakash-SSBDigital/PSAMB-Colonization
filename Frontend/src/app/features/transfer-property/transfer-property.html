@@ -1,6 +1,6 @@
 <section class="container-fluid py-4 property-transfer" aria-labelledby="pt-title">
     <header class="mb-4">
-        <h1 id="pt-title" class="h3 fw-bold text-forest mb-1">Property Transfer</h1>
+        <h1 id="pt-title" class="h3 fw-bold text-forest mb-1">Transfer Property</h1>
         <p class="text-secondary mb-0">
             Review your existing property details and provide the information of the new allottee to initiate the
             ownership transfer.
@@ -137,6 +137,32 @@
                         </div>
                     </div>
 
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="na-phoneNumber">
+                            Phone Number <span class="text-danger" aria-hidden="true">*</span>
+                        </label>
+                        <input type="text" class="form-control custom-input-color" id="na-phoneNumber"
+                            formControlName="phoneNumber" placeholder="10-digit phone number" maxlength="10"
+                            inputmode="numeric" autocomplete="off" (input)="digitsOnly($event)"
+                            [class.is-invalid]="isInvalid(newAllottee.controls.phoneNumber)"
+                            aria-describedby="na-phoneNumber-err" required />
+                        <div class="invalid-feedback" id="na-phoneNumber-err">
+                            {{ errorMessage(newAllottee.controls.phoneNumber, 'Phone Number') }}
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="na-aadhaarNumber">
+                            Email <span class="text-danger" aria-hidden="true">*</span>
+                        </label>
+                        <input type="email" class="form-control custom-input-color" id="na-email" formControlName="email" placeholder="Email address"
+                            inputmode="email" autocomplete="off" (input)="digitsOnly($event)"
+                            [class.is-invalid]="isInvalid(newAllottee.controls.email)"
+                            aria-describedby="na-email-err" required />
+                        <div class="invalid-feedback" id="na-email-err">
+                            {{ errorMessage(newAllottee.controls.email, 'Email') }}
+                        </div>
+                    </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label" for="na-aadhaarNumber">
                             Aadhaar Card Number <span class="text-danger" aria-hidden="true">*</span>

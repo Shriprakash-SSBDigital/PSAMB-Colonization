@@ -65,6 +65,8 @@ export interface TransferSubmission {
     ownershipShare: number;
     ownershipType: string;
     aadhaarNumber: string;
+    phoneNumber?: string;
+    email?: string;
   };
   photo: File;
   documents: { typeId: string; file: File }[];
@@ -200,6 +202,13 @@ export class TransferProperty {
         Validators.maxLength(12),
         Validators.pattern(AADHAAR_PATTERN),
       ]],
+      phoneNumber: ['', [
+        Validators.required,
+        Validators.minLength(10),
+        Validators.maxLength(10),
+        Validators.pattern(/^\d{10}$/),
+      ]],
+      email: ['', [Validators.email, Validators.maxLength(100)]],
       photo: new FormControl<File | null>(null, Validators.required),
     }),
     documents: this.fb.array<DocumentGroup>([]),
@@ -245,6 +254,8 @@ export class TransferProperty {
       address: v.address.trim(),
       ownershipShare: Number(v.ownershipShare),
       ownershipType: v.ownershipType,
+      phoneNumber: v.phoneNumber,
+      email: v.email,
       aadhaarNumber: v.aadhaarNumber,
     };
   }
