@@ -8,7 +8,8 @@
         public int UnsoldProperties { get; set; }
         public int DigitizedProperties { get; set; }
         public int ForfeitedProperties { get; set; }
-        public int NdcIssued { get; set; }
+        //public int NdcIssued { get; set; }
+        public int TotalMandis { get; set; }
 
     }
 }
