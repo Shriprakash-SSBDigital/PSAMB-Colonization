@@ -1,0 +1,426 @@
+<section class="container-fluid py-4 property-transfer" aria-labelledby="pt-title">
+  <header class="mb-4">
+    <h1 id="pt-title" class="h3 fw-semibold text-forest mb-1">Property Transfer</h1>
+    <p class="text-secondary mb-0">
+      Review your existing property details and provide the information of the new allottee to initiate the ownership transfer.
+    </p>
+  </header>
+
+  @if (submitSuccess()) {
+    <div class="alert alert-success d-flex align-items-start gap-2" role="status">
+      <i class="fa-solid fa-circle-check mt-1" aria-hidden="true"></i>
+      <div>Transfer application submitted for departmental verification.</div>
+    </div>
+  }
+
+  <div class="card shadow-sm border rounded-3 card-accent mb-4">
+    <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
+      <h2 class="h5 fw-semibold text-forest mb-0">
+        <i class="fa-solid fa-building-columns me-2" aria-hidden="true"></i>Existing Property Details
+      </h2>
+      <span class="badge text-bg-light border text-secondary">
+        <i class="fa-solid fa-lock me-1" aria-hidden="true"></i>Read-only
+      </span>
+    </div>
+
+    <div class="card-body">
+  @if (detailFields().length) {
+    <div class="row g-2 bg-light rounded-3 p-3 mb-4">
+
+      <div class="col-md-6">
+        @for (f of detailFields().slice(0, 6); track f.label) {
+          <p class="mb-2">
+            <span class="fw-semibold">{{ f.label }} :</span>
+            {{ f.value || '—' }}
+          </p>
+        }
+      </div>
+
+      <div class="col-md-6">
+        @for (f of detailFields().slice(6); track f.label) {
+          <p class="mb-2">
+            <span class="fw-semibold">{{ f.label }} :</span>
+            {{ f.value || '—' }}
+          </p>
+        }
+
+        <p class="mb-0">
+          <span class="fw-semibold">Address :</span>
+          {{ address() || '—' }}
+        </p>
+      </div>
+
+    </div>
+  } @else {
+    <p class="text-muted mb-0">Property details are not available.</p>
+  }
+</div>
+
+    <div class="card-footer bg-white py-3">
+      <p class="small text-muted mb-3">These details come from the property record and cannot be modified here.</p>
+      @if (!showTransferForm()) {
+        <div class="d-grid d-sm-block">
+          <button
+            type="button"
+            class="btn btn-forest btn-lg px-4"
+            [disabled]="!detailFields().length"
+            [attr.aria-expanded]="showTransferForm()"
+            aria-controls="pt-transfer-form"
+            (click)="openTransferForm()"
+          >
+            <i class="fa-solid fa-right-left me-2" aria-hidden="true"></i>Transfer Property
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showTransferForm()) {
+    <form id="pt-transfer-form" [formGroup]="form" (ngSubmit)="handleSubmit()" novalidate>
+      <!-- ===================== Section B: New allottee ===================== -->
+      <div class="card shadow-sm border card-accent mb-4" formGroupName="newAllottee">
+        <div class="card-header bg-white py-3">
+          <h2 class="h5 fw-semibold text-forest mb-1">
+            <i class="fa-solid fa-user-pen me-2" aria-hidden="true"></i>New Allottee Details
+          </h2>
+          <p class="small text-secondary mb-0">
+            Enter the details of the person to whom the property ownership is being transferred.
+          </p>
+        </div>
+
+        <div class="card-body">
+          <p class="small text-muted">Fields marked <span class="text-danger">*</span> are required.</p>
+          <div class="row g-3">
+            @for (f of textFields; track f.key) {
+              <div class="col-12 col-md-6">
+                <label class="form-label" [for]="'na-' + f.key">
+                  {{ f.label }} <span class="text-danger" aria-hidden="true">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'na-' + f.key"
+                  [formControlName]="f.key"
+                  [placeholder]="f.placeholder"
+                  [maxlength]="f.maxLength"
+                  [class.is-invalid]="isInvalid(newAllottee.get(f.key))"
+                  [attr.aria-describedby]="'na-' + f.key + '-err'"
+                  required
+                />
+                <div class="invalid-feedback" [id]="'na-' + f.key + '-err'">
+                  {{ errorMessage(newAllottee.get(f.key), f.label) }}
+                </div>
+              </div>
+            }
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="na-plotType">
+                Plot Type <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <select
+                class="form-select"
+                id="na-plotType"
+                formControlName="plotType"
+                [class.is-invalid]="isInvalid(newAllottee.controls.plotType)"
+                aria-describedby="na-plotType-err"
+                required
+              >
+                <option value="" disabled>Select plot type</option>
+                @for (o of plotTypes(); track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+              <div class="invalid-feedback" id="na-plotType-err">
+                {{ errorMessage(newAllottee.controls.plotType, 'Plot Type') }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="na-ownershipType">
+                Ownership Type <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <select
+                class="form-select"
+                id="na-ownershipType"
+                formControlName="ownershipType"
+                [class.is-invalid]="isInvalid(newAllottee.controls.ownershipType)"
+                aria-describedby="na-ownershipType-err"
+                required
+              >
+                <option value="" disabled>Select ownership type</option>
+                @for (o of ownershipTypes(); track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+              <div class="invalid-feedback" id="na-ownershipType-err">
+                {{ errorMessage(newAllottee.controls.ownershipType, 'Ownership Type') }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="na-ownershipShare">
+                Ownership Share (%) <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="number"
+                class="form-control"
+                id="na-ownershipShare"
+                formControlName="ownershipShare"
+                placeholder="e.g. 50"
+                min="0.01"
+                max="100"
+                step="0.01"
+                inputmode="decimal"
+                [class.is-invalid]="isInvalid(newAllottee.controls.ownershipShare)"
+                aria-describedby="na-ownershipShare-err"
+                required
+              />
+              <div class="invalid-feedback" id="na-ownershipShare-err">
+                {{ errorMessage(newAllottee.controls.ownershipShare, 'Ownership Share') }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="na-aadhaarNumber">
+                Aadhaar Card Number <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="na-aadhaarNumber"
+                formControlName="aadhaarNumber"
+                placeholder="12-digit Aadhaar number"
+                maxlength="12"
+                inputmode="numeric"
+                autocomplete="off"
+                (input)="digitsOnly($event)"
+                [class.is-invalid]="isInvalid(newAllottee.controls.aadhaarNumber)"
+                aria-describedby="na-aadhaarNumber-err"
+                required
+              />
+              <div class="invalid-feedback" id="na-aadhaarNumber-err">
+                {{ errorMessage(newAllottee.controls.aadhaarNumber, 'Aadhaar Card Number') }}
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="na-address">
+                Address <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                class="form-control"
+                id="na-address"
+                formControlName="address"
+                rows="3"
+                maxlength="300"
+                placeholder="House / street, city, district, state, PIN"
+                [class.is-invalid]="isInvalid(newAllottee.controls.address)"
+                aria-describedby="na-address-err"
+                required
+              ></textarea>
+              <div class="invalid-feedback" id="na-address-err">
+                {{ errorMessage(newAllottee.controls.address, 'Address') }}
+              </div>
+            </div>
+
+            <!-- Profile photograph -->
+            <div class="col-12">
+              <label class="form-label" for="na-photo">
+                Profile Photograph <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <div class="row g-3 align-items-center">
+                <div class="col-12 col-sm">
+                  <input
+                    #photoInput
+                    type="file"
+                    class="form-control"
+                    id="na-photo"
+                    [accept]="photoRule.accept"
+                    [class.is-invalid]="fileErrors()[photoKey] || isInvalid(newAllottee.controls.photo)"
+                    aria-describedby="na-photo-help na-photo-err"
+                    (change)="handleFileSelect($event, photoKey, newAllottee.controls.photo, photoRule)"
+                  />
+                  <div class="form-text" id="na-photo-help">{{ photoRule.hint }}</div>
+                  <div class="invalid-feedback" id="na-photo-err">
+                    {{ fileErrors()[photoKey] || 'Profile Photograph is required.' }}
+                  </div>
+                  @if (newAllottee.controls.photo.value; as photo) {
+                    <div class="d-flex align-items-center gap-2 mt-2 small">
+                      <i class="fa-solid fa-image text-forest" aria-hidden="true"></i>
+                      <span class="text-break">{{ photo.name }}</span>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger ms-auto"
+                        (click)="removeFile(photoKey, newAllottee.controls.photo, photoInput)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  }
+                </div>
+                @if (previews()[photoKey]) {
+                  <div class="col-auto">
+                    <img [src]="previews()[photoKey]" alt="Selected profile photograph preview" class="img-thumbnail photo-preview object-fit-cover" />
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Section C: Supporting documents ===================== -->
+      <div class="card shadow-sm border card-accent mb-4">
+        <div class="card-header bg-white py-3">
+          <h2 class="h5 fw-semibold text-forest mb-1">
+            <i class="fa-solid fa-file-arrow-up me-2" aria-hidden="true"></i>Upload Supporting Documents
+          </h2>
+          <p class="small text-secondary mb-0">
+            Choose the documents you want to upload. An upload card appears for each one you add.
+          </p>
+        </div>
+
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12 col-md-8 col-xl-6">
+              <label class="form-label" for="doc-picker">Add a document</label>
+              <select
+                #docPicker
+                class="form-select"
+                id="doc-picker"
+                [disabled]="!availableDocuments().length"
+                (change)="addDocument(docPicker.value); docPicker.value = ''"
+              >
+                <option value="" selected disabled>
+                  {{ availableDocuments().length ? 'Select a document type' : 'All document types added' }}
+                </option>
+                @for (d of availableDocuments(); track d.id) {
+                  <option [value]="d.id">{{ d.label }}</option>
+                }
+              </select>
+              <div class="form-text">{{ documentRule.hint }}. You do not need to upload every type.</div>
+            </div>
+          </div>
+
+          @if (documents.length) {
+            <div class="row g-3 mt-1" formArrayName="documents">
+              @for (group of documents.controls; track group.controls.typeId.value; let i = $index) {
+                @let typeId = group.controls.typeId.value;
+                @let fileCtrl = group.controls.file;
+                <div class="col-12 col-md-6 col-xl-4" [formGroupName]="i">
+                  <div class="card h-100 border bg-light">
+                    <div class="card-body d-flex flex-column gap-2">
+                      <div class="d-flex align-items-start justify-content-between gap-2">
+                        <h3 class="h6 fw-semibold text-forest mb-0">
+                          <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>{{ documentLabel(typeId) }}
+                        </h3>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger flex-shrink-0"
+                          [attr.aria-label]="'Remove ' + documentLabel(typeId)"
+                          (click)="removeDocument(i)"
+                        >
+                          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                      </div>
+
+                      <div>
+                        <label class="visually-hidden" [for]="'doc-' + typeId">Upload {{ documentLabel(typeId) }}</label>
+                        <input
+                          #docInput
+                          type="file"
+                          class="form-control form-control-sm"
+                          [id]="'doc-' + typeId"
+                          [accept]="documentRule.accept"
+                          [class.is-invalid]="fileErrors()[typeId] || isInvalid(fileCtrl)"
+                          [attr.aria-describedby]="'doc-' + typeId + '-err'"
+                          (change)="handleFileSelect($event, typeId, fileCtrl, documentRule)"
+                        />
+                        <div class="invalid-feedback" [id]="'doc-' + typeId + '-err'">
+                          {{ fileErrors()[typeId] || 'Please attach a file for this document.' }}
+                        </div>
+                      </div>
+
+                      @if (fileCtrl.value; as file) {
+                        <div class="small d-flex flex-wrap align-items-center gap-2">
+                          <i class="fa-solid fa-paperclip text-forest" aria-hidden="true"></i>
+                          <span class="text-break flex-grow-1">{{ file.name }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mt-auto">
+                          <a
+                            class="btn btn-sm btn-outline-secondary"
+                            [href]="previews()[typeId]"
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            View
+                          </a>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="docInput.click()">
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            (click)="removeFile(typeId, fileCtrl, docInput)"
+                          >
+                            Remove file
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-muted small mt-3 mb-0">No documents selected yet. Use the list above to add one.</p>
+          }
+        </div>
+      </div>
+
+      <!-- ===================== Section D: Declaration ===================== -->
+      <div class="card shadow-sm border card-accent mb-4">
+        <div class="card-body">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="declaration"
+              formControlName="declaration"
+              [class.is-invalid]="isInvalid(form.controls.declaration)"
+            />
+            <label class="form-check-label" for="declaration">
+              I declare that all the information provided and the documents uploaded are true and correct.
+            </label>
+          </div>
+          <div class="alert alert-light border small mt-3 mb-0" role="note">
+            <i class="fa-solid fa-circle-info me-1 text-forest" aria-hidden="true"></i>
+            This application will be submitted for departmental verification.
+          </div>
+        </div>
+
+        <div class="card-footer bg-white py-3">
+          <div class="d-grid d-sm-flex justify-content-sm-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" [disabled]="submitting()" (click)="closeTransferForm()">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-outline-forest" [disabled]="submitting()" (click)="resetForm()">
+              Reset
+            </button>
+            <button
+              type="submit"
+              class="btn btn-forest"
+              [disabled]="form.invalid || !validateSelectedDocuments() || submitting()"
+            >
+              @if (submitting()) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Submitting…
+              } @else {
+                Submit Transfer Application
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  }
+</section>

@@ -85,6 +85,7 @@ export class MainLayout {
       '/application-status',
       '/digitised-summary-report',
       '/plot-sold-unsold-report',
+      '/transfer-property',
     ];
     return dashboardRoutes.some(
       (route) =>

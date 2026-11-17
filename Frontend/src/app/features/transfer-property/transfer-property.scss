@@ -1,0 +1,42 @@
+$gold: var(--bs-warning, #c9a227);
+
+.text-forest {
+  color: var(--theme-primary);
+}
+
+.card-accent {
+  border-top: 3px solid $gold;
+}
+
+.btn-forest {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--theme-primary);
+  --bs-btn-border-color: var(--theme-primary);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #053d2e;
+  --bs-btn-hover-border-color: #053d2e;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #042f23;
+  --bs-btn-active-border-color: #042f23;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--theme-primary);
+  --bs-btn-disabled-border-color: var(--theme-primary);
+  --bs-btn-focus-shadow-rgb: 6, 78, 59;
+}
+
+.btn-outline-forest {
+  --bs-btn-color:var(--theme-primary);
+  --bs-btn-border-color: var(--theme-primary);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--theme-primary);
+  --bs-btn-hover-border-color: var(--theme-primary);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--theme-primary);
+  --bs-btn-active-border-color: var(--theme-primary);
+  --bs-btn-focus-shadow-rgb: 6, 78, 59;
+}
+
+.photo-preview {
+  width: 6rem;
+  height: 6rem;
+}
