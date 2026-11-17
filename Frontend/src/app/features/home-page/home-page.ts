@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CountUp } from '../../shared/directives/count-up';
-import { Common } from '../../core/service/CommonService/common';
+import { PropertySummary, PropertySummaryData } from '../../core/service/property-summary';
 
 interface Announcement {
   id: number;
@@ -43,7 +43,7 @@ export class HomePage implements OnInit {
   soldProperties = 0;
   unsoldProperties = 0;
 
-  constructor(private common: Common, private cdr: ChangeDetectorRef) {}
+  constructor(private propertySummary: PropertySummary, private cdr: ChangeDetectorRef) {}
 
   announcements: Announcement[] = [
     // { id: 1, title: 'Tender Document for Hiring Vehicles', isNew: true, url: 'https://emandikaran-pb.in/files/HiringVehicles.pdf' },
@@ -114,34 +114,15 @@ export class HomePage implements OnInit {
   selectedLeaderData: any = null;
 
   ngOnInit(): void {
-    const storedSummary = sessionStorage.getItem('property_summary');
-    if (storedSummary) {
-      try {
-        this.applyPropertySummary(JSON.parse(storedSummary));
-        return;
-      } catch (error) {
-        console.error('Failed to read cached property summary:', error);
-        sessionStorage.removeItem('property_summary');
-      }
-    }
-
-    this.common.GetPropertySummary().subscribe({
-      next: (response) => {
-        if (!response?.success || !response.responseData) {
-          return;
-        }
-
-        const summary = response.responseData;
-        this.applyPropertySummary(summary);
-        sessionStorage.setItem('property_summary', JSON.stringify(summary));
-      },
+    this.propertySummary.getPropertySummary().subscribe({
+      next: (summary) => this.applyPropertySummary(summary),
       error: (error) => {
         console.error('Failed to load property summary:', error);
       }
     });
   }
 
-  private applyPropertySummary(summary: any): void {
+  private applyPropertySummary(summary: PropertySummaryData): void {
     this.totalProperties = summary?.totalProperties ?? 0;
     this.soldProperties = summary?.soldProperties ?? 0;
     this.unsoldProperties = summary?.unsoldProperties ?? 0;

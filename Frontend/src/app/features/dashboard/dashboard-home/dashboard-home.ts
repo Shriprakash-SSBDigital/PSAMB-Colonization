@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MenuService, SubMenuItem } from '../../../core/service/MenuService/menu.service';
 import { CountUp } from '../../../shared/directives/count-up';
+import { PropertySummary, PropertySummaryData } from '../../../core/service/property-summary';
 
 export interface DashboardStats {
   totalProperties: number;
@@ -37,10 +38,6 @@ export class DashboardHome implements OnInit {
   monthlyDues = 1840000;
   ndcIssuedTillDate = 0;
 
-  collection = '42,85,000';
-  dues = '18,40,000';
-  ndcissued = '348';
-
   currentDate = new Date();
 
   loggedInUser: {
@@ -52,7 +49,11 @@ export class DashboardHome implements OnInit {
 
   availableServices: SubMenuItem[] = [];
 
-  constructor(private menuService: MenuService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private menuService: MenuService,
+    private propertySummary: PropertySummary,
+    private cdr: ChangeDetectorRef,
+) {}
 
   ngOnInit(): void {
     this.extractUserFromStorage();
@@ -78,8 +79,12 @@ export class DashboardHome implements OnInit {
         this.cdr.detectChanges();
       }
     });
-    // Load property summary from session storage if available
-    this.loadPropertySummaryFromSession();
+    this.propertySummary.getPropertySummary().subscribe({
+      next: (summary) => this.applyPropertySummary(summary),
+      error: (error) => {
+        console.error('Failed to load property summary:', error);
+      },
+    });
   }
   getUserRoles(): string[] {
     const roles: string[] = [];
@@ -206,24 +211,15 @@ export class DashboardHome implements OnInit {
     return menus?.flatMap((menu) => (menu.subMenus ?? []).map((sub: SubMenuItem) => sub)) ?? [];
   }
 
-  private loadPropertySummaryFromSession(): void {
-    const storedSummary = sessionStorage.getItem('property_summary');
-    if (!storedSummary) {
-      return;
-    }
-
-    try {
-      const summary = JSON.parse(storedSummary);
-      this.totalProperties = summary.totalProperties ?? this.totalProperties;
-      this.soldProperties = summary.soldProperties ?? this.soldProperties;
-      this.unsoldProperties = summary.unsoldProperties ?? this.unsoldProperties;
-      this.digitizedProperties = summary.digitizedProperties ?? this.digitizedProperties;
-      this.forfeitedProperties = summary.forfeitedProperties ?? this.forfeitedProperties;
-      this.ndcIssuedTillDate = summary.ndcIssued ?? this.ndcIssuedTillDate;
+  private applyPropertySummary(summary: PropertySummaryData): void {
+    this.totalProperties = summary.totalProperties ?? 0;
+    this.soldProperties = summary.soldProperties ?? 0;
+    this.unsoldProperties = summary.unsoldProperties ?? 0;
+    this.digitizedProperties = summary.digitizedProperties ?? 0;
+    this.forfeitedProperties = summary.forfeitedProperties ?? 0;
+    // this.monthlyCollection = summary.monthlyCollection ?? 0;
+    // this.monthlyDues = summary.monthlyDues ?? 0;
+      this.ndcIssuedTillDate = summary.ndcIssued ?? 0;
       this.cdr.detectChanges();
-    } catch (error) {
-      console.error('Failed to read cached property summary:', error);
-      sessionStorage.removeItem('property_summary');
-    }
   }
 }
