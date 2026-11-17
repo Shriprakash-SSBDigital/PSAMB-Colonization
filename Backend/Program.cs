@@ -176,6 +176,7 @@ try
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<IMobileVerificationService, MobileVerificationService>();
+    builder.Services.AddScoped<IDashboardService, DashboardService>();
     //
     builder.Services.AddScoped<ISendCredUserService, SendCredUserService>();
     builder.Services.AddEndpointsApiExplorer();
