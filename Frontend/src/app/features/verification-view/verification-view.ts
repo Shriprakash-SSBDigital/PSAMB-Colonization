@@ -91,7 +91,7 @@ export class VerificationView implements OnInit {
     { key: 'transferOrder', label: 'Transfer Order', fileName: null, fileUrl: null, uploaded: false },
     { key: 'legalHeirCertificate', label: 'Legal Heir Certificate', fileName: null, fileUrl: null, uploaded: false },
     { key: 'aadhaarProof', label: 'Aadhaar Card Proof', fileName: null, fileUrl: null, uploaded: false },
-    { key: 'passportProof', label: 'Passport Proof', fileName: null, fileUrl: null, uploaded: false },
+    { key: 'panProof', label: 'Pan Proof', fileName: null, fileUrl: null, uploaded: false },
   ];
 
   decisionForm!: FormGroup;
