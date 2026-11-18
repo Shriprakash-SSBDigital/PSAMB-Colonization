@@ -152,11 +152,11 @@
                     </div>
 
                     <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-aadhaarNumber">
+                        <label class="form-label" for="na-email">
                             Email <span class="text-danger" aria-hidden="true">*</span>
                         </label>
                         <input type="email" class="form-control custom-input-color" id="na-email" formControlName="email" placeholder="Email address"
-                            inputmode="email" autocomplete="off" (input)="digitsOnly($event)"
+                            inputmode="email" autocomplete="email" maxlength="100"
                             [class.is-invalid]="isInvalid(newAllottee.controls.email)"
                             aria-describedby="na-email-err" required />
                         <div class="invalid-feedback" id="na-email-err">
@@ -313,33 +313,20 @@
             </div>
         </div>
 
-        <!-- <div class="card border-0 rounded-3 shadow-sm mb-3">
-        <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-2">
-          <h2 class="h6 fw-semibold mb-0 text-white">Declaration &amp; Submission</h2>
-        </div>
-
-        <div class="card-footer bg-white border-0 rounded-0 px-3 px-lg-4 pt-0 pb-3 pb-lg-4">
-          <div class="d-grid d-sm-flex justify-content-sm-end gap-2">
-            <button type="button" class="btn btn-outline-secondary" [disabled]="submitting()" (click)="closeTransferForm()">
-              Cancel
+        <div class="d-flex flex-wrap justify-content-end gap-2 my-4">
+            <button type="button" class="btn btn-outline-secondary rounded-3 px-4 py-2 fw-semibold"
+                [disabled]="submitting()" (click)="closeTransferForm()">
+                Cancel
             </button>
-            <button type="button" class="btn btn-outline-forest" [disabled]="submitting()" (click)="resetForm()">
-              Reset
-            </button>
-            <button
-              type="submit"
-              class="btn btn-forest"
-              [disabled]="form.invalid || !validateSelectedDocuments() || submitting()"
-            >
-              @if (submitting()) {
+            <button type="submit" class="btn btn-forest rounded-3 px-4 py-2 fw-semibold shadow-sm"
+                [disabled]="form.invalid || !validateSelectedDocuments() || submitting()">
+                @if (submitting()) {
                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Submitting…
-              } @else {
+                } @else {
                 Submit Transfer Application
-              }
+                }
             </button>
-          </div>
         </div>
-      </div> -->
     </form>
     }
 </section>

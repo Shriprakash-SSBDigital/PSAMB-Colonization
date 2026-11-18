@@ -208,11 +208,11 @@ export class TransferProperty {
         Validators.maxLength(10),
         Validators.pattern(/^\d{10}$/),
       ]],
-      email: ['', [Validators.email, Validators.maxLength(100)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
       photo: new FormControl<File | null>(null, Validators.required),
     }),
     documents: this.fb.array<DocumentGroup>([]),
-    declaration: [false, Validators.requiredTrue],
+    declaration: [false],
   });
 
   readonly newAllottee = this.form.controls.newAllottee;
