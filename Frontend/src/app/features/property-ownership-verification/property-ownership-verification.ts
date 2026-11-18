@@ -154,8 +154,6 @@ export class PropertyOwnershipVerification implements OnInit {
       next: (res: any) => {
         const rawData = res.data || res || [];
 
-        // Senior Assistant ko sirf wo data dikhe jo clerk se approve ho chuka hai (status 2, 3, 4) ya SA ne khud send back kiya ho (status 7 with levelId='Senior Assistant')
-        // Clerk ka objection (status 7 with levelId='Clerk') aur naya pending data (status 1) Senior Assistant ko NAHI dikhega
         const visibleData = isSA
           ? rawData.filter((d: any) => {
             const s = Number(d.status != null ? d.status : d.applicationStatusId);
