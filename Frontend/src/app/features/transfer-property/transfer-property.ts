@@ -80,7 +80,6 @@ type DocumentGroup = FormGroup<{
 const DEFAULT_DOCUMENT_TYPES: DocumentType[] = [
   { id: 'ndc', label: 'NDC Certificate' },
   { id: 'allotment-letter', label: 'Allotment Letter' },
-  { id: 'possession-letter', label: 'Possession Letter' },
   { id: 'sale-deed', label: 'Registered Sale Deed / Transfer Deed' },
   { id: 'tax-receipt', label: 'Property Tax / Payment Receipt' },
   { id: 'other', label: 'Other Supporting Documents' },
@@ -134,10 +133,6 @@ const DOCUMENT_RULE: FileRule = {
 const PHOTO_KEY = 'photo';
 const SUBMIT_DELAY_MS = 800;
 
-const PERSON_NAME = /^[\p{L}][\p{L} .'-]*$/u;
-const PLOT_NUMBER = /^[A-Za-z0-9][A-Za-z0-9 \-\/]*$/;
-const AADHAAR_PATTERN = /^\d{12}$/;
-
 function notBlank(control: AbstractControl): ValidationErrors | null {
   const v = control.value;
   return typeof v === 'string' && v.length > 0 && v.trim() === '' ? { blank: true } : null;
@@ -187,11 +182,11 @@ export class TransferProperty {
 
   readonly form = this.fb.group({
     newAllottee: this.fb.group({
-      name: ['', [Validators.required, notBlank, Validators.minLength(3), Validators.maxLength(100), Validators.pattern(PERSON_NAME)]],
-      fatherHusbandName: ['', [Validators.required, notBlank, Validators.minLength(3), Validators.maxLength(100), Validators.pattern(PERSON_NAME)]],
+      name: ['', [Validators.required, notBlank, Validators.minLength(3), Validators.maxLength(100)]],
+      fatherHusbandName: ['', [Validators.required, notBlank, Validators.minLength(3), Validators.maxLength(100)]],
       mandiName: ['', [Validators.required, notBlank, Validators.maxLength(100)]],
       plotType: ['', Validators.required],
-      plotNumber: ['', [Validators.required, notBlank, Validators.maxLength(30), Validators.pattern(PLOT_NUMBER)]],
+      plotNumber: ['', [Validators.required, notBlank, Validators.maxLength(30)]],
       plotSize: ['', [Validators.required, notBlank, Validators.maxLength(50)]],
       address: ['', [Validators.required, notBlank, Validators.minLength(10), Validators.maxLength(300)]],
       ownershipShare: [null as number | null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
@@ -200,7 +195,7 @@ export class TransferProperty {
         Validators.required,
         Validators.minLength(12),
         Validators.maxLength(12),
-        Validators.pattern(AADHAAR_PATTERN),
+        Validators.pattern(/^\d{12}$/),
       ]],
       phoneNumber: ['', [
         Validators.required,
