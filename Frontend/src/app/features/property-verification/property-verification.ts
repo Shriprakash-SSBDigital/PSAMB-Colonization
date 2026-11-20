@@ -335,22 +335,18 @@ toggleHistory(property: PropertyVerificationModel, event: Event, popover: Popove
     this.selectedHistoryPropertyNo = property.propertyNo;
     this.selectedHistoryCreatedDate = property.registrationDate ?? null;
     this.historyError = '';
-  popover.show(event);
+  this.selectedHistory = [];
 
-  // 1. Use timeline history already available in registrationData.
-  const rawTimeline =
- property.registrationData?.['timelineHistory'] ||
- property.registrationData?.['TimelineHistory'];
-    if (Array.isArray(rawTimeline) && rawTimeline.length > 0) {
-    this.historyCache.set(propertyId, rawTimeline);
-      this.selectedHistory = this.mapStatusHistory(rawTimeline, property);
-      this.historyLoading = false;
-    this.historyLoadingPropertyId = null;
-    this.cdr.detectChanges();
-    return;
+  if (popover.overlayVisible) {
+    popover.hide();
+    Promise.resolve().then(() => {
+      popover.show(event);
+    });
+  } else {
+    popover.show(event);
   }
 
-  // 2. Use cached history if already loaded.
+  // 1. Use cached history if this property was already fetched this session.
   if (this.historyCache.has(propertyId)) {
     const cachedHistory = this.historyCache.get(propertyId);
 
@@ -361,14 +357,13 @@ toggleHistory(property: PropertyVerificationModel, event: Event, popover: Popove
       return;
     }
 
-  // 3. Prevent duplicate API requests for the same property.
+  // 2. Prevent duplicate in-flight requests for the same property.
   if (this.historyRequests.has(propertyId)) {
     this.historyLoading = true;
     this.historyLoadingPropertyId = propertyId;
     return;
   }
 
-  this.selectedHistory = [];
   this.historyLoading = true;
   this.historyLoadingPropertyId = propertyId;
   this.historyRequests.add(propertyId);
@@ -389,34 +384,33 @@ toggleHistory(property: PropertyVerificationModel, event: Event, popover: Popove
         const historyData = res?.data ?? res;
 
         if (!historyData) {
-          if (this.isHistoryPopoverOpen && this.activeHistoryPropertyId === propertyId) {
+          if (this.activeHistoryPropertyId === propertyId) {
             this.historyError = 'History could not be loaded.';
           }
           return;
         }
 
         if (!Array.isArray(historyData)) {
+          if (this.activeHistoryPropertyId === propertyId) {
           this.selectedHistoryPropertyNo =
             historyData.propertyCode ?? this.selectedHistoryPropertyNo;
           this.selectedHistoryCreatedDate =
             historyData.createdDate ?? this.selectedHistoryCreatedDate;
+          }
         }
 
-        // 4. Cache the successful response.
+        // Cache so subsequent clicks on this row are served instantly.
         this.historyCache.set(propertyId, historyData);
-        if (!this.isHistoryPopoverOpen || this.activeHistoryPropertyId !== propertyId) {
+        if (this.activeHistoryPropertyId !== propertyId) {
           return;
         }
 
-     this.selectedHistory = this.mapStatusHistory(
-        historyData,
-         property
-        );
+     this.selectedHistory = this.mapStatusHistory(historyData, property);
       },
 
       error: (err: any) => {
         console.error('Error fetching property history:', err);
-        if (this.isHistoryPopoverOpen && this.activeHistoryPropertyId === propertyId) {
+        if (this.activeHistoryPropertyId === propertyId) {
         this.historyError = 'History could not be loaded.';
       }
       }
@@ -424,7 +418,9 @@ toggleHistory(property: PropertyVerificationModel, event: Event, popover: Popove
   }
 
 onHistoryPopoverHide(): void {
-  this.isHistoryPopoverOpen = false;
+  if (this.isHistoryPopoverOpen) {
+    return;
+  }
   this.activeHistoryPropertyId = null;
   this.historyLoading = false;
   this.historyLoadingPropertyId = null;

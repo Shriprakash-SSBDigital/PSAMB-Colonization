@@ -4,10 +4,10 @@
   }
 
   <div class="app-page-content flex-grow-1">
-    <router-outlet></router-outlet>
+    <router-outlet (activate)="onPageActivate()"></router-outlet>
   </div>
 
-  @if (showPublicFooter) {
+  @if (showPublicFooter && isFooterReady()) {
     <app-footer></app-footer>
   }
 </div>
