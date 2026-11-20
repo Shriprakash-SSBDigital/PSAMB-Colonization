@@ -68,7 +68,7 @@ export class PropertySummary {
 
       sessionStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to read cached property summary:', error);
+      // console.error('Failed to read cached property summary:', error);
       this.removeCachedSummary();
     }
 
@@ -79,7 +79,7 @@ export class PropertySummary {
     try {
       sessionStorage.setItem(this.storageKey, JSON.stringify(summary));
     } catch (error) {
-      console.error('Failed to cache property summary:', error);
+      // console.error('Failed to cache property summary:', error);
     }
   }
 
@@ -87,7 +87,7 @@ export class PropertySummary {
     try {
       sessionStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to remove cached property summary:', error);
+      // console.error('Failed to remove cached property summary:', error);
     }
   }
 
