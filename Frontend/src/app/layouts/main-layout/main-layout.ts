@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -11,6 +11,7 @@ import { filter, map, startWith } from 'rxjs';
 })
 export class MainLayout {
   private readonly router = inject(Router);
+  protected readonly isFooterReady = signal(false);
 
   private readonly hiddenLayoutPaths = new Set([
     '/auth/login',
@@ -50,6 +51,13 @@ export class MainLayout {
       );
 
     return !isDashboardRoute && !isHiddenAuthRoute;
+  }
+
+  protected onPageActivate(): void {
+    this.isFooterReady.set(false);
+    requestAnimationFrame(() => {
+      this.isFooterReady.set(true);
+    });
   }
 
   private getInitialUrl(): string {
