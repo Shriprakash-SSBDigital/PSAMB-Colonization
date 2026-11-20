@@ -12,6 +12,7 @@ export interface PropertySummaryData {
   monthlyCollection?: number;
   monthlyDues?: number;
   ndcIssued?: number;
+  totalMandis?: number;
 }
 
 @Injectable({
@@ -105,6 +106,7 @@ export class PropertySummary {
       'monthlyCollection',
       'monthlyDues',
       'ndcIssued',
+      'totalMandis',
     ];
 
     return summaryFields.some((field) => typeof summary[field] === 'number' && Number.isFinite(summary[field]));
