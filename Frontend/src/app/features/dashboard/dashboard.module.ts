@@ -163,6 +163,14 @@ import { RoleGuard } from '../../core/guards/role-guard';
             loadComponent: () =>
               import('../admin-pages/role-management/role-management')
                 .then((m) => m.RoleManagement),
+          },
+          {
+            path: 'transfer-property',
+            canActivate: [RoleGuard],
+            data: { roles: ['User'] },
+            loadComponent: () =>
+              import('../transfer-property/transfer-property')
+                .then((m) => m.TransferProperty),
           }
         ]
       }

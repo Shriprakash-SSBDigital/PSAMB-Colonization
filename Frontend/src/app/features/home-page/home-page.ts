@@ -42,6 +42,7 @@ export class HomePage implements OnInit {
   totalProperties = 0;
   soldProperties = 0;
   unsoldProperties = 0;
+  totalMandis = 0 | 91;
 
   constructor(private propertySummary: PropertySummary, private cdr: ChangeDetectorRef) {}
 
@@ -126,6 +127,7 @@ export class HomePage implements OnInit {
     this.totalProperties = summary?.totalProperties ?? 0;
     this.soldProperties = summary?.soldProperties ?? 0;
     this.unsoldProperties = summary?.unsoldProperties ?? 0;
+    this.totalMandis = summary?.totalMandis ?? 0;
     this.cdr.detectChanges();
   }
 

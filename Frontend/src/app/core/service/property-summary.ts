@@ -12,6 +12,7 @@ export interface PropertySummaryData {
   monthlyCollection?: number;
   monthlyDues?: number;
   ndcIssued?: number;
+  totalMandis?: number;
 }
 
 @Injectable({
@@ -67,7 +68,7 @@ export class PropertySummary {
 
       sessionStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to read cached property summary:', error);
+      // console.error('Failed to read cached property summary:', error);
       this.removeCachedSummary();
     }
 
@@ -78,7 +79,7 @@ export class PropertySummary {
     try {
       sessionStorage.setItem(this.storageKey, JSON.stringify(summary));
     } catch (error) {
-      console.error('Failed to cache property summary:', error);
+      // console.error('Failed to cache property summary:', error);
     }
   }
 
@@ -86,7 +87,7 @@ export class PropertySummary {
     try {
       sessionStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to remove cached property summary:', error);
+      // console.error('Failed to remove cached property summary:', error);
     }
   }
 
@@ -105,6 +106,7 @@ export class PropertySummary {
       'monthlyCollection',
       'monthlyDues',
       'ndcIssued',
+      'totalMandis',
     ];
 
     return summaryFields.some((field) => typeof summary[field] === 'number' && Number.isFinite(summary[field]));
