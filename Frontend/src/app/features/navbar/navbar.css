@@ -83,7 +83,7 @@
 }
 
 .logo-img {
-  width: 30px;
+  width: 35px;
   height: auto;
   opacity: 0.9;
   filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
@@ -136,13 +136,17 @@
   transition: color 0.3s ease;
 }
 
-.nav-link-item::after {
+.nav-link-item::after,
+.nav-link-item.dropdown-toggle::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 2px;
+  display: block;
+  margin: 0;
+  border: 0;
   background-color: #d97706; /* Golden Line */
   transform: scaleX(0);
   transform-origin: right;
@@ -350,7 +354,7 @@
     padding: 12px 0;
   }
 
-  .nav-link-item::after {
+  .nav-links-container .nav-link-item::after {
     display: none;
   }
 

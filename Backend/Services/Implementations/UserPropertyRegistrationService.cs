@@ -494,6 +494,7 @@ namespace Backend.Services.Implementations
                     {
                         record.Status = 3;
                         record.LevelId = "Senior Assistant";
+                        record.AllotteeCode = dto.AllotteeCode;
                     }
                     else if (dto.Decision == "sendback")
                     {

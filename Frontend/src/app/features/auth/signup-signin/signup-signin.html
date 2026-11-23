@@ -199,7 +199,7 @@
                         <button type="button" *ngIf="!loginOtpData.otpSent" class="btn-login-screenshot flex-grow-1"
                             [disabled]="isSendingLoginOtp"
                             (click)="sendLoginOtp()">
-                            <span *ngIf="!isSendingLoginOtp">Send OTP / ਵੈਰੀਫਾਈ ਕਰੋ</span>
+                            <span *ngIf="!isSendingLoginOtp">Send OTP</span>
                             <span *ngIf="isSendingLoginOtp" class="btn-spinner-row">
                                 <span class="btn-spinner"></span> Sending&hellip;
                             </span>
@@ -467,8 +467,8 @@
         <div class="modal-content rounded-3 shadow border-0 overflow-hidden">
 
             <!-- Header -->
-            <div class="modal-header text-white bg-success p-0 p-md-3">
-                <div class="d-flex align-items-center gap-3">
+            <div class="modal-header text-white bg-success px-3 py-2 p-md-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 pe-2 pe-md-3">
                     <span class="icon-circle d-flex align-items-center justify-content-center rounded-2 flex-shrink-0">
                         <i class="fa-solid fa-file-lines fs-4"></i>
                     </span>
@@ -481,7 +481,7 @@
                         </h2>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" (click)="closeViewModal()" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" (click)="closeViewModal()" aria-label="Close"></button>
             </div>
 
             <!-- Body -->

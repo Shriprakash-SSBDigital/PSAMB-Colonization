@@ -228,6 +228,8 @@ namespace Backend.Models.Dtos
         public string? Decision { get; set; }
         public string? Role { get; set; }
         public string? UserId { get; set; }
+        public string? AllotteeCode { get; set; }
+
     }
 
 
