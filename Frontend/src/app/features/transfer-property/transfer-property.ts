@@ -9,6 +9,12 @@ import { Common } from '../../core/service/CommonService/common';
 import { environment } from '../../../environments/environment';
 
 
+export interface DocumentConfig {
+  key: string;
+  label: string;
+  visible: string[];
+  requiredForTransferType: boolean;
+}
 
 @Component({
   selector: 'app-transfer-property',
@@ -23,16 +29,84 @@ export class TransferProperty implements OnInit {
 
   readonly allowedFileTypes = '.jpeg,.jpg,.png,.pdf';
 
-  readonly documents = [
-    { key: 'allotmentLetter', label: 'Allotment Letter' },
-    { key: 'lastPaymentReceipt', label: 'Last Payment Receipt', hint: 'Any one from last three receipts' },
-    { key: 'noDueCertificate', label: 'No Due Certificate' },
-    { key: 'bForm', label: 'B.Form' },
-    { key: 'conveyanceDeed', label: 'Conveyance Deed' },
-    { key: 'saleDeed', label: 'Sale Deed' },
-    { key: 'transferOrder', label: 'Transfer Order' },
-    { key: 'legalHeirCertificate', label: 'Legal Heir Certificate' },
+  readonly TransferCases = [
+    { key: 'normal', label: 'Normal Property ' },
+    { key: 'death', label: 'Due to Death' },
+    { key: 'multiple_owners', label: 'Multiple Owners' },
   ];
+
+  readonly commonDocuments: DocumentConfig[] = [
+    {
+      key: 'conveyanceDeed',
+      label: 'Conveyance Deed (Form B)',
+      visible: ['normal', 'death', 'multiple_owners'],
+      requiredForTransferType: false
+    },
+    {
+      key: 'bankNoc',
+      label: 'NOC from Concerned Bank',
+      visible: ['normal', 'death', 'multiple_owners'],
+      requiredForTransferType: false
+    },
+    {
+      key: 'saleDeed',
+      label: 'Registered Sale Deed (Certified Copy)',
+      visible: ['normal','multiple_owners'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'powerOfAttorney',
+      label: 'Power of Attorney, if applicable',
+      visible: ['normal'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'partnershipDeed',
+      label: 'Partnership Deed',
+      visible: ['normal', 'multiple_owners'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'deathCertificate',
+      label: 'Death Certificate of Deceased',
+      visible: ['death:withoutWill', 'death:withWill'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'legalHeirCertificate',
+      label: 'Legal Heirs Report',
+      visible: ['death:withoutWill', 'death:withWill'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'registeredWill',
+      label: 'Registered Will of Deceased',
+      visible: ['death:withWill'],
+      requiredForTransferType: true
+    },
+    {
+      key: 'requiredNotarizedDoc',
+      label: 'Required Notarized Document',
+      visible: ['multiple_owners'],
+      requiredForTransferType: true
+    },
+  ];
+
+  get documents(): DocumentConfig[] {
+    if (!this.selectedTransferType) {
+      return [];
+    }
+
+    const category = this.selectedTransferType === 'death' && this.selectedWillOption
+      ? `death:${this.selectedWillOption}`
+      : '';
+    return this.commonDocuments.filter((document) =>
+      document.visible.includes(this.selectedTransferType) || document.visible.includes(category)
+    );
+  }
+
+  selectedTransferType = '';
+  selectedWillOption = '';
 
   protected propertyForm: FormGroup;
   districts: any[] = [];
@@ -86,7 +160,7 @@ export class TransferProperty implements OnInit {
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {
-    const documentControls = this.documents.reduce<Record<string, unknown>>((controls, document) => {
+    const documentControls = this.commonDocuments.reduce<Record<string, unknown>>((controls, document) => {
       controls[`${document.key}Selected`] = [false];
       controls[`${document.key}File`] = [null];
       return controls;
@@ -94,6 +168,8 @@ export class TransferProperty implements OnInit {
 
     this.propertyForm = this.fb.group(
       {
+        transferType: ['', Validators.required],
+        deathWillOption: ['', Validators.required],
         allotteeCode: [''],
         districtId: ['', Validators.required],
         branchId: ['', Validators.required],
@@ -115,7 +191,7 @@ export class TransferProperty implements OnInit {
         panProof: [null],
         ...documentControls,
       },
-      { validators: this.atLeastOneDocumentValidator() },
+      { validators: this.conditionalDocumentValidator() },
     );
   }
 
@@ -227,6 +303,8 @@ export class TransferProperty implements OnInit {
         this.loadCities(districtId);
       }
     });
+
+    this.loadProfileAndPatchOwnerInfo(true);
   }
 
   // Loads the logged-in user's profile and pre-fills the editable owner information.
@@ -980,7 +1058,7 @@ export class TransferProperty implements OnInit {
       panNo: ''
     };
 
-    this.documents.forEach((doc) => {
+    this.commonDocuments.forEach((doc) => {
       clearPatch[`${doc.key}Selected`] = false;
       clearPatch[`${doc.key}File`] = null;
     });
@@ -1088,8 +1166,78 @@ export class TransferProperty implements OnInit {
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
-  hasDocumentError(): boolean {
-    return !!this.propertyForm.hasError('documentRequired') && (this.propertyForm.dirty || this.propertyForm.touched);
+  onTransferTypeChange(event?: Event | string): void {
+    let val = '';
+    if (typeof event === 'string') {
+      val = event;
+    } else if (event && (event.target as HTMLSelectElement)) {
+      val = (event.target as HTMLSelectElement).value;
+    } else {
+      val = this.propertyForm.get('transferType')?.value || '';
+    }
+
+    this.selectedTransferType = val;
+    this.propertyForm.get('transferType')?.setValue(val, { emitEvent: false });
+    this.propertyForm.get('transferType')?.markAsDirty();
+
+    if (val === 'death') {
+      this.propertyForm.get('deathWillOption')?.setValidators([Validators.required]);
+    } else {
+      this.selectedWillOption = '';
+      this.propertyForm.get('deathWillOption')?.clearValidators();
+      this.propertyForm.get('deathWillOption')?.setValue('', { emitEvent: false });
+    }
+    this.propertyForm.get('deathWillOption')?.updateValueAndValidity({ emitEvent: false });
+
+    this.cleanupInactiveDocumentControls();
+    this.propertyForm.updateValueAndValidity();
+    this.cdr.detectChanges();
+  }
+
+  onWillOptionChange(option: string): void {
+    this.selectedWillOption = option;
+    this.propertyForm.get('deathWillOption')?.setValue(option, { emitEvent: false });
+    this.propertyForm.get('deathWillOption')?.markAsDirty();
+    this.propertyForm.get('deathWillOption')?.updateValueAndValidity({ emitEvent: false });
+
+    this.cleanupInactiveDocumentControls();
+    this.propertyForm.updateValueAndValidity();
+    this.cdr.detectChanges();
+  }
+
+  private cleanupInactiveDocumentControls(): void {
+    const activeKeys = new Set(this.documents.map((d) => d.key));
+
+    this.commonDocuments.forEach((doc) => {
+      if (!activeKeys.has(doc.key)) {
+        this.propertyForm.get(`${doc.key}Selected`)?.setValue(false, { emitEvent: false });
+        this.propertyForm.get(`${doc.key}Selected`)?.setErrors(null);
+
+        this.propertyForm.get(`${doc.key}File`)?.setValue(null, { emitEvent: false });
+        this.propertyForm.get(`${doc.key}File`)?.setErrors(null);
+
+        delete this.uploadedDocData[doc.key];
+
+        const fileInput = document.getElementById(`${doc.key}File`) as HTMLInputElement | null;
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      }
+    });
+  }
+
+  isTransferTypeInvalid(): boolean {
+    const ctrl = this.propertyForm.get('transferType');
+    return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
+  }
+
+  hasWillOptionError(): boolean {
+    const ctrl = this.propertyForm.get('deathWillOption');
+    return (
+      this.selectedTransferType === 'death' &&
+      !this.selectedWillOption &&
+      (!!ctrl?.touched || !!ctrl?.dirty || !!this.propertyForm.touched)
+    );
   }
 
   fileName(controlName: string): string {
@@ -1143,6 +1291,8 @@ export class TransferProperty implements OnInit {
 
   resetForm(): void {
     this.isOwnerInfoReadOnly = false;
+    this.selectedTransferType = '';
+    this.selectedWillOption = '';
     this.propertyForm.reset();
     this.marketCommittees = [];
     this.mandis = [];
@@ -1155,17 +1305,47 @@ export class TransferProperty implements OnInit {
     this.passportDocPath = null;
     this.addrDocPath = null;
     this.uploadedDocData = {};
+
+    this.commonDocuments.forEach((doc) => {
+      const fileInput = document.getElementById(`${doc.key}File`) as HTMLInputElement | null;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    });
+
+    this.propertyForm.get('deathWillOption')?.clearValidators();
+    this.propertyForm.get('deathWillOption')?.updateValueAndValidity({ emitEvent: false });
+    this.propertyForm.updateValueAndValidity();
+    this.cdr.detectChanges();
   }
 
-  private atLeastOneDocumentValidator(): ValidatorFn {
+  private conditionalDocumentValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
-      const hasUploadedDocument = this.documents.some((document) => {
-        return !!group.get(`${document.key}Selected`)?.value &&
-          (!!group.get(`${document.key}File`)?.value || !!this.uploadedDocData[document.key]);
+      const transferType = group.get('transferType')?.value || this.selectedTransferType;
+      if (!transferType) {
+        return null;
+      }
+
+      if (transferType === 'death') {
+        const willOpt = group.get('deathWillOption')?.value || this.selectedWillOption;
+        if (!willOpt) {
+          return { willOptionRequired: true };
+        }
+      }
+
+      const activeTypeDocs = this.documents.filter((document) => document.requiredForTransferType);
+      if (!activeTypeDocs || activeTypeDocs.length === 0) {
+        return null;
+      }
+
+      const hasUploadedTypeDoc = activeTypeDocs.some((document) => {
+        return (
+          !!group.get(`${document.key}Selected`)?.value &&
+          (!!group.get(`${document.key}File`)?.value || !!this.uploadedDocData[document.key])
+        );
       });
 
-      return hasUploadedDocument ? null : { documentRequired: true };
+      return hasUploadedTypeDoc ? null : { documentRequired: true };
     };
   }
 }
-

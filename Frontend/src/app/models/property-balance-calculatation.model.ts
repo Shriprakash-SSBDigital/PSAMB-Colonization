@@ -47,6 +47,16 @@ export interface InstallmentDetail {
   totalDueAmount: number;
 }
 
+export interface FutureInstallmentDetail {
+  diaryNo: string;
+  diaryDate: string;
+  draftNo: string;
+  draftDate: string;
+  paymentMode: string;
+  draftBank: string;
+  dueAmount: number;
+}
+
 export interface InstallmentReceipt {
   receiptNo: string;
   receiptDate: string;
@@ -98,6 +108,7 @@ export interface PropertyBalanceResponse {
   dueInstallments: InstallmentDetail[];
   installmentReceipts: InstallmentReceipt[];
   futureInstallments: InstallmentDetail[];
+  otherfutureInstallments?: FutureInstallmentDetail[];
   otherAmounts: OtherAmountDetail[];
   interestAndPenaltyDetails: InterstAndPanalityDetail[];
   summary: PropertyBalanceSummary;
