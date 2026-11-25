@@ -179,5 +179,18 @@ namespace Backend.Controllers
 
             return Ok(response);
         }
+
+
+        [HttpGet("GetPdfReport")]
+        public async Task<IActionResult> GetPdfReportPlotwise(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, bool isSold)
+        {
+            var pdfBytes = await _service.GenerateMandiWisePdfAsync(MandiId, PlotTypeId, PlotNo, PlotSize, isSold);
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                "MandiWiseAllotmentReport.pdf"
+            );
+        }
     }
 }
