@@ -72,7 +72,6 @@ export class PropertyVerification implements OnInit {
 
   mapStatus(statusId: number | null | undefined, roleName: string | null | undefined
   ): string {
-    // debugger
     const role = (roleName || '').trim().toLowerCase();
 
     // Objection
@@ -106,7 +105,6 @@ export class PropertyVerification implements OnInit {
   }
 
   GetPendingForClerk(searchCode?: string) {
-    // debugger
     const roleName = this.getUserRole();
     this.service.GetPendingForClerk(searchCode).subscribe({
       next: (res: any) => {
@@ -138,7 +136,6 @@ export class PropertyVerification implements OnInit {
   }
   getUserRole(): string {
     try {
-      // debugger
       const cpMenus = sessionStorage.getItem('cp_menus');
 
       if (!cpMenus) {
