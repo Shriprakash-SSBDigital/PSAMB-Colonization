@@ -5,6 +5,7 @@ using Backend.Models.DTOs;
 using Backend.Services.Interfaces;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Wordprocessing;
+using iText.Commons.Utils;
 using iText.Html2pdf;
 using iText.Kernel.Pdf;
 using Microsoft.Data.SqlClient;
@@ -2253,6 +2254,86 @@ namespace Backend.Services.Implementations
                 </tr>");
             }
 
+
+            var futureInstallments = response.Data?.FutureInstallments;
+            var futurereceiveRows = new StringBuilder();
+            decimal totalfutureReceiveDeposit = 0;
+
+            if (futureInstallments?.Any() == true)
+            {
+                foreach (var item in futureInstallments)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalfutureReceiveDeposit += amount;
+
+                    futurereceiveRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                futurereceiveRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+
+            var otherReceiveInstallments = response.Data?.OtherAmountReceivedInstallments;
+            var receivereceiveRows = new StringBuilder();
+            decimal totalRecReceiveDeposit = 0;
+
+            if (otherReceiveInstallments?.Any() == true)
+            {
+                foreach (var item in otherReceiveInstallments)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalRecReceiveDeposit += amount;
+
+                    receivereceiveRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                receivereceiveRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+            string rateofinterst = string.Empty;
+            if (response.Data?.AllotmentDate.HasValue == true && response.Data.AllotmentDate.Value.Year < 1992)
+            {
+                rateofinterst = "6";
+            }
+            else
+            {
+                rateofinterst = "12";
+            }
+
             html = html.Replace("{{header}}", "Mandi Wise Property Report")
                 .Replace("{{propertyInfo.allotteeCode}}", response.Data?.PropertyCode ?? "")
                 .Replace("{{propertyInfo.nameOfAllottee}}", response.Data?.BidderName ?? "")
@@ -2261,18 +2342,23 @@ namespace Backend.Services.Implementations
                 .Replace("{{propertyInfo.allotmentDate}}", response.Data?.AllotmentDate?.ToString("dd-MM-yyyy") ?? "")
                 .Replace("{{propertyInfo.finalBidPrice}}", Convert.ToString(response.Data?.FinalBidPrice) ?? "")
                 .Replace("{{propertyInfo.mandiName}}", response.Data?.MandiName ?? "")
-                //.Replace("{{propertyInfo.plotType}}", response.Data?.PlotTypeId ?? "")
+                .Replace("{{propertyInfo.plotType}}", response.Data?.PlotType ?? "")
                 .Replace("{{propertyInfo.plotNoOrSelectedPlotNo}}", Convert.ToString(response.Data?.PlotNo) ?? "")
                 .Replace("{{propertyInfo.sizeOfPlot}}", response.Data?.PlotSize ?? "")
                 .Replace("{{propertyInfo.address}}", response.Data?.Address ?? "")
                 .Replace("{{initialDepositRows}}", depositRows.ToString())
                 .Replace("{{totals.initialDepositsAmount}}", totalInitialDeposit.ToString("N2"))
+                .Replace("{{rateOfInterest}}", rateofinterst.ToString())
                 .Replace("{{dueInstallments}}", dueInstallmentRows.ToString())
                 .Replace("{{totals.dueInstallmentsDueAmount}}", totalDueAmount.ToString("N2"))
                 .Replace("{{totals.dueInstallmentsInterest}}", totalInterest.ToString("N2"))
                 .Replace("{{totals.dueInstallmentsTotal}}", totalDue.ToString("N2"))
                 .Replace("{{installmentReceipts}}", receiveRows.ToString())
-                .Replace("{{totals.installmentReceiptsDraftAmount}}", totalReceiveDeposit.ToString("N2"));
+                .Replace("{{totals.installmentReceiptsDraftAmount}}", totalReceiveDeposit.ToString("N2"))
+                .Replace("{{futureInstallments}}", futurereceiveRows.ToString())
+                .Replace("{{totals.futureInstallmentsTotal}}", totalfutureReceiveDeposit.ToString("N2"))
+                .Replace("{{otherAmounts}}", receivereceiveRows.ToString())
+                .Replace("{{totals.otherAmountsDraftAmount}}", totalRecReceiveDeposit.ToString("N2"));
             // Convert HTML into PDF
             using var memoryStream = new MemoryStream();
 
