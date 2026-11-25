@@ -1,332 +1,586 @@
-<section class="container-fluid py-4 property-transfer" aria-labelledby="pt-title">
-    <header class="mb-4">
-        <h1 id="pt-title" class="h3 fw-bold text-forest mb-1">Transfer Property</h1>
+<main class="bg-light py-3 py-lg-4">
+  <div class="container-xl">
+    <form [formGroup]="propertyForm" novalidate>
+    <div class="bg-white rounded-4 p-3 p-lg-4 mb-3 border shadow-sm">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h1 class="h4 fw-bold text-success mb-1">Transfer Property</h1>
         <p class="text-secondary mb-0">
-            Review your existing property details and provide the information of the new allottee to initiate the
-            ownership transfer.
+            Please fill in the required details accurately to proceed with the property transfer.
         </p>
-    </header>
+          </div>
 
-    @if (submitSuccess()) {
-    <div class="alert alert-success d-flex align-items-start gap-2" role="status">
-        <i class="fa-solid fa-circle-check mt-1" aria-hidden="true"></i>
-        <div>Transfer application submitted for departmental verification.</div>
-    </div>
-    }
-
-    <section class="card border-0 rounded-3 shadow-sm mb-3">
-        <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
-            <h2 class="h6 fw-semibold mb-0 text-white">Property Details</h2>
-        </div>
-
-        <div class="card-body p-3 p-lg-4">
-            @if (currentAllottee(); as allottee) {
-            <div class="row g-2 bg-light rounded-3 p-3 mb-0">
-                <div class="col-md-6">
-                    <p class="mb-2"><span class="fw-semibold">Allottee Code :</span> {{ allottee.allotteeCode || '—' }}
-                    </p>
-                    <p class="mb-2"><span class="fw-semibold">Name of Allottee :</span> {{ allottee.name || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Allottee's Father/Husband Name :</span> {{
-                        allottee.fatherHusbandName || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Allotment Date :</span> {{
-                        formatDate(allottee.allotmentDate) || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Allotment Amount (Rs.) :</span> {{
-                        formatAmount(allottee.allotmentAmount) }}</p>
-                    <p class="mb-0"><span class="fw-semibold">Ownership Share :</span> {{ allottee.ownershipShare || '—'
-                        }}</p>
-                </div>
-
-                <div class="col-md-6">
-                    <p class="mb-2"><span class="fw-semibold">Mandi Name :</span> {{ allottee.mandiName || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Plot Type :</span> {{ allottee.plotType || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Plot Number :</span> {{ allottee.plotNumber || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Size of Plot :</span> {{ allottee.plotSize || '—' }}</p>
-                    <p class="mb-2"><span class="fw-semibold">Ownership Type :</span> {{ allottee.ownershipType || '—'
-                        }}</p>
-                    <p class="mb-0"><span class="fw-semibold">Address :</span> {{ allottee.address || '—' }}</p>
-                </div>
-            </div>
-            } @else {
-            <p class="text-muted mb-0">Property details are not available.</p>
+          <div class="col-12 col-md-4 col-lg-3">
+            <label class="form-label small text-dark fw-semibold text-uppercase mb-1">
+              Transfer Type <span class="text-danger">*</span>
+            </label>
+            <select class="form-select bg-light rounded-3 custom-input-color"
+              [class.is-invalid]="isTransferTypeInvalid()"
+              formControlName="transferType"
+              (change)="onTransferTypeChange($event)">
+              <option value="" disabled>Select Transfer Type</option>
+              @for (case of TransferCases; track case.key) {
+                <option [value]="case.key">{{ case.label }}</option>
+              }
+            </select>
+            @if (isTransferTypeInvalid()) {
+              <div class="invalid-feedback d-block">Transfer Type is required.</div>
             }
+          </div>
         </div>
+      </div>
 
-        @if (!showTransferForm()) {
-        <div class="card-footer bg-white border-0 rounded-0 px-3 px-lg-4 pt-0 pb-3 pb-lg-4">
-            <div class="d-grid d-sm-flex justify-content-sm-end">
-                <button type="button" class="btn btn-forest px-4" [disabled]="!currentAllottee()"
-                    [attr.aria-expanded]="showTransferForm()" aria-controls="pt-transfer-form"
-                    (click)="openTransferForm()">
-                    Transfer Property
-                </button>
-            </div>
-        </div>
-        }
-    </section>
+      <section class="card register-section-card border-0 rounded-4 shadow-sm mb-4">
+        <div class="card-body p-3 p-lg-4">
+          <div class="border-bottom pb-3 mb-3 section-header">
+            <h2 class="h5 fw-semibold mb-1">Property Details (Location, committee and plot information)</h2>
+          </div>
 
-    @if (showTransferForm()) {
-    <form id="pt-transfer-form" [formGroup]="form" (ngSubmit)="handleSubmit()" novalidate>
-        <div class="card border-0 rounded-3 shadow-sm mb-3" formGroupName="newAllottee">
-            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
-                <h2 class="h6 fw-semibold mb-0 text-white">New Allottee Details</h2>
-            </div>
-
-            <div class="card-body p-3 p-lg-4">
-
-                <div class="row g-3">
-                    @for (f of textFields; track f.key) {
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" [for]="'na-' + f.key">
-                            {{ f.label }} <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <input type="text" class="form-control custom-input-color" [id]="'na-' + f.key"
-                            [formControlName]="f.key" [placeholder]="f.placeholder" [maxlength]="f.maxLength"
-                            [class.is-invalid]="isInvalid(newAllottee.get(f.key))"
-                            [attr.aria-describedby]="'na-' + f.key + '-err'" required />
-                        <div class="invalid-feedback" [id]="'na-' + f.key + '-err'">
-                            {{ errorMessage(newAllottee.get(f.key), f.label) }}
-                        </div>
-                    </div>
-                    }
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-plotType">
-                            Plot Type <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <select class="form-select custom-input-color" id="na-plotType" formControlName="plotType"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.plotType)"
-                            aria-describedby="na-plotType-err" required>
-                            <option value="" disabled>Select plot type</option>
-                            @for (o of plotTypes(); track o.value) {
-                            <option [value]="o.value">{{ o.label }}</option>
-                            }
-                        </select>
-                        <div class="invalid-feedback" id="na-plotType-err">
-                            {{ errorMessage(newAllottee.controls.plotType, 'Plot Type') }}
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-ownershipType">
-                            Ownership Type <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <select class="form-select custom-input-color" id="na-ownershipType"
-                            formControlName="ownershipType"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.ownershipType)"
-                            aria-describedby="na-ownershipType-err" required>
-                            <option value="" disabled>Select ownership type</option>
-                            @for (o of ownershipTypes(); track o.value) {
-                            <option [value]="o.value">{{ o.label }}</option>
-                            }
-                        </select>
-                        <div class="invalid-feedback" id="na-ownershipType-err">
-                            {{ errorMessage(newAllottee.controls.ownershipType, 'Ownership Type') }}
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-ownershipShare">
-                            Ownership Share (%) <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <input type="number" class="form-control custom-input-color" id="na-ownershipShare"
-                            formControlName="ownershipShare" placeholder="e.g. 50" min="0.01" max="100" step="0.01"
-                            inputmode="decimal" [class.is-invalid]="isInvalid(newAllottee.controls.ownershipShare)"
-                            aria-describedby="na-ownershipShare-err" required />
-                        <div class="invalid-feedback" id="na-ownershipShare-err">
-                            {{ errorMessage(newAllottee.controls.ownershipShare, 'Ownership Share') }}
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-phoneNumber">
-                            Phone Number <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <input type="text" class="form-control custom-input-color" id="na-phoneNumber"
-                            formControlName="phoneNumber" placeholder="10-digit phone number" maxlength="10"
-                            inputmode="numeric" autocomplete="off" (input)="digitsOnly($event)"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.phoneNumber)"
-                            aria-describedby="na-phoneNumber-err" required />
-                        <div class="invalid-feedback" id="na-phoneNumber-err">
-                            {{ errorMessage(newAllottee.controls.phoneNumber, 'Phone Number') }}
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-email">
-                            Email <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <input type="email" class="form-control custom-input-color" id="na-email" formControlName="email" placeholder="Email address"
-                            inputmode="email" autocomplete="email"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.email)"
-                            aria-describedby="na-email-err" required />
-                        <div class="invalid-feedback" id="na-email-err">
-                            {{ errorMessage(newAllottee.controls.email, 'Email') }}
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-aadhaarNumber">
-                            Aadhaar Card Number <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <input type="text" class="form-control custom-input-color" id="na-aadhaarNumber"
-                            formControlName="aadhaarNumber" placeholder="12-digit Aadhaar number" maxlength="12"
-                            inputmode="numeric" autocomplete="off" (input)="digitsOnly($event)"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.aadhaarNumber)"
-                            aria-describedby="na-aadhaarNumber-err" required />
-                        <div class="invalid-feedback" id="na-aadhaarNumber-err">
-                            {{ errorMessage(newAllottee.controls.aadhaarNumber, 'Aadhaar Card Number') }}
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="na-photo">
-                            Profile Photograph <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <div class="row g-3 align-items-center">
-                            <div class="col-12 col-sm">
-                                <input #photoInput type="file" class="form-control custom-input-color" id="na-photo"
-                                    [accept]="photoRule.accept"
-                                    [class.is-invalid]="fileErrors()[photoKey] || isInvalid(newAllottee.controls.photo)"
-                                    aria-describedby="na-photo-help na-photo-err"
-                                    (change)="handleFileSelect($event, photoKey, newAllottee.controls.photo, photoRule)" />
-                                <div class="form-text" id="na-photo-help">{{ photoRule.hint }}</div>
-                                <div class="invalid-feedback" id="na-photo-err">
-                                    {{ fileErrors()[photoKey] || 'Profile Photograph is required.' }}
-                                </div>
-                                @if (newAllottee.controls.photo.value; as photo) {
-                                <div class="d-flex align-items-center gap-2 mt-2 small">
-                                    <i class="fa-solid fa-image text-forest" aria-hidden="true"></i>
-                                    <span class="text-break">{{ photo.name }}</span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto"
-                                        (click)="removeFile(photoKey, newAllottee.controls.photo, photoInput)">
-                                        Remove
-                                    </button>
-                                </div>
-                                }
-                            </div>
-                            @if (previews()[photoKey]) {
-                            <div class="col-auto">
-                                <img [src]="previews()[photoKey]" alt="Selected profile photograph preview"
-                                    class="img-thumbnail photo-preview object-fit-cover" />
-                            </div>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label" for="na-address">
-                            Address <span class="text-danger" aria-hidden="true">*</span>
-                        </label>
-                        <textarea class="form-control custom-input-color" id="na-address" formControlName="address"
-                            rows="3" maxlength="300" placeholder="House / street, city, district, state, PIN"
-                            [class.is-invalid]="isInvalid(newAllottee.controls.address)"
-                            aria-describedby="na-address-err" required></textarea>
-                        <div class="invalid-feedback" id="na-address-err">
-                            {{ errorMessage(newAllottee.controls.address, 'Address') }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card border-0 rounded-3 shadow-sm mb-3">
-            <div class="card-header bg-success rounded-top-3 px-3 px-lg-4 py-3">
-                <h2 class="h6 fw-semibold mb-0 text-white">Upload Supporting Documents</h2>
-            </div>
-
-            <div class="card-body p-3 p-lg-4">
-
-                <div class="row">
-                    <div class="col-12 col-md-8 col-xl-6">
-                        <select #docPicker class="form-select custom-input-color" id="doc-picker"
-                            [disabled]="!availableDocuments().length"
-                            (change)="addDocument(docPicker.value); docPicker.value = ''">
-                            <option value="" selected disabled>
-                                {{ availableDocuments().length ? 'Select a document type' : 'All document types added'
-                                }}
-                            </option>
-                            @for (d of availableDocuments(); track d.id) {
-                            <option [value]="d.id">{{ d.label }}</option>
-                            }
-                        </select>
-                        <div class="form-text">{{ documentRule.hint }}.</div>
-                    </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                District <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('districtId')" [class.open]="isDistrictDropdownOpen"
+                    placeholder="Select District"
+                    [value]="isDistrictDropdownOpen ? districtSearchText : (getSelectedDistrictName() || '')"
+                    (input)="onDistrictSearch($event)" (click)="toggleDistrictDropdown($event)" autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isDistrictDropdownOpen" (click)="toggleDistrictDropdown($event)"></i>
                 </div>
 
-                @if (documents.length) {
-                <div class="row g-3 mt-1" formArrayName="documents">
-                    @for (group of documents.controls; track group.controls.typeId.value; let i = $index) {
-                    @let typeId = group.controls.typeId.value;
-                    @let fileCtrl = group.controls.file;
-                    <div class="col-12 col-md-6 col-xl-4" [formGroupName]="i">
-                        <div class="card h-100 border bg-light">
-                            <div class="card-body d-flex flex-column gap-2">
-                                <div class="d-flex align-items-start justify-content-between gap-2">
-                                    <h3 class="h6 fw-semibold text-forest mb-0">
-                                        <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>{{
-                                        documentLabel(typeId) }}
-                                    </h3>
-                                    <button type="button"
-                                        class="btn btn-sm btn-outline-danger document-remove-button flex-shrink-0"
-                                        [attr.aria-label]="'Remove ' + documentLabel(typeId)"
-                                        (click)="removeDocument(i)">
-                                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-
-                                <div>
-                                    <label class="visually-hidden" [for]="'doc-' + typeId">Upload {{
-                                        documentLabel(typeId) }}</label>
-                                    <input #docInput type="file" class="form-control form-control-sm custom-input-color"
-                                        [id]="'doc-' + typeId" [accept]="documentRule.accept"
-                                        [class.is-invalid]="fileErrors()[typeId] || isInvalid(fileCtrl)"
-                                        [attr.aria-describedby]="'doc-' + typeId + '-err'"
-                                        (change)="handleFileSelect($event, typeId, fileCtrl, documentRule)" />
-                                    <div class="invalid-feedback" [id]="'doc-' + typeId + '-err'">
-                                        {{ fileErrors()[typeId] || 'Please attach a file for this document.' }}
-                                    </div>
-                                </div>
-
-                                @if (fileCtrl.value; as file) {
-                                <div class="small d-flex flex-wrap align-items-center gap-2">
-                                    <i class="fa-solid fa-paperclip text-forest" aria-hidden="true"></i>
-                                    <span class="text-break flex-grow-1">{{ file.name }}</span>
-                                </div>
-                                <div class="d-flex flex-wrap gap-2 mt-auto">
-                                    <a class="btn btn-sm btn-outline-secondary" [href]="previews()[typeId]"
-                                        target="_blank" rel="noopener">View</a>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        (click)="docInput.click()">Replace</button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                        (click)="removeFile(typeId, fileCtrl, docInput)">
-                                        Remove file
-                                    </button>
-                                </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                    }
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isDistrictDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectDistrict('')">
+                    Select District
+                  </div>
+                  @for (item of filteredDistricts; track item.districtId) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isDistrictSelected(item)"
+                    (click)="selectDistrict(item.districtId)">
+                    {{ item.districtName }}
+                  </div>
+                  }
+                  @if (filteredDistricts.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No district found
+                  </div>
+                  }
                 </div>
-                } @else {
-                <p class="text-muted small mt-3 mb-0">No documents selected yet. Use the list above to add one.</p>
+              </div>
+              @if (isInvalid('districtId')) {
+              <div class="invalid-feedback d-block">District is required.</div>
+              }
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                Market Committee <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('branchId')" [class.open]="isMarketCommitteeDropdownOpen"
+                    placeholder="Select Market Committee"
+                    [value]="isMarketCommitteeDropdownOpen ? marketCommitteeSearchText : (getSelectedMarketCommitteeName() || '')"
+                    (input)="onMarketCommitteeSearch($event)" (click)="toggleMarketCommitteeDropdown($event)"
+                    autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isMarketCommitteeDropdownOpen"
+                    (click)="toggleMarketCommitteeDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isMarketCommitteeDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectMarketCommittee('')">
+                    Select Market Committee
+                  </div>
+                  @for (committee of filteredMarketCommittees; track (committee.marketCommitteeId || committee.id ||
+                  committee.branchId)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isMarketCommitteeSelected(committee)"
+                    (click)="selectMarketCommittee(committee.marketCommitteeId || committee.id || committee.branchId)">
+                    {{ committee.marketCommitteeName || committee.name || committee.branchName }}
+                  </div>
+                  }
+                  @if (filteredMarketCommittees.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No market committee found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('branchId')) {
+              <div class="invalid-feedback d-block">Market Committee is required.</div>
+              }
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                Mandi <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('mandiId')" [class.open]="isMandiDropdownOpen"
+                    placeholder="Select Mandi"
+                    [value]="isMandiDropdownOpen ? mandiSearchText : (getSelectedMandiName() || '')"
+                    (input)="onMandiSearch($event)" (click)="toggleMandiDropdown($event)" autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isMandiDropdownOpen" (click)="toggleMandiDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isMandiDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectMandi('')">
+                    Select Mandi
+                  </div>
+                  @for (mandiItem of filteredMandis; track (mandiItem.mandiId || mandiItem.id)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isMandiSelected(mandiItem)"
+                    (click)="selectMandi(mandiItem.mandiId || mandiItem.id)">
+                    {{ mandiItem.mandiName || mandiItem.name }}
+                  </div>
+                  }
+                  @if (filteredMandis.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No mandi found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('mandiId')) {
+              <div class="invalid-feedback d-block">Mandi is required.</div>
+              }
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">Plot Type <span
+                  class="text-danger">*</span></label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('plotTypeId')" [class.open]="isPlotTypeDropdownOpen"
+                    placeholder="Select Plot Type"
+                    [value]="isPlotTypeDropdownOpen ? plotTypeSearchText : (getSelectedPlotTypeName() || '')"
+                    (input)="onPlotTypeSearch($event)" (click)="togglePlotTypeDropdown($event)" autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isPlotTypeDropdownOpen" (click)="togglePlotTypeDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isPlotTypeDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectPlotType('')">
+                    Select Plot Type
+                  </div>
+                  @for (type of filteredPlotTypes; track (type.plotTypeId || type.id || type)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isPlotTypeSelected(type)"
+                    (click)="selectPlotType(type.plotTypeId || type.id || type)">
+                    {{ type.plotType || type.plotType || type }}
+                  </div>
+                  }
+                  @if (filteredPlotTypes.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No plot type found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('plotTypeId')) { <div class="invalid-feedback d-block">Plot type is required.</div> }
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">Plot Number <span
+                  class="text-danger">*</span></label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('plotNumber')" [class.open]="isPlotNumberDropdownOpen"
+                    placeholder="Select Plot Number"
+                    [value]="isPlotNumberDropdownOpen ? plotNumberSearchText : (getSelectedPlotNumberName() || '')"
+                    (input)="onPlotNumberSearch($event)" (click)="togglePlotNumberDropdown($event)"
+                    autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isPlotNumberDropdownOpen" (click)="togglePlotNumberDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isPlotNumberDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectPlotNumber('')">
+                    Select Plot Number
+                  </div>
+                  @for (plot of filteredPlotNumbers; track (plot.plotNo || plot.plotNumber || plot.id || plot)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isPlotNumberSelected(plot)"
+                    (click)="selectPlotNumber(plot.plotNo ?? plot.plotNumber ?? plot)">
+                    {{ plot.plotNo ?? plot.plotNumber ?? plot }}
+                  </div>
+                  }
+                  @if (filteredPlotNumbers.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No plot number found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('plotNumber')) { <div class="invalid-feedback d-block">Plot/property no. is required.</div>
+              }
+            </div>
+
+
+
+            <div class="col-md-4">
+              <label class="form-label small text-dark fw-semibold text-uppercase">Plot Size <span
+                  class="text-danger">*</span></label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('plotSize')" [class.open]="isPlotSizeDropdownOpen"
+                    placeholder="Select Plot Size"
+                    [value]="isPlotSizeDropdownOpen ? plotSizeSearchText : (getSelectedPlotSizeName() || '')"
+                    (input)="onPlotSizeSearch($event)" (click)="togglePlotSizeDropdown($event)" autocomplete="off" />
+                  <i class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isPlotSizeDropdownOpen" (click)="togglePlotSizeDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1" *ngIf="isPlotSizeDropdownOpen">
+                  <div class="custom-dropdown-item text-muted" (click)="selectPlotSize('')">
+                    Select Plot Size
+                  </div>
+                  @for (size of filteredPlotSizes; track (size.plotSize || size.size || size.id || size)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isPlotSizeSelected(size)"
+                    (click)="selectPlotSize(size.plotSize ?? size.size ?? size.name ?? size)">
+                    {{ size.plotSize ?? size.size ?? size.name ?? size }}
+                  </div>
+                  }
+                  @if (filteredPlotSizes.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No plot size found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('plotSize')) { <div class="invalid-feedback d-block">Plot size is required.</div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card register-section-card border-0 rounded shadow-sm mb-4">
+        <div class="card-body p-3 p-lg-4">
+          <div class="border-bottom pb-3 mb-3 section-header">
+            <h2 class="h5 fw-semibold mb-1">Owner Information (Applicant identity and communication details)</h2>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+              <label for="currentOwnerName" class="form-label small text-dark fw-semibold text-uppercase">Current Owner
+                Name <small class="text-success text-capitalize">(As per document)</small> <span
+                  class="text-danger">*</span></label>
+              <input id="currentOwnerName" class="form-control bg-light rounded-3 custom-input-color"
+                placeholder="Current owner" formControlName="currentOwnerName" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('currentOwnerName')" />
+              @if (isInvalid('currentOwnerName')) { <div class="invalid-feedback">Current owner name is required.</div>
+              }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label for="guardianName" class="form-label small text-dark fw-semibold text-uppercase">Father's / Husband
+                Name <span class="text-danger">*</span></label>
+              <input id="guardianName" class="form-control bg-light rounded-3 custom-input-color"
+                placeholder="Father's / husband name" formControlName="guardianName" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('guardianName')" />
+              @if (isInvalid('guardianName')) { <div class="invalid-feedback">Father's / husband name is required.</div>
+              }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label for="mobileNumber" class="form-label small text-dark fw-semibold text-uppercase">Mobile Number
+                <span class="text-danger">*</span></label>
+              <input id="mobileNumber" type="tel" maxlength="10"
+                class="form-control bg-light rounded-3 custom-input-color" placeholder="10 digit mobile number"
+                formControlName="mobileNumber" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('mobileNumber')" />
+              @if (isInvalid('mobileNumber')) { <div class="invalid-feedback">Enter a valid 10 digit mobile number.
+              </div> }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label for="email" class="form-label small text-dark fw-semibold text-uppercase">Email <span
+                  class="text-danger">*</span></label>
+              <input id="email" type="email" class="form-control bg-light rounded-3 custom-input-color"
+                placeholder="name@example.com" formControlName="email" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('email')" />
+              @if (isInvalid('email')) { <div class="invalid-feedback">Enter a valid email address.</div> }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                State <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('state')" [class.open]="isStateDropdownOpen"
+                    [class.pe-none]="isOwnerInfoReadOnly" [readonly]="isOwnerInfoReadOnly" placeholder="Select State"
+                    [value]="isStateDropdownOpen ? stateSearchText : (getSelectedStateName() || '')"
+                    (input)="onStateSearch($event)" (click)="toggleStateDropdown($event)" autocomplete="off" />
+                  <i *ngIf="!isOwnerInfoReadOnly" class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isStateDropdownOpen" (click)="toggleStateDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1"
+                  *ngIf="isStateDropdownOpen && !isOwnerInfoReadOnly">
+                  <div class="custom-dropdown-item text-muted" (click)="selectState('')">
+                    Select State
+                  </div>
+                  @for (item of filteredStates; track (item.stateId || item)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isStateSelected(item)"
+                    (click)="selectState(item.stateId || item.id || item)">
+                    {{ item.stateName || item.name || item }}
+                  </div>
+                  }
+                  @if (filteredStates.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No state found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('state')) {
+              <div class="invalid-feedback d-block">State is required.</div>
+              }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                District <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('ownerDistrict')" [class.open]="isOwnerDistrictDropdownOpen"
+                    [class.pe-none]="isOwnerInfoReadOnly" [readonly]="isOwnerInfoReadOnly" placeholder="Select District"
+                    [value]="isOwnerDistrictDropdownOpen ? ownerDistrictSearchText : (getSelectedOwnerDistrictName() || '')"
+                    (input)="onOwnerDistrictSearch($event)" (click)="toggleOwnerDistrictDropdown($event)"
+                    autocomplete="off" />
+                  <i *ngIf="!isOwnerInfoReadOnly" class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isOwnerDistrictDropdownOpen" (click)="toggleOwnerDistrictDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1"
+                  *ngIf="isOwnerDistrictDropdownOpen && !isOwnerInfoReadOnly">
+                  <div class="custom-dropdown-item text-muted" (click)="selectOwnerDistrict('')">
+                    Select District
+                  </div>
+                  @for (item of filteredOwnerDistricts; track (item.districtId || item)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isOwnerDistrictSelected(item)"
+                    (click)="selectOwnerDistrict(item.districtId || item.id || item)">
+                    {{ item.districtName || item.name || item }}
+                  </div>
+                  }
+                  @if (filteredOwnerDistricts.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No district found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('ownerDistrict')) {
+              <div class="invalid-feedback d-block">Owner district is required.</div>
+              }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label class="form-label small text-dark fw-semibold text-uppercase">
+                City <span class="text-danger">*</span>
+              </label>
+              <div class="custom-select-wrapper position-relative">
+                <div class="position-relative d-flex align-items-center">
+                  <input type="text" class="form-control form-select-search bg-light rounded-3 custom-input-color"
+                    [class.is-invalid]="isInvalid('city')" [class.open]="isCityDropdownOpen" placeholder="Select City"
+                    [class.pe-none]="isOwnerInfoReadOnly" [readonly]="isOwnerInfoReadOnly"
+                    [value]="isCityDropdownOpen ? citySearchText : (getSelectedCityName() || '')"
+                    (input)="onCitySearch($event)" (click)="toggleCityDropdown($event)" autocomplete="off" />
+                  <i *ngIf="!isOwnerInfoReadOnly" class="dropdown-chevron fas fa-chevron-down position-absolute"
+                    [class.rotate-180]="isCityDropdownOpen" (click)="toggleCityDropdown($event)"></i>
+                </div>
+
+                <div class="custom-dropdown-menu shadow-sm rounded-3 mt-1"
+                  *ngIf="isCityDropdownOpen && !isOwnerInfoReadOnly">
+                  <div class="custom-dropdown-item text-muted" (click)="selectCity('')">
+                    Select City
+                  </div>
+                  @for (item of filteredCities; track (item.cityId || item)) {
+                  <div class="custom-dropdown-item text-truncate" [class.active]="isCitySelected(item)"
+                    (click)="selectCity(item.cityId || item.id || item)">
+                    {{ item.cityName || item.name || item }}
+                  </div>
+                  }
+                  @if (filteredCities.length === 0) {
+                  <div class="custom-dropdown-item text-muted text-center py-2">
+                    No city found
+                  </div>
+                  }
+                </div>
+              </div>
+              @if (isInvalid('city')) {
+              <div class="invalid-feedback d-block">City is required.</div>
+              }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label for="address" class="form-label small text-dark fw-semibold text-uppercase">Address <span
+                  class="text-danger">*</span></label>
+              <input id="address" class="form-control bg-light rounded-3 custom-input-color"
+                placeholder="Complete address" formControlName="address" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('address')" />
+              @if (isInvalid('address')) { <div class="invalid-feedback">Address is required.</div> }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <label for="aadhaarNumber" class="form-label small text-dark fw-semibold text-uppercase">Aadhaar Number</label>
+              <input #aadhaarNumberInput id="aadhaarNumber" maxlength="12" inputmode="numeric"
+                class="form-control bg-light rounded-3 custom-input-color"
+                placeholder="Enter Aadhaar number" formControlName="aadhaarNumber"
+                (input)="onAadhaarInput($event)" (focus)="showAadhaarInput($event)"
+                (blur)="maskAadhaarInput($event)"
+                [readonly]="isOwnerInfoReadOnly" [class.is-invalid]="isInvalid('aadhaarNumber')" />
+              @if (isInvalid('aadhaarNumber')) { <div class="invalid-feedback">Enter a valid 12 digit Aadhaar number.
+              </div> }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="aadhaarProof" class="form-label small text-dark fw-semibold text-uppercase">Upload Aadhaar Card</label>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+              <input id="aadhaarProof" type="file" class="form-control bg-light rounded-3 custom-input-color"
+                [accept]="allowedFileTypes" (change)="onFileChange($event, 'aadhaarProof', 'aadhaarProof')"
+                [class.is-invalid]="isInvalid('aadhaarProof')" />
+                @if (uploadedDocData['aadhaarProof']?.fileUrl || uploadedDocData['aadhaarProof']?.relativePath) {
+                  <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
+                    (click)="viewDocument(uploadedDocData['aadhaarProof']?.fileUrl || uploadedDocData['aadhaarProof']?.relativePath, 'aadhaarProof')"
+                    title="View Aadhaar Card">
+                    <i class="fas fa-eye"></i>
+                  </button>
                 }
+              </div>
+              @if (isInvalid('aadhaarProof')) { <div class="invalid-feedback d-block">JPEG, JPG, PNG or PDF files only.
+              </div> }
             </div>
-        </div>
 
-        <div class="d-flex flex-wrap justify-content-end gap-2 my-4">
-            <button type="button" class="btn btn-outline-secondary rounded-3 px-4 py-2 fw-semibold"
-                [disabled]="submitting()" (click)="closeTransferForm()">
-                Cancel
-            </button>
-            <button type="submit" class="btn btn-forest rounded-3 px-4 py-2 fw-semibold shadow-sm"
-                [disabled]="form.invalid || !validateSelectedDocuments() || submitting()">
-                @if (submitting()) {
-                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Submitting…
-                } @else {
-                Submit Transfer Application
+            <div class="col-md-6 col-xl-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="panNo" class="form-label small text-dark fw-semibold text-uppercase">PAN No.</label>
+              </div>
+              <input id="panNo" type="text" maxlength="10"
+                class="form-control bg-light rounded-3 font-monospace text-uppercase custom-input-color"
+                placeholder="ABCDE1234F" formControlName="panNo" [readonly]="isOwnerInfoReadOnly"
+                [class.is-invalid]="isInvalid('panNo')" />
+              @if (isInvalid('panNo')) { <div class="invalid-feedback">PAN no. is required.</div> }
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="panProof" class="form-label small text-dark fw-semibold text-uppercase">Upload
+                  Pan Card
+                  Proof</label>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+              <input id="panProof" type="file" class="form-control bg-light rounded-3 custom-input-color"
+                [accept]="allowedFileTypes" (change)="onFileChange($event, 'panProof', 'panProof')"
+                [class.is-invalid]="isInvalid('panProof')" />
+
+                 @if (uploadedDocData['panProof']?.fileUrl || uploadedDocData['panProof']?.relativePath) {
+                  <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
+                    (click)="viewDocument(uploadedDocData['panProof']?.fileUrl || uploadedDocData['panProof']?.relativePath, 'panProof')"
+                    title="View PAN Card">
+                    <i class="fas fa-eye"></i>
+                  </button>
                 }
-            </button>
+              </div>
+              @if (isInvalid('panProof')) { <div class="invalid-feedback d-block">JPEG, JPG, PNG or PDF files only.</div> }
+            </div>
+            
+            @if (selectedTransferType === 'death'){
+            <div class="col-md-6 col-xl-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="panProof" class="form-label small text-dark fw-semibold text-uppercase">Will Options <span class="text-danger">*</span></label>
+              </div>
+               <div class="d-flex align-items-center gap-4 border rounded-3 bg-light p-2">
+                <div class="form-check">
+                  <input class="form-check-input custom-checkbox-color" type="radio"
+                    id="willOptionWithout" name="deathWillRadio" value="withoutWill"
+                    [checked]="selectedWillOption === 'withoutWill'"
+                    (change)="onWillOptionChange('withoutWill')" />
+                  <label class="form-check-label fw-semibold text-dark" for="willOptionWithout">
+                    Without Will
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input custom-checkbox-color" type="radio"
+                    id="willOptionWith" name="deathWillRadio" value="withWill"
+                    [checked]="selectedWillOption === 'withWill'"
+                    (change)="onWillOptionChange('withWill')" />
+                  <label class="form-check-label fw-semibold text-dark" for="willOptionWith">
+                    With Will
+                  </label>
+                </div>
+              </div>
+            </div>
+          }
+          </div>
         </div>
+      </section>
+
+      @if (selectedTransferType) {
+      <section class="card register-section-card border-0 rounded-4 shadow-sm mb-4">
+        <div class="card-body p-3 p-lg-4">
+          <div class="border-bottom pb-3 mb-3 section-header">
+            <h2 class="h5 fw-semibold mb-1">Upload Documents</h2>
+          </div>
+
+          <div class="row g-3">
+            @for (document of documents; track document.key) {
+            <div class="col-12 col-lg-6">
+              <div class="border rounded-3 bg-light p-3 h-100">
+                <div class="row g-3 align-items-center">
+                  <div class="col-12 col-md-5">
+                    <div class="form-check">
+                      <input class="form-check-input custom-checkbox-color" type="checkbox"
+                        [id]="document.key + 'Selected'" [formControlName]="document.key + 'Selected'" />
+                      <label class="form-check-label fw-semibold" style="color: #064e3b;"
+                        [for]="document.key + 'Selected'">
+                        {{ document.label }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-7">
+                    <div class="d-flex align-items-center gap-2">
+                      <input [id]="document.key + 'File'" type="file"
+                        class="form-control bg-white rounded-3 custom-input-color" [accept]="allowedFileTypes"
+                        (change)="onFileChange($event, document.key + 'File', document.key)" />
+                      @if (propertyForm.get(document.key + 'File')?.value || uploadedDocData[document.key]?.fileUrl ||
+                      uploadedDocData[document.key]?.relativePath) {
+                      <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 rounded-2 text-nowrap"
+                        (click)="viewDocument(uploadedDocData[document.key]?.fileUrl || uploadedDocData[document.key]?.relativePath, document.key + 'File')"
+                        title="View Selected File">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+      }
+
+      <div class="d-flex flex-column flex-sm-row justify-content-end gap-3 mb-4">
+        <button type="button" class="btn btn-outline-secondary rounded-3 px-4 py-2 fw-semibold"
+          (click)="resetForm()">Cancel</button>
+        <button type="submit" class="btn btn-success rounded-3 px-4 py-2 fw-semibold shadow-sm">
+          Transfer Property
+        </button>
+      </div>
     </form>
-    }
-</section>
+
+  </div>
+</main>

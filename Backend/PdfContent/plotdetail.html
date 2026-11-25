@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Property Plot Details</title>
+<style>
+:root { --theme-primary:#064e3b; --bs-border-color:#dee2e6; }
+*,*::before,*::after { box-sizing:border-box; }
+html,body { margin:0; padding:0; color:#212529; background:#fff; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.45; }
+main { width:100%; }
+.bg-success { background-color:var(--theme-primary)!important; }
+.text-white { color:#fff!important; }
+.bg-light { background:#f8f9fa!important; }
+.border { border:1px solid #dee2e6!important; }
+.border-top { border-top:1px solid #dee2e6!important; }
+.rounded-3 { border-radius:.375rem!important; }
+.rounded-top-3 { border-top-left-radius:.5rem!important; border-top-right-radius:.5rem!important; }
+.rounded-top-2 { border-top-left-radius:.375rem!important; border-top-right-radius:.375rem!important; }
+.shadow-sm { box-shadow:0 .125rem .25rem rgba(0,0,0,.075); }
+.mb-0 { margin-bottom:0!important; } .mb-2 { margin-bottom:.5rem!important; }
+.mb-3 { margin-bottom:1rem!important; } .mt-3 { margin-top:1rem!important; }
+.p-3 { padding:1rem!important; } .px-3 { padding-left:1rem!important; padding-right:1rem!important; }
+.py-2 { padding-top:.5rem!important; padding-bottom:.5rem!important; }
+.py-3 { padding-top:1rem!important; padding-bottom:1rem!important; }
+.p-lg-4 { padding:1.5rem!important; }
+.w-100 { width:100%!important; }
+.text-end { text-align:right!important; } .text-center { text-align:center!important; }
+.text-muted { color:#6c757d!important; }
+.fw-semibold { font-weight:600!important; } .fw-bold { font-weight:700!important; }
+.small { font-size:.875em!important; } .h5 { font-size:1.25rem; }
+.d-flex { display:flex!important; } .align-items-center { align-items:center!important; }
+.justify-content-between { justify-content:space-between!important; }
+.gap-2 { gap:.5rem!important; }
+.row { display:flex; flex-wrap:wrap; margin-left:-.5rem; margin-right:-.5rem; }
+.row > * { padding-left:.5rem; padding-right:.5rem; }
+.g-2 { row-gap:.5rem; }
+.col-md-6 { width:50%; }
+.table-section { border:1px solid #dee2e6; border-radius:.375rem; overflow:hidden; margin-bottom:1rem; }
+.table-section-header { background-color:var(--theme-primary)!important; color:#fff!important; font-weight:600; padding:.5rem 1rem; font-size:.95rem; }
+.table-responsive { width:100%; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; margin-bottom:0; }
+.table { color:#212529; vertical-align:top; }
+.table-bordered th,.table-bordered td { border:1px solid #dee2e6; }
+.table th,.table td { padding:.45rem .5rem; border-bottom:1px solid #dee2e6; }
+.table th { font-size:.85rem; font-weight:600; white-space:nowrap; text-align:left; }
+.table td { font-size:.9rem; }
+.table-light th { background:#f8f9fa; }
+.table tfoot td { background-color:#f8f9fa; }
+.property-info { border-radius:.375rem; padding:1rem; margin-bottom:1rem; }
+.property-info p { margin-top:0; }
+.report-header { background:var(--theme-primary); color:#fff; text-align:center; padding:14px 16px; border-radius:.375rem .375rem 0 0; }
+.report-title { margin:0; font-size:18px; font-weight:700; }
+@page { size:A4 landscape; margin:12mm; }
+@media print {
+ html,body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+ .table-section { break-inside:avoid; page-break-inside:avoid; }
+ thead { display:table-header-group; }
+ tr { break-inside:avoid; page-break-inside:avoid; }
+}
+@media screen and (max-width:700px) {
+ .col-md-6 { width:100%; }
+}
+</style>
+</head>
+<body>
+<main>
+  <section class="border rounded-3 shadow-sm">
+    <header class="report-header">
+      <h1 class="report-title">{{header}}</h1>
+    </header>
+
+    <div class="p-3 p-lg-4">
+      <section class="row g-2 bg-light rounded-3 p-3 mb-3 border property-info">
+        <div class="col-md-6">
+          <p class="mb-2"><strong>Allottee Code :</strong> {{propertyInfo.allotteeCode}}</p>
+          <p class="mb-2"><strong>Name of Allottee :</strong> {{propertyInfo.nameOfAllottee}}</p>
+          <p class="mb-2"><strong>Allottee's Father/Husband Name :</strong> {{propertyInfo.fatherOrHusbandName}}</p>
+          <p class="mb-2"><strong>Auction Date :</strong> {{propertyInfo.auctionDate}}</p>
+          <p class="mb-2"><strong>Allotment Date :</strong> {{propertyInfo.allotmentDate}}</p>
+          <p class="mb-0"><strong>Allotment Amount (Rs.) :</strong> ₹{{propertyInfo.finalBidPrice}}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-2"><strong>Mandi Name :</strong> {{propertyInfo.mandiName}}</p>
+          <p class="mb-2"><strong>Plot Type :</strong> {{propertyInfo.plotType}}</p>
+          <p class="mb-2"><strong>Plot Number :</strong> {{propertyInfo.plotNoOrSelectedPlotNo}}</p>
+          <p class="mb-2"><strong>Size of Plot :</strong> {{propertyInfo.sizeOfPlot}}</p>
+          <p class="mb-0"><strong>Address :</strong> {{propertyInfo.address}}</p>
+        </div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-section-header">Detail of Initial 25% deposited :</div>
+        <div class="table-responsive"><table class="table table-bordered">
+          <thead class="table-light"><tr>
+            <th>Diary No.</th><th>Diary Date</th><th>Draft/Cheque/RTGS No</th><th>Draft/Cheque/RTGS Date</th><th>Payment Mode</th><th>Bank</th><th class="text-end">Diary Amount (Rs.)</th>
+          </tr></thead>
+          <tbody>
+              {{initialDepositRows}}
+          </tbody>
+          <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.initialDepositsAmount}}</td></tr></tfoot>
+      
+        </table></div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-section-header">Details of Due Installments : (Rate of Interest ({{rateOfInterest}}%))</div>
+        <div class="table-responsive"><table class="table table-bordered">
+          <thead class="table-light"><tr>
+            <th>Installment No.</th><th>Due Date</th><th class="text-end">Due Amount (Rs.)</th><th class="text-end">Interest (Rs.)</th><th class="text-end">Total Due Amount (Rs.)</th>
+          </tr></thead>
+          <tbody>
+            {{dueInstallments}}
+          </tbody>
+          <tfoot><tr><td colspan="2" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.dueInstallmentsDueAmount}}</td>
+              <td class="text-end fw-semibold">₹{{totals.dueInstallmentsInterest}}</td>
+              <td class="text-end fw-semibold">₹{{totals.dueInstallmentsTotal}}</td></tr></tfoot>
+       
+        </table></div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-section-header">Details of Installments Amount Received :</div>
+        <div class="table-responsive"><table class="table table-bordered">
+          <thead class="table-light"><tr>
+            <th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th>
+          </tr></thead>
+          <tbody>
+            {{installmentReceipts}}
+          </tbody>
+          <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.installmentReceiptsDraftAmount}}</td></tr></tfoot>
+    
+        </table></div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-section-header">Details of Future Installments:</div>
+        <div class="table-responsive"><table class="table table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>Diary No.</th>
+            <th>Diary Date</th>
+            <th>Draft No</th>
+            <th>Draft/RTGS Date</th>
+            <th>Payment Mode</th>
+            <th>Draft/RTGS Bank</th>
+            <th class="text-end">Draft Amount (Rs.)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{futureInstallments}}
+    </tbody>
+    <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.futureInstallmentsTotal}}</td></tr></tfoot>
+</table></div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-section-header">Details of Other Amount Received (If Any):</div>
+        <div class="table-responsive"><table class="table table-bordered">
+          <thead class="table-light"><tr><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th>
+          </tr></thead>
+          <tbody>
+            {{otherAmounts}}
+          </tbody>
+          <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.otherAmountsDraftAmount}}</td></tr></tfoot>
+        </table></div>
+      </section>
+    </div>
+  </section>
+</main>
+</body>
+</html>

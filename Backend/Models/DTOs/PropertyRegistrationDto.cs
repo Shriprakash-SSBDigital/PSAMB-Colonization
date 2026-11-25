@@ -73,6 +73,7 @@ namespace Backend.Models.Dtos
         public int BranchId { get; set; }
         public int DistrictId { get; set; }
         public int? PlotTypeId { get; set; }
+        public string? PlotType { get; set; }
         public int? PlanId { get; set; }
         public string? PlanName { get; set; }
         public string? PlotSize { get; set; }
@@ -136,6 +137,8 @@ namespace Backend.Models.Dtos
         public int? ApplicationStatusId { get; set; }
 
         public List<InstallmentDetailsDto>? Installments { get; set; }
+        public List<InstallmentDetailsDto>? FutureInstallments { get; set; }
+        public List<InstallmentDetailsDto>? OtherAmountReceivedInstallments { get; set; }
         public List<InstallmentScheduleDto>? InstallmentSchedules { get; set; }
         public List<InstallmentScheduleDto>? InstallmentNotCompleted { get; set; }
         public List<InstallmentCalculationDto>? InstallmentCalculations { get; set; }

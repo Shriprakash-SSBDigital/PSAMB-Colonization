@@ -560,7 +560,6 @@ export class VerificationView implements OnInit {
   }
 
   handleSendBack(): void {
-    debugger
     this.onDecisionChange('sendback');
     this.apiError = '';
     this.apiSuccess = '';
@@ -585,7 +584,6 @@ export class VerificationView implements OnInit {
   }
 
   private callVerifyApi(decision: 'approve' | 'sendback', remarks: string): void {
-    debugger
     if (!this.propertyId) {
       this.apiError = 'Property ID not found. Please go back and try again.';
       return;

@@ -158,7 +158,6 @@ export class DeoRegistrationStatus implements OnInit {
   }
 
   onEdit(item: RegistrationRecord): void {
-    // debugger
     this.router.navigate(['/property-bidder-registration'], {
       queryParams: {
         mode: 'edit',

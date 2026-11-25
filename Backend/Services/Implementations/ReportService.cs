@@ -5,28 +5,36 @@ using Backend.Models.DTOs;
 using Backend.Services.Interfaces;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Wordprocessing;
+using iText.Commons.Utils;
+using iText.Html2pdf;
+using iText.Kernel.Pdf;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NuGet.Packaging;
+using Org.BouncyCastle.Asn1.Ocsp;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using System.Data;
 using System.Drawing;
+using System.Net;
+using System.Text;
 
 namespace Backend.Services.Implementations
 {
-    public class ReportService:IReportService
+    public class ReportService : IReportService
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
-        public ReportService(ApplicationDbContext context, IConfiguration config)
+        private readonly IPropertyBidderRegistration _service;
+        public ReportService(ApplicationDbContext context, IConfiguration config, IPropertyBidderRegistration service)
         {
             _context = context;
             _config = config;
+            _service = service;
         }
 
-        public async Task<ApiResponse<PagedResponse<ReportDto>>> GetMandiWiseAllotmentSummaryAsync(int districtId, int branchId, int mandiId, int pageNumber = 1,int pageSize = 10, DateTime? fromDate = null,  DateTime? toDate = null)
+        public async Task<ApiResponse<PagedResponse<ReportDto>>> GetMandiWiseAllotmentSummaryAsync(int districtId, int branchId, int mandiId, int pageNumber = 1, int pageSize = 10, DateTime? fromDate = null, DateTime? toDate = null)
         {
             try
             {
@@ -49,12 +57,12 @@ namespace Backend.Services.Implementations
 
                 command.Parameters.Add(new SqlParameter("@BranchId", branchId));
                 command.Parameters.Add(new SqlParameter("@MandiId", mandiId));
-                command.Parameters.Add(new SqlParameter("@PageNumber", SqlDbType.Int){ Value = pagedResult.PageNumber});
+                command.Parameters.Add(new SqlParameter("@PageNumber", SqlDbType.Int) { Value = pagedResult.PageNumber });
 
-                command.Parameters.Add( new SqlParameter("@PageSize", SqlDbType.Int) {  Value = pagedResult.PageSize});
-                command.Parameters.Add( new SqlParameter("@FromDate", SqlDbType.Date){ Value = fromDate.HasValue ? fromDate.Value.Date : DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@PageSize", SqlDbType.Int) { Value = pagedResult.PageSize });
+                command.Parameters.Add(new SqlParameter("@FromDate", SqlDbType.Date) { Value = fromDate.HasValue ? fromDate.Value.Date : DBNull.Value });
 
-                command.Parameters.Add( new SqlParameter("@ToDate", SqlDbType.Date) {  Value = toDate.HasValue ? toDate.Value.Date : DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@ToDate", SqlDbType.Date) { Value = toDate.HasValue ? toDate.Value.Date : DBNull.Value });
 
                 var dataSet = new DataSet();
 
@@ -86,7 +94,7 @@ namespace Backend.Services.Implementations
                         "No allotment data found.");
                 }
 
-               
+
                 foreach (DataRow row in table.Rows)
                 {
                     var item = new ReportDto
@@ -159,7 +167,7 @@ namespace Backend.Services.Implementations
                             ? 0
                             : Convert.ToInt32(row["DistrictId"]),
 
-                        FinalBidPrice =row["SalesAmount"] != DBNull.Value
+                        FinalBidPrice = row["SalesAmount"] != DBNull.Value
                             ? Convert.ToDecimal(row["SalesAmount"])
                             : null,
                         AllotmentNumber = row["EstateNo"] == DBNull.Value
@@ -186,8 +194,8 @@ namespace Backend.Services.Implementations
             }
         }
 
-  
- 
+
+
 
         private static readonly Dictionary<string, MandiWiseReportColumnDef> MandiWiseColumnsMap = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -483,9 +491,9 @@ namespace Backend.Services.Implementations
 
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
-            var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48"); 
+            var primaryColor = QuestPDF.Infrastructure.Color.FromHex("#136f48");
             var headerBgColor = QuestPDF.Infrastructure.Color.FromHex("#1b4332");
-            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f8fafc"); 
+            var zebraBgColor = QuestPDF.Infrastructure.Color.FromHex("#f8fafc");
             var gridBorderColor = QuestPDF.Infrastructure.Color.FromHex("#cbd5e1");
 
             // Generate PDF
@@ -962,7 +970,7 @@ namespace Backend.Services.Implementations
                                     .FontSize(8)
                                     .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
 
-                                
+
                             });
                         });
 
@@ -1625,7 +1633,7 @@ namespace Backend.Services.Implementations
                         footerCol.Item().LineHorizontal(0.5f).LineColor(borderColor);
                         footerCol.Item().PaddingTop(2).Row(row =>
                         {
-                          
+
 
                             row.RelativeItem().AlignRight().Text(text =>
                             {
@@ -1642,7 +1650,7 @@ namespace Backend.Services.Implementations
             return document.GeneratePdf();
         }
 
-        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>>  GetDigitizationPropertyDayWiseCountAsync(DateTime fromDate, DateTime toDate, int pageNumber = 1,int pageSize = 10)
+        public async Task<ApiResponse<List<DigitizationPropertyDayWiseDto>>> GetDigitizationPropertyDayWiseCountAsync(DateTime fromDate, DateTime toDate, int pageNumber = 1, int pageSize = 10)
         {
             try
             {
@@ -1676,9 +1684,9 @@ namespace Backend.Services.Implementations
 
                 command.Parameters.Add(new SqlParameter("@FromDate", fromDate));
                 command.Parameters.Add(new SqlParameter("@ToDate", toDate));
-                command.Parameters.Add( new SqlParameter("@PageNumber", SqlDbType.Int) { Value = pageNumber });
+                command.Parameters.Add(new SqlParameter("@PageNumber", SqlDbType.Int) { Value = pageNumber });
 
-                command.Parameters.Add( new SqlParameter("@PageSize", SqlDbType.Int) { Value = pageSize });
+                command.Parameters.Add(new SqlParameter("@PageSize", SqlDbType.Int) { Value = pageSize });
 
                 await using var reader = await command.ExecuteReaderAsync();
 
@@ -1840,7 +1848,7 @@ namespace Backend.Services.Implementations
                                     .FontSize(14f)
                                     .FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
 
-                                
+
                             });
 
                             row.ConstantItem(200).AlignRight().Column(metaCol =>
@@ -2094,7 +2102,7 @@ namespace Backend.Services.Implementations
 
                 var searchParam = new SqlParameter("@search", SqlDbType.NVarChar, 100)
                 {
-                    Value = string.IsNullOrWhiteSpace(search)  ? DBNull.Value  : search.Trim()
+                    Value = string.IsNullOrWhiteSpace(search) ? DBNull.Value : search.Trim()
                 };
 
                 command.Parameters.Add(searchParam);
@@ -2126,7 +2134,252 @@ namespace Backend.Services.Implementations
             {
                 return ApiResponse<List<MandiWiseAllotmentSummaryDto>>.Fail($"Error fetching mandis: {ex.Message}");
             }
-          
+
+        }
+        public async Task<byte[]> GenerateMandiWisePdfAsync(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, bool isSold)
+        {
+            var response = await _service.GetPropertyDetailsByMandiPlot(MandiId, PlotTypeId, PlotNo, PlotSize, isSold);
+
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "PdfContent", "plotdetail.html");
+            string html = await File.ReadAllTextAsync(filePath);
+
+            var initialDeposits = response.Data?.Installments?.Where(x => x.AmountTypeId == 1).ToList();
+            var depositRows = new StringBuilder();
+
+            decimal totalInitialDeposit = 0;
+
+            if (initialDeposits?.Any() == true)
+            {
+                foreach (var item in initialDeposits)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalInitialDeposit += amount;
+
+                    depositRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                depositRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+            var dueInstallmentRows = new StringBuilder();
+
+            decimal totalDueAmount = 0;
+            decimal totalInterest = 0;
+            decimal totalDue = 0;
+
+            var dueInstallments = response.Data?.InstallmentSchedules;
+
+            if (dueInstallments?.Any() == true)
+            {
+                foreach (var item in dueInstallments)
+                {
+                    decimal dueAmount = item.BasePrincipal ?? 0;
+                    decimal interest = item.Interest ?? 0;
+                    decimal totalAmount = item.TotalEstimatedAmount ?? 0;
+
+                    totalDueAmount += dueAmount;
+                    totalInterest += interest;
+                    totalDue += totalAmount;
+
+                    dueInstallmentRows.Append($@"
+                    <tr>
+                        <td>{WebUtility.HtmlEncode(item.InstallmentNo ?? "")}</td>
+                        <td>{item.CalculatedDueDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                        <td class='text-end'>{dueAmount:N2}</td>
+                        <td class='text-end'>{interest:N2}</td>
+                        <td class='text-end'>{totalAmount:N2}</td>
+                    </tr>");
+                }
+            }
+            else
+            {
+                dueInstallmentRows.Append(@"
+                <tr>
+                    <td colspan='5' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+
+            var ReceivedDeposits = response.Data?.Installments?.Where(x => x.AmountTypeId != 1).ToList();
+            var receiveRows = new StringBuilder();
+
+            decimal totalReceiveDeposit = 0;
+
+            if (ReceivedDeposits?.Any() == true)
+            {
+                foreach (var item in ReceivedDeposits)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalReceiveDeposit += amount;
+
+                    receiveRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                receiveRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+
+            var futureInstallments = response.Data?.FutureInstallments;
+            var futurereceiveRows = new StringBuilder();
+            decimal totalfutureReceiveDeposit = 0;
+
+            if (futureInstallments?.Any() == true)
+            {
+                foreach (var item in futureInstallments)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalfutureReceiveDeposit += amount;
+
+                    futurereceiveRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                futurereceiveRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+
+            var otherReceiveInstallments = response.Data?.OtherAmountReceivedInstallments;
+            var receivereceiveRows = new StringBuilder();
+            decimal totalRecReceiveDeposit = 0;
+
+            if (otherReceiveInstallments?.Any() == true)
+            {
+                foreach (var item in otherReceiveInstallments)
+                {
+                    decimal amount = item.DraftAmount ?? 0;
+
+                    totalRecReceiveDeposit += amount;
+
+                    receivereceiveRows.Append($@"
+                     <tr>
+                         <td>{WebUtility.HtmlEncode(item.ReceiptNo ?? "")}</td>
+                         <td>{item.ReceiptDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td>{WebUtility.HtmlEncode(item.DraftNo ?? "")}</td>
+                         <td>{item.DraftDate?.ToString("dd-MM-yyyy") ?? ""}</td>
+                         <td></td>
+                         <td>{WebUtility.HtmlEncode(item.DraftBank ?? "")}</td>
+                         <td class='text-end'>{amount:N2}</td>
+                     </tr>");
+                }
+            }
+            else
+            {
+                receivereceiveRows.Append(@"
+                <tr>
+                    <td colspan='7' class='text-center text-muted'>
+                        No records found
+                    </td>
+                </tr>");
+            }
+
+            string rateofinterst = string.Empty;
+            if (response.Data?.AllotmentDate.HasValue == true && response.Data.AllotmentDate.Value.Year < 1992)
+            {
+                rateofinterst = "6";
+            }
+            else
+            {
+                rateofinterst = "12";
+            }
+
+            html = html.Replace("{{header}}", "Mandi Wise Property Report")
+                .Replace("{{propertyInfo.allotteeCode}}", response.Data?.PropertyCode ?? "")
+                .Replace("{{propertyInfo.nameOfAllottee}}", response.Data?.BidderName ?? "")
+                .Replace("{{propertyInfo.fatherOrHusbandName}}", response.Data?.FatherOrHusbandName ?? "")
+                .Replace("{{propertyInfo.auctionDate}}", response.Data?.AuctionDate?.ToString("dd-MM-yyyy") ?? "")
+                .Replace("{{propertyInfo.allotmentDate}}", response.Data?.AllotmentDate?.ToString("dd-MM-yyyy") ?? "")
+                .Replace("{{propertyInfo.finalBidPrice}}", Convert.ToString(response.Data?.FinalBidPrice) ?? "")
+                .Replace("{{propertyInfo.mandiName}}", response.Data?.MandiName ?? "")
+                .Replace("{{propertyInfo.plotType}}", response.Data?.PlotType ?? "")
+                .Replace("{{propertyInfo.plotNoOrSelectedPlotNo}}", Convert.ToString(response.Data?.PlotNo) ?? "")
+                .Replace("{{propertyInfo.sizeOfPlot}}", response.Data?.PlotSize ?? "")
+                .Replace("{{propertyInfo.address}}", response.Data?.Address ?? "")
+                .Replace("{{initialDepositRows}}", depositRows.ToString())
+                .Replace("{{totals.initialDepositsAmount}}", totalInitialDeposit.ToString("N2"))
+                .Replace("{{rateOfInterest}}", rateofinterst.ToString())
+                .Replace("{{dueInstallments}}", dueInstallmentRows.ToString())
+                .Replace("{{totals.dueInstallmentsDueAmount}}", totalDueAmount.ToString("N2"))
+                .Replace("{{totals.dueInstallmentsInterest}}", totalInterest.ToString("N2"))
+                .Replace("{{totals.dueInstallmentsTotal}}", totalDue.ToString("N2"))
+                .Replace("{{installmentReceipts}}", receiveRows.ToString())
+                .Replace("{{totals.installmentReceiptsDraftAmount}}", totalReceiveDeposit.ToString("N2"))
+                .Replace("{{futureInstallments}}", futurereceiveRows.ToString())
+                .Replace("{{totals.futureInstallmentsTotal}}", totalfutureReceiveDeposit.ToString("N2"))
+                .Replace("{{otherAmounts}}", receivereceiveRows.ToString())
+                .Replace("{{totals.otherAmountsDraftAmount}}", totalRecReceiveDeposit.ToString("N2"));
+            // Convert HTML into PDF
+            using var memoryStream = new MemoryStream();
+
+            using (var writer = new PdfWriter(memoryStream))
+            {
+                using (var pdfDocument = new PdfDocument(writer))
+                {
+                    //  Landscape
+                    pdfDocument.SetDefaultPageSize(iText.Kernel.Geom.PageSize.A4);
+
+                    var converterProperties = new ConverterProperties();
+
+
+                    HtmlConverter.ConvertToPdf(
+                        html,
+                        pdfDocument,
+                        converterProperties);
+                }
+            }
+
+            return memoryStream.ToArray();
         }
 
     }

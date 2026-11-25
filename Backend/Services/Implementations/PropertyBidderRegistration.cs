@@ -121,7 +121,7 @@ namespace Backend.Services.Implementations
                     OwnerStateID = dto.OwnerStateID,
                     OwnerDistrtictID = dto.OwnerDistrtictID,
                     OwnerCityID = dto.OwnerCityID,
-                    PenaltyOrderDate= dto.PenaltyOrderDate,
+                    PenaltyOrderDate = dto.PenaltyOrderDate,
                     PenaltyRateInorder = dto.PenaltyRateInorder
                 };
 
@@ -1080,8 +1080,8 @@ namespace Backend.Services.Implementations
                                                t.StatusId == 3 ? "Verified by Assistant" :
                                                t.StatusId == 7 ? "Sent Back" : ""),
                                            UserId = t.UserId,
-                                           UserName = user != null 
-                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim() 
+                                           UserName = user != null
+                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim()
                                                : t.UserId,
                                            Remarks = t.Remarks
                                        }).ToListAsync();
@@ -2760,6 +2760,9 @@ namespace Backend.Services.Implementations
                 response.PlotTypeId = row["PlotTypeId"] != DBNull.Value
                     ? Convert.ToInt32(row["PlotTypeId"])
                     : null;
+                response.PlotType = row["PlotType"] != DBNull.Value
+                    ? Convert.ToString(row["PlotType"])
+                    : null;
 
                 response.PlanId = row["PlanId"] != DBNull.Value
                     ? Convert.ToInt32(row["PlanId"])
@@ -2849,7 +2852,7 @@ namespace Backend.Services.Implementations
                 //      ? Convert.ToInt32(row["BiddingType"])
                 //      : null;
 
-                response.PenaltyOrderDate =row["PenaltyOrderDate"] != DBNull.Value
+                response.PenaltyOrderDate = row["PenaltyOrderDate"] != DBNull.Value
                      ? Convert.ToDateTime(row["PenaltyOrderDate"])
                      : null;
 
@@ -3129,6 +3132,37 @@ namespace Backend.Services.Implementations
 
                     response.Installments.Add(installment);
                 }
+            }
+
+            // Other amount  received
+            response.OtherAmountReceivedInstallments = new List<InstallmentDetailsDto>();
+
+            if (response.Installments != null && response.Installments.Count > 0)
+            {
+                var otherreceipts = response.Installments
+                    .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1 && x.AmountTypeId != 2)
+                    .OrderBy(x => x.ReceiptDate)
+                    .ToList();
+
+                response.OtherAmountReceivedInstallments = otherreceipts
+                           .Select(x => new InstallmentDetailsDto
+                           {
+                               Id = x.Id,
+                               ReceiptNo = x.ReceiptNo,
+                               ReceiptDate = x.ReceiptDate,
+                               DraftNo = x.DraftNo,
+                               DraftAmount = x.DraftAmount,
+                               DraftDate = x.DraftDate,
+                               DraftBank = x.DraftBank,
+                               PrincipalAmount = x.PrincipalAmount,
+                               InterestAmount = x.InterestAmount,
+                               OtherAmount = x.OtherAmount,
+                               PenaltyAmount = x.PenaltyAmount,
+                               PenaltyType = x.PenaltyType,
+                               AmountTypeId = x.AmountTypeId,
+                               Remarks = x.Remarks
+
+                           }).ToList();
             }
 
             if (dataSet.Tables.Count > 6 && dataSet.Tables[6].Rows.Count > 0)
@@ -3567,7 +3601,7 @@ namespace Backend.Services.Implementations
                     .ToList();
 
                 var receipts = response.Installments
-                    .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1)
+                    .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1 && x.AmountTypeId == 2)
                     .OrderBy(x => x.ReceiptDate)
                     .ToList();
 
@@ -3578,12 +3612,12 @@ namespace Backend.Services.Implementations
                 int penaltyPercentRateInorder = rateInorder;
                 decimal TotalPenaltyAppliedAmount = 0m;
 
-                if(orderDatePenalty != null)
+                if (orderDatePenalty != null)
                 {
                     penaltyOrderDate = orderDatePenalty.Value;
                 }
 
-                if(penaltyOrderDate != DateTime.MinValue)
+                if (penaltyOrderDate != DateTime.MinValue)
                 {
                     foreach (var schedule in schedules)
                     {
@@ -3619,7 +3653,7 @@ namespace Backend.Services.Implementations
 
                     if (penaltyOrderDate != DateTime.MinValue)
                     {
-                         decimal penalty = (installmentAmount * penaltyPercentRateInorder) / 100;
+                        decimal penalty = (installmentAmount * penaltyPercentRateInorder) / 100;
                         penalityAmount = penalty;
                     }
 
@@ -3629,7 +3663,7 @@ namespace Backend.Services.Implementations
                     decimal DueAmount = installmentAmount;
 
                     int delayDays = 0;
-                   // int PenalityRateInPercent = 10;
+                    // int PenalityRateInPercent = 10;
 
                     int penalInterestRate =
                         response.AllotmentDate.HasValue &&
@@ -3680,7 +3714,7 @@ namespace Backend.Services.Implementations
                         //        installmentAmount * PenalityRateInPercent / 100m, 2)
                         //    : 0m;
 
-                       // DueAmount = installmentAmount + penalityAmount;
+                        // DueAmount = installmentAmount + penalityAmount;
                     }
 
                     // INSTALLMENT NOT COMPLETED
@@ -3743,6 +3777,161 @@ namespace Backend.Services.Implementations
 
             }
 
+
+            response.FutureInstallments = new List<InstallmentDetailsDto>();
+            /* Future installment */
+            if (response.InstallmentSchedules.Count > 0 && response.Installments.Count > 0)
+            {
+                var schedules = response.InstallmentSchedules
+                    .Where(x => x.CalculatedDueDate.HasValue)
+                    .OrderBy(x => x.CalculatedDueDate)
+                    .ToList();
+
+                var receipts = response.Installments
+                    .Where(x => x.ReceiptDate.HasValue && x.AmountTypeId != 1 && x.AmountTypeId == 2)
+                    .OrderBy(x => x.ReceiptDate)
+                    .ToList();
+
+                DateTime? orderDatePenalty = response.PenaltyOrderDate;
+                int rateInorder = response.PenaltyRateInorder;
+
+                DateTime penaltyOrderDate = DateTime.MinValue;
+                int penaltyPercentRateInorder = rateInorder;
+                decimal TotalPenaltyAppliedAmount = 0m;
+
+                if (orderDatePenalty != null)
+                {
+                    penaltyOrderDate = orderDatePenalty.Value;
+                }
+
+                if (penaltyOrderDate != DateTime.MinValue)
+                {
+                    foreach (var schedule in schedules)
+                    {
+                        DateTime dueDate = schedule.CalculatedDueDate!.Value.Date;
+
+                        decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
+
+                        decimal penaltyapplied = (installmentAmount * penaltyPercentRateInorder) / 100;
+
+                        TotalPenaltyAppliedAmount += penaltyapplied;
+
+                    }
+                }
+
+                int receiptIndex = 0;
+
+                decimal extraBalanceAmount = 0m;
+                DateTime previousReceiptDate = DateTime.MinValue;
+
+                foreach (var schedule in schedules)
+                {
+                    DateTime dueDate = schedule.CalculatedDueDate!.Value.Date;
+
+                    decimal installmentAmount = schedule.TotalEstimatedAmount ?? 0m;
+
+                    decimal penalityAmount = 0m;
+
+                    if (installmentAmount <= 0m)
+                        continue;
+
+                    if (penaltyOrderDate != DateTime.MinValue)
+                    {
+                        decimal penalty = (installmentAmount * penaltyPercentRateInorder) / 100;
+                        penalityAmount = penalty;
+                    }
+
+                    decimal receivedAmount = extraBalanceAmount;
+                    decimal TotalpenalityAmount = TotalPenaltyAppliedAmount;
+                    TotalPenaltyAppliedAmount = 0m;
+                    decimal DueAmount = installmentAmount;
+
+                    int delayDays = 0;
+                    // int PenalityRateInPercent = 10;
+
+                    int penalInterestRate =
+                        response.AllotmentDate.HasValue &&
+                        response.AllotmentDate.Value.Year >= 1992
+                            ? 12
+                            : 6;
+
+                    DateTime receiptDate = extraBalanceAmount > 0m
+                        ? previousReceiptDate
+                        : DateTime.MinValue;
+
+                    // The previous surplus must not be counted again.
+                    extraBalanceAmount = 0m;
+
+                    // Calculate penalty for an existing carried balance.
+                    if (receiptDate != DateTime.MinValue)
+                    {
+                        delayDays = Math.Max(0, (receiptDate - dueDate).Days);
+
+                        //penalityAmount = delayDays > 0
+                        //    ? Math.Round(
+                        //        installmentAmount * PenalityRateInPercent / 100m, 2)
+                        //    : 0m;
+
+                        DueAmount = installmentAmount + TotalpenalityAmount;
+                    }
+
+                    // Keep consuming receipts until the installment is fully paid.
+                    while (receivedAmount < DueAmount &&
+                           receiptIndex < receipts.Count)
+                    {
+                        var receipt = receipts[receiptIndex++];
+
+                        decimal nextReceivedAmount = receipt.DraftAmount ?? 0m;
+
+                        if (nextReceivedAmount <= 0m)
+                            continue;
+
+                        receivedAmount += nextReceivedAmount;
+
+                        receiptDate = receipt.ReceiptDate!.Value.Date;
+                        previousReceiptDate = receiptDate;
+
+                        delayDays = Math.Max(0, (receiptDate - dueDate).Days);
+
+
+                        //penalityAmount = delayDays > 0
+                        //    ? Math.Round(
+                        //        installmentAmount * PenalityRateInPercent / 100m, 2)
+                        //    : 0m;
+
+                        // DueAmount = installmentAmount + penalityAmount;
+                    }
+
+
+                    if (dueDate > DateTime.UtcNow.Date && previousReceiptDate != DateTime.MinValue && previousReceiptDate < dueDate)
+                    {
+                        var futureReceipts = receipts.Where(x => x.ReceiptDate.HasValue && x.ReceiptDate.Value.Date < dueDate).ToList();
+
+                        response.FutureInstallments = futureReceipts
+                            .Select(x => new InstallmentDetailsDto
+                            {
+                                Id = x.Id,
+                                ReceiptNo = x.ReceiptNo,
+                                ReceiptDate = x.ReceiptDate,
+                                DraftNo = x.DraftNo,
+                                DraftAmount = x.DraftAmount,
+                                DraftDate = x.DraftDate,
+                                DraftBank = x.DraftBank,
+                                PrincipalAmount = x.PrincipalAmount,
+                                InterestAmount = x.InterestAmount,
+                                OtherAmount = x.OtherAmount,
+                                PenaltyAmount = x.PenaltyAmount,
+                                PenaltyType = x.PenaltyType,
+                                AmountTypeId = x.AmountTypeId,
+                                Remarks = x.Remarks
+
+                            }).ToList();
+                    }
+                }
+
+            }
+
+
             return response;
         }
 
@@ -3769,8 +3958,8 @@ namespace Backend.Services.Implementations
                                                t.StatusId == 3 ? "Verified by Assistant" :
                                                t.StatusId == 7 ? "Sent Back" : "Unknown"),
                                            UserId = t.UserId,
-                                           UserName = user != null 
-                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim() 
+                                           UserName = user != null
+                                               ? (user.FirstName + " " + (user.LastName ?? "")).Trim()
                                                : t.UserId,
                                            Remarks = t.Remarks
                                        }).ToListAsync();

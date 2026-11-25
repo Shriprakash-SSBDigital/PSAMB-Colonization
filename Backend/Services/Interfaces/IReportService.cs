@@ -23,6 +23,7 @@ namespace Backend.Services.Interfaces
 
         Task<ApiResponse<List<DigitizationPropertyDayWiseDetailsDto>>> GetDigitizationPropertyDayWiseCountDetailsAsync(DateTime fromDate);
         Task<ApiResponse<List<MandiWiseAllotmentSummaryDto>>> GetAllMandisForMandiWiseAllotmentSummaryAsync(string? search);
+        Task<byte[]> GenerateMandiWisePdfAsync(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, bool isSold);
     }
 }
 
