@@ -133,39 +133,38 @@ table { width:100%; border-collapse:collapse; margin-bottom:0; }
         </table></div>
       </section>
 
-      {{#if futureInstallments.length}}
       <section class="table-section">
         <div class="table-section-header">Details of Future Installments:</div>
         <div class="table-responsive"><table class="table table-bordered">
-          <thead class="table-light"><tr>
-            <th>Installment No.</th><th>Due Date</th><th class="text-end">Due Amount (Rs.)</th><th class="text-end">Interest (Rs.)</th><th class="text-end">Total Due Amount (Rs.)</th>
-          </tr></thead>
-          <tbody>
-            {{#each futureInstallments}}
-            <tr><td>{{installmentNo}}</td><td>{{dueDate}}</td><td class="text-end">₹{{dueAmount}}</td><td class="text-end">₹{{interest}}</td><td class="text-end">₹{{totalDueAmount}}</td></tr>
-            {{/each}}
-          </tbody>
-          <tfoot><tr><td colspan="2" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.futureInstallmentsDueAmount}}</td><td class="text-end fw-semibold">₹{{totals.futureInstallmentsInterest}}</td><td class="text-end fw-semibold">₹{{totals.futureInstallmentsTotal}}</td></tr></tfoot>
-        </table></div>
+    <thead class="table-light">
+        <tr>
+            <th>Diary No.</th>
+            <th>Diary Date</th>
+            <th>Draft No</th>
+            <th>Draft/RTGS Date</th>
+            <th>Payment Mode</th>
+            <th>Draft/RTGS Bank</th>
+            <th class="text-end">Draft Amount (Rs.)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{futureInstallments}}
+    </tbody>
+    <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.futureInstallmentsTotal}}</td></tr></tfoot>
+</table></div>
       </section>
-      {{/if}}
 
-      {{#if otherAmounts.length}}
       <section class="table-section">
         <div class="table-section-header">Details of Other Amount Received (If Any):</div>
         <div class="table-responsive"><table class="table table-bordered">
-          <thead class="table-light"><tr>
-            <th>Payment Type</th><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th>
+          <thead class="table-light"><tr><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th>
           </tr></thead>
           <tbody>
-            {{#each otherAmounts}}
-            <tr><td>{{paymentType}}</td><td>{{receiptNo}}</td><td>{{receiptDate}}</td><td>{{draftNo}}</td><td>{{draftRtgsDate}}</td><td>{{paymentMode}}</td><td>{{draftRtgsBank}}</td><td class="text-end">₹{{draftAmount}}</td></tr>
-            {{/each}}
+            {{otherAmounts}}
           </tbody>
-          <tfoot><tr><td colspan="7" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.otherAmountsDraftAmount}}</td></tr></tfoot>
+          <tfoot><tr><td colspan="6" class="text-end fw-semibold">Total (Rs.):</td><td class="text-end fw-semibold">₹{{totals.otherAmountsDraftAmount}}</td></tr></tfoot>
         </table></div>
       </section>
-      {{/if}}
     </div>
   </section>
 </main>
