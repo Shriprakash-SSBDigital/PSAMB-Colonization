@@ -6,7 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Common } from '../../core/service/CommonService/common';
 import { MenuService } from '../../core/service/MenuService/menu.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
-import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
+import { FutureInstallmentDetail, PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { Userservice } from '../../core/service/UserService/userservice';
 import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
 registerLocaleData(localeEnIn);
@@ -715,6 +715,18 @@ export class PropertyBalanceCalculate implements OnInit {
     });
   }
 
+  private mapFutureInstallmentDetails(rows: any[]): FutureInstallmentDetail[] {
+    return rows.map((item: any) => ({
+      diaryNo: String(item?.diaryNo ?? item?.receiptNo ?? ''),
+      diaryDate: this.formatDate(item?.diaryDate ?? item?.receiptDate),
+      draftNo: String(item?.draftNo ?? ''),
+      draftDate: this.formatDate(item?.draftDate ?? item?.draftRtgsDate),
+      paymentMode: String(item?.paymentMode ?? '-'),
+      draftBank: String(item?.draftBank ?? item?.draftRtgsBank ?? item?.bank ?? '-'),
+      dueAmount: this.coerceNumber(item?.dueAmount ?? item?.draftAmount ?? item?.amount)
+    }));
+  }
+
   // private getMandiName(property: any): string {
   //   const responseMandiName = property?.mandiName ?? property?.MandiName;
   //   if (typeof responseMandiName === 'string' && responseMandiName.trim()) {
@@ -750,6 +762,7 @@ export class PropertyBalanceCalculate implements OnInit {
         dueInstallments: [],
         installmentReceipts: [],
         futureInstallments: [],
+        otherfutureInstallments: [],
         otherAmounts: [],
         interestAndPenaltyDetails: [],
         summary: {
@@ -789,6 +802,9 @@ export class PropertyBalanceCalculate implements OnInit {
     const dueInstallments = this.mapInstallmentRows(scheduleRows);
     const futureInstallments = this.mapInstallmentRows(
       Array.isArray(d.futureInstallments) ? d.futureInstallments : []
+    );
+    const otherfutureInstallments = this.mapFutureInstallmentDetails(
+      Array.isArray(d.otherfutureInstallments) ? d.otherfutureInstallments : []
     );
 
     const plotTypeObj = this.plotTypes.find((t: any) =>
@@ -856,6 +872,7 @@ export class PropertyBalanceCalculate implements OnInit {
       dueInstallments,
       installmentReceipts,
       futureInstallments,
+      otherfutureInstallments,
       otherAmounts: Array.isArray(d.otherAmounts) ? d.otherAmounts : [],
       interestAndPenaltyDetails,
       summary: {

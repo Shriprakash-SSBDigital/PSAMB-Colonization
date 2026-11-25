@@ -357,31 +357,33 @@
                 <table class="table table-bordered mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Installment No.</th>
-                            <th>Due Date</th>
-                            <th class="text-end">Due Amount(Rs.)</th>
-                            <th class="text-end">Interest(Rs.)</th>
-                            <th class="text-end">Total Due Amount(Rs.)</th>
+                            <th>Diary No.</th>
+                            <th>Diary Date</th>
+                            <th>Draft No</th>
+                            <th>Draft/RTGS Date</th>
+                            <th>Payment Mode</th>
+                            <th>Draft/RTGS Bank</th>
+                            <th class="text-end">Draft Amount(Rs.)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngIf="!balanceData.futureInstallments.length">
-                            <td colspan="5" class="text-center text-muted">No records found</td>
+                        <tr *ngIf="!balanceData.otherfutureInstallments?.length">
+                            <td colspan="7" class="text-center text-muted">No records found</td>
                         </tr>
-                        <tr *ngFor="let installment of balanceData.futureInstallments">
-                            <td>{{ installment.installmentNo }}</td>
-                            <td>{{ installment.dueDate }}</td>
+                        <tr *ngFor="let installment of (balanceData.otherfutureInstallments || [])">
+                            <td>{{ installment.diaryNo }}</td>
+                            <td>{{ installment.diaryDate }}</td>
+                            <td>{{ installment.draftNo }}</td>
+                            <td>{{ installment.draftDate }}</td>
+                            <td>{{ installment.paymentMode }}</td>
+                            <td>{{ installment.draftBank }}</td>
                             <td class="text-end">₹{{ installment.dueAmount | number:'1.2-2':'en-IN' }}</td>
-                            <td class="text-end">₹{{ installment.interest | number:'1.2-2':'en-IN' }}</td>
-                            <td class="text-end">₹{{ installment.totalDueAmount | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
-                            <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number:'1.2-2':'en-IN' }}</td>
-              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'interest') | number:'1.2-2':'en-IN' }}</td>
-              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number:'1.2-2':'en-IN' }}</td>
+                            <td colspan="6" class="text-end fw-semibold">Total(Rs.) :</td>
+              <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherfutureInstallments || [], 'dueAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -397,7 +399,6 @@
                 <table class="table table-bordered mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Payment Type</th>
                             <th>Diary No.</th>
                             <th>Diary Date</th>
                             <th>Draft No</th>
@@ -409,10 +410,9 @@
                     </thead>
                     <tbody>
                         <tr *ngIf="!balanceData.otherAmounts.length">
-                            <td colspan="8" class="text-center text-muted">No records found</td>
+                            <td colspan="7" class="text-center text-muted">No records found</td>
                         </tr>
                         <tr *ngFor="let other of balanceData.otherAmounts">
-                            <td>{{ other.paymentType }}</td>
                             <td>{{ other.receiptNo }}</td>
                             <td>{{ other.receiptDate }}</td>
                             <td>{{ other.draftNo || '-' }}</td>
@@ -424,7 +424,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                            <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
                             <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2':'en-IN' }}</td>
                         </tr>
                     </tfoot>
