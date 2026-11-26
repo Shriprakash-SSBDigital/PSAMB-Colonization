@@ -17,10 +17,10 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetMandiWiseAllotmentSummary")]
-        public async Task<IActionResult> GetMandiWiseAllotmentSummary([FromQuery] int districtId=0, [FromQuery] int branchId = 0,[FromQuery] int mandiId = 0, int pageNumber = 1,
+        public async Task<IActionResult> GetMandiWiseAllotmentSummary([FromQuery] int districtId = 0, [FromQuery] int branchId = 0, [FromQuery] int mandiId = 0, int pageNumber = 1,
         int pageSize = 10, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
         {
-            var response = await _service.GetMandiWiseAllotmentSummaryAsync(districtId,branchId, mandiId, pageNumber, pageSize, fromDate, toDate);
+            var response = await _service.GetMandiWiseAllotmentSummaryAsync(districtId, branchId, mandiId, pageNumber, pageSize, fromDate, toDate);
 
             return Ok(response);
         }
@@ -36,7 +36,7 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode( StatusCodes.Status500InternalServerError,  new { message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
 
@@ -45,7 +45,7 @@ namespace Backend.Controllers
         {
             var pdfBytes = await _service.ExportMandiWiseAllotmentSummaryPdfAsync(districtId, branchId, mandiId, fromDate, toDate, columns);
 
-            return File(pdfBytes,"application/pdf","MandiWiseAllotmentSummary.pdf");
+            return File(pdfBytes, "application/pdf", "MandiWiseAllotmentSummary.pdf");
         }
 
         [HttpGet("GetMandisForPropertyReport")]
@@ -129,9 +129,9 @@ namespace Backend.Controllers
         }
 
         [HttpGet("GetDigitizationPropertyDayWiseCountAsync")]
-        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountAsync([FromQuery] DateTime fromDate,  [FromQuery] DateTime toDate, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetDigitizationPropertyDayWiseCountAsync([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var response = await _service.GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber,pageSize);
+            var response = await _service.GetDigitizationPropertyDayWiseCountAsync(fromDate, toDate, pageNumber, pageSize);
 
             return Ok(response);
         }
@@ -167,7 +167,7 @@ namespace Backend.Controllers
         [HttpGet("GetDigitizationPropertyDayWiseCountDetailsAsync")]
         public async Task<IActionResult> GetDigitizationPropertyDayWiseCountDetailsAsync([FromQuery] DateTime fromDate)
         {
-            var response = await _service.GetDigitizationPropertyDayWiseCountDetailsAsync( fromDate);
+            var response = await _service.GetDigitizationPropertyDayWiseCountDetailsAsync(fromDate);
 
             return Ok(response);
         }
@@ -184,13 +184,39 @@ namespace Backend.Controllers
         [HttpGet("GetPdfReport")]
         public async Task<IActionResult> GetPdfReportPlotwise(int MandiId, int PlotTypeId, string PlotNo, string PlotSize, bool isSold)
         {
-            var pdfBytes = await _service.GenerateMandiWisePdfAsync(MandiId, PlotTypeId, PlotNo, PlotSize, isSold);
+            try
+            {
+                var pdfBytes = await _service.GenerateMandiWisePdfAsync(MandiId, PlotTypeId, PlotNo, PlotSize, isSold);
 
-            return File(
-                pdfBytes,
-                "application/pdf",
-                "MandiWiseAllotmentReport.pdf"
-            );
+                return File(
+                    pdfBytes,
+                    "application/pdf",
+                    "MandiWiseAllotmentReport.pdf"
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("GetPdfReportforpropertyDetail")]
+        public async Task<IActionResult> GetPdfReportforpropertyDetail(string propertyCode, bool isSold)
+        {
+            try
+            {
+                var pdfBytes = await _service.GetPdfReportforpropertyDetailAsync(propertyCode, isSold);
+
+                return File(
+                    pdfBytes,
+                    "application/pdf",
+                    "MandiWiseAllotmentReport.pdf"
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
         }
     }
 }
