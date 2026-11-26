@@ -281,6 +281,38 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     const finalBidPrice = Number(d.finalBidPrice ?? d.allotmentAmount) || 0;
     const totalBalance = Math.max(finalBidPrice - totalReceived, 0);
 
+    const futureInstallmentRows =
+      Array.isArray(d.otherfutureInstallments) && d.otherfutureInstallments.length
+        ? d.otherfutureInstallments
+        : Array.isArray(d.futureInstallments)
+          ? d.futureInstallments
+          : [];
+    const otherfutureInstallments = futureInstallmentRows.map((item: any) => ({
+      diaryNo: String(item.diaryNo ?? item.receiptNo ?? ''),
+      diaryDate: this.formatDate(item.diaryDate ?? item.receiptDate),
+      draftNo: String(item.draftNo ?? ''),
+      draftDate: this.formatDate(item.draftDate ?? item.draftRtgsDate),
+      paymentMode: String(item.paymentMode ?? '-'),
+      draftBank: String(item.draftBank ?? item.draftRtgsBank ?? item.bank ?? '-'),
+      dueAmount: this.coerceNumber(item.dueAmount ?? item.draftAmount ?? item.amount),
+    }));
+    const otherAmountRows =
+      Array.isArray(d.otherAmounts) && d.otherAmounts.length
+        ? d.otherAmounts
+        : Array.isArray(d.otherAmountReceivedInstallments)
+          ? d.otherAmountReceivedInstallments
+          : [];
+    const otherAmounts = otherAmountRows.map((item: any) => ({
+      paymentType: String(item.paymentType ?? item.remarks ?? ''),
+      receiptNo: String(item.receiptNo ?? item.diaryNo ?? ''),
+      receiptDate: this.formatDate(item.receiptDate ?? item.diaryDate),
+      draftNo: String(item.draftNo ?? ''),
+      draftRtgsDate: this.formatDate(item.draftRtgsDate ?? item.draftDate),
+      paymentMode: String(item.paymentMode ?? '-'),
+      draftRtgsBank: String(item.draftRtgsBank ?? item.draftBank ?? item.bank ?? '-'),
+      draftAmount: this.coerceNumber(item.draftAmount ?? item.otherAmount ?? item.amount),
+    }));
+
     return {
       propertyInfo: {
         allotteeCode: d.propertyCode ?? d.allotteeCode ?? '',
@@ -302,7 +334,8 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
       dueInstallments: Array.isArray(d.dueInstallments) && d.dueInstallments.length ? d.dueInstallments : dueInstallments,
       installmentReceipts: Array.isArray(d.installmentReceipts) && d.installmentReceipts.length ? d.installmentReceipts : installmentReceipts,
       futureInstallments: Array.isArray(d.futureInstallments) ? d.futureInstallments : [],
-      otherAmounts: Array.isArray(d.otherAmounts) ? d.otherAmounts : [],
+      otherfutureInstallments,
+      otherAmounts,
       interestAndPenaltyDetails: Array.isArray(d.interestAndPenaltyDetails)
         ? d.interestAndPenaltyDetails
         : Array.isArray(d.installmentCalculations)
