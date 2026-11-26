@@ -18,11 +18,16 @@ export class PlotDetailsModal {
   @Input() header: string = 'Plot Details';
 
   @Output() modalClosed = new EventEmitter<void>();
+  @Output() downloadPdf = new EventEmitter<void>();
 
   constructor(private cdr: ChangeDetectorRef) { }
 
   onModalClose(): void {
     this.modalClosed.emit();
+  }
+
+  onDownloadPdf(): void {
+    this.downloadPdf.emit();
   }
 
   getTotal(rows: Array<Record<string, any>> | null | undefined, field: string): number {

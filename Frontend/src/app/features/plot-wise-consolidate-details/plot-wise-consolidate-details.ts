@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { ReportService } from '../../core/service/ReportService/report.service';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
+import { PdfDownloadReusedComponent } from '../../core/service/DowloadPdfService/pdf-download-reused-component';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
 import { PlotDetailsModal } from '../plot-details-modal/plot-details-modal';
@@ -59,8 +60,12 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
   pageSize = 10;
   selectedMandiId: number | null = null;
   selectedPlotNo: string = '';
+  private selectedPlotMandiId: number | null = null;
+  private selectedPlotTypeId: number | null = null;
+  private selectedPlotSize = '';
+  isDownloadingPlotPdf = false;
   plotDetail: any = null;
-  headerTitle: string = 'Sold Plot Details';
+  headerTitle: string = 'Plot Wise Consolidate Details';
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
@@ -70,6 +75,7 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private reportService: ReportService,
     private service: Propertybidderregn,
+    private pdfDownloadService: PdfDownloadReusedComponent,
     private cdr: ChangeDetectorRef
   ) {
     this.filterForm = this.fb.group({
@@ -100,6 +106,9 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     this.plotDetail = null;
     this.plotDetailError = '';
     this.selectedPlotNo = '';
+    this.selectedPlotMandiId = null;
+    this.selectedPlotTypeId = null;
+    this.selectedPlotSize = '';
   }
 
   openPlotModal(plotNo: string, row: PlotSummaryRow): void {
@@ -113,6 +122,9 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
     const mandiId = this.selectedMandiId;
     const plotTypeId = row.plotTypeId;
     const plotSize = row.plotSize;
+    this.selectedPlotMandiId = mandiId;
+    this.selectedPlotTypeId = plotTypeId;
+    this.selectedPlotSize = plotSize;
 
     this.service
       .getPropertyDetailsByMandiPlot(mandiId, plotTypeId, plotNo, plotSize, true)
@@ -137,6 +149,39 @@ export class PlotWiseConsolidateDetails implements OnInit, OnDestroy {
         error: (err: any) => {
           this.plotDetailError = err?.error?.message || 'Failed to load plot details. Please try again.';
           this.cdr.detectChanges();
+        },
+      });
+  }
+
+  downloadPlotDetailsPdf(): void {
+    if (this.isDownloadingPlotPdf) return;
+
+    if (this.selectedPlotMandiId === null || this.selectedPlotTypeId === null || !this.selectedPlotNo) {
+      console.error('Cannot download plot details PDF without the selected plot parameters.');
+      alert('Unable to download the plot details PDF. Please select a plot and try again.');
+      return;
+    }
+
+    this.isDownloadingPlotPdf = true;
+    this.pdfDownloadService
+      .downloadPlotDetailsPdf(
+        this.selectedPlotMandiId,
+        this.selectedPlotTypeId,
+        this.selectedPlotNo,
+        this.selectedPlotSize,
+        true
+      )
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isDownloadingPlotPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        error: (err: any) => {
+          console.error('Error downloading plot details PDF:', err);
+          alert('Failed to download the plot details PDF. Please try again.');
         },
       });
   }

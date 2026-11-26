@@ -5,6 +5,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { Propertybidderregn } from '../../core/service/Property-Bidder-RegnService/propertybidderregn';
 import { MandiWiseService } from '../../core/service/Mandi-Wise-Summary-Service/mandi-wise-service';
+import { PdfDownloadReusedComponent } from '../../core/service/DowloadPdfService/pdf-download-reused-component';
 import { PropertyBalanceResponse } from '../../models/property-balance-calculatation.model';
 import { MandiOption, PlotSummaryRow } from '../plot-wise-consolidate-details/plot-wise-consolidate-details';
 import { PlotDetailsModal } from '../plot-details-modal/plot-details-modal';
@@ -126,7 +127,7 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
 
   dateRangeError = false;
   plotDetail: any = null;
-  headerTitle: string = 'Plot Details';
+  headerTitle: string = 'Mandi Wise Allotment Summary';
   balanceData: PropertyBalanceResponse | null = null;
   plotDetailLoading = false;
   plotDetailError = '';
@@ -135,6 +136,10 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
   sortAsc = true;
   selectedPlotNo: string = '';
   selectedMandiId: number | null = null;
+  private selectedPlotMandiId: number | null = null;
+  private selectedPlotTypeId: number | null = null;
+  private selectedPlotSize = '';
+  isDownloadingPlotPdf = false;
   allRows: PlotSummaryRow[] = [];
   filterForm: any;
   mandiOptions: MandiOption[] = [];
@@ -163,7 +168,8 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private propertyService: Propertybidderregn,
-    private mandiWiseService: MandiWiseService
+    private mandiWiseService: MandiWiseService,
+    private pdfDownloadService: PdfDownloadReusedComponent
   ) {
     this.form = this.fb.group({
       districtId: [null],
@@ -1085,6 +1091,9 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     this.plotDetail = null;
     this.plotDetailError = '';
     this.selectedPlotNo = '';
+    this.selectedPlotMandiId = null;
+    this.selectedPlotTypeId = null;
+    this.selectedPlotSize = '';
   }
 
   openPlotModal(plotNoOrRow: string | AllotmentRow, maybeRow?: any): void {
@@ -1098,9 +1107,12 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     this.plotDetailLoading = true;
     this.cdr.detectChanges();
 
-    const mandiId = row.mandiId || this.form.get('mandiId')?.value || this.selectedMandiId || 0;
-    const plotTypeId = row.plotTypeId || 0;
+    const mandiId = Number(row.mandiId || this.form.get('mandiId')?.value || this.selectedMandiId || 0);
+    const plotTypeId = Number(row.plotTypeId || 0);
     const plotSize = row.plotSize || '';
+    this.selectedPlotMandiId = mandiId;
+    this.selectedPlotTypeId = plotTypeId;
+    this.selectedPlotSize = plotSize;
 
     this.propertyService
       .getPropertyDetailsByMandiPlot(mandiId, plotTypeId, plotNo, plotSize, true)
@@ -1279,5 +1291,37 @@ export class MandiWiseAllotmentSummary implements OnInit, OnDestroy {
     }
 
     return year < 1992 ? 6 : 12;
+  }
+
+  downloadPlotDetailsPdf(){
+    if (this.isDownloadingPlotPdf) return;
+
+    if (this.selectedPlotMandiId === null || this.selectedPlotTypeId === null || !this.selectedPlotNo) {
+      console.error('Cannot download plot details PDF without the selected plot parameters.');
+      alert('Unable to download the plot details PDF. Please select a plot and try again.');
+      return;
+    }
+
+    this.isDownloadingPlotPdf = true;
+    this.pdfDownloadService
+      .downloadPlotDetailsPdf(
+        this.selectedPlotMandiId,
+        this.selectedPlotTypeId,
+        this.selectedPlotNo,
+        this.selectedPlotSize,
+        true
+      )
+      .pipe(
+        finalize(() => {
+          this.isDownloadingPlotPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        error: (err: any) => {
+          console.error('Error downloading plot details PDF:', err);
+          alert('Failed to download the plot details PDF. Please try again.');
+        },
+      });
   }
 }
