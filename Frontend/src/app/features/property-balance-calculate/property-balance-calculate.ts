@@ -1,6 +1,6 @@
 import { CommonModule, registerLocaleData } from '@angular/common';
 import localeEnIn from '@angular/common/locales/en-IN';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { Common } from '../../core/service/CommonService/common';
@@ -10,6 +10,8 @@ import { FutureInstallmentDetail, PropertyBalanceResponse } from '../../models/p
 import { Userservice } from '../../core/service/UserService/userservice';
 import { nameWithoutRelationshipPrefix } from '../../core/utils/name.utils';
 registerLocaleData(localeEnIn);
+import { PdfDownloadReusedComponent } from '../../core/service/DowloadPdfService/pdf-download-reused-component';
+import { Subject, takeUntil, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-property-balance-calculate',
@@ -18,9 +20,10 @@ registerLocaleData(localeEnIn);
   templateUrl: './property-balance-calculate.html',
   styleUrl: './property-balance-calculate.scss',
 })
-export class PropertyBalanceCalculate implements OnInit {
+export class PropertyBalanceCalculate implements OnInit, OnDestroy {
 
   balanceForm!: FormGroup;
+  private readonly destroy$ = new Subject<void>();
 
   districts: any[] = [];
   marketCommittees: any[] = [];
@@ -37,7 +40,7 @@ export class PropertyBalanceCalculate implements OnInit {
   isUser = false;
   allotteeCodes: any[] = [];
   isLoadingAllotteeCodes = false;
-
+  isDownloadingPlotPdf = false;
   showResults = false;
   balanceData: PropertyBalanceResponse | null = null;
   propertyDetails: any = null;
@@ -50,12 +53,18 @@ export class PropertyBalanceCalculate implements OnInit {
     private menuService: MenuService,
     private toastr: ToastrService,
     private userService: Userservice,
+    private pdfDownloadService: PdfDownloadReusedComponent,
     private cdr: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.buildForm();
     this.initUserRoleAndAllotteeCodes();
     this.loadMasterData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private buildForm(): void {
@@ -886,8 +895,45 @@ export class PropertyBalanceCalculate implements OnInit {
     };
   }
 
-  printReport(): void {
-    window.print();
+  downloadPdf(): void {
+    this.isDownloadingPlotPdf = true;
+    const propertyCode = String(
+      this.propertyDetails?.propertyCode ??
+      this.propertyDetails?.PropertyCode ??
+      this.balanceData?.propertyInfo?.allotteeCode ??
+      ''
+    ).trim();
+
+    if (!this.isUser && !propertyCode) {
+      this.isDownloadingPlotPdf = false;
+      this.toastr.error('Property code is unavailable. The PDF cannot be downloaded.', 'Download Failed');
+      return;
+    }
+
+    const downloadRequest = this.isUser
+      ? this.pdfDownloadService.downloadPlotDetailsPdf(
+        Number(this.balanceForm.get('mandiId')?.value),
+        Number(this.balanceForm.get('plotTypeId')?.value),
+        String(this.balanceForm.get('plotNo')?.value ?? ''),
+        String(this.balanceForm.get('plotSize')?.value ?? ''),
+        true
+      )
+      : this.pdfDownloadService.downloadPropertyDetailsPdf(propertyCode, true);
+
+    downloadRequest
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isDownloadingPlotPdf = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        error: (err: any) => {
+          console.error('Error downloading property PDF:', err);
+          alert('Failed to download the property PDF. Please try again.');
+        },
+      });
   }
 
   // Sums a numeric field across a list of row objects for table footer totals.

@@ -13,8 +13,15 @@ export class PdfDownloadReusedComponent {
   constructor(private http: HttpClient) {}
 
   private DownloadPdf(mandiId: number, plotTypeId: number, plotNo: string, PlotSize: string, isSold: boolean): Observable<Blob> {
-    const payload = { mandiId, plotTypeId, plotNo, PlotSize, isSold };
-    return this.http.post(`${this.baseUrl}/Report/GetPdfReport`, payload, { responseType: 'blob' });
+    return this.http.get(`${this.baseUrl}/Report/GetPdfReport`, {
+      params: { mandiId, plotTypeId, plotNo, PlotSize, isSold },
+     responseType: 'blob',
+    });
+  }
+  private DownloadPdfForPropertyDetails(propertyCode: string, isSold: boolean): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/Report/GetPdfReportforpropertyDetail`, {
+      params: { propertyCode, isSold },
+      responseType: 'blob' });
   }
 
   downloadPlotDetailsPdf(
@@ -37,5 +44,23 @@ export class PdfDownloadReusedComponent {
       }),
       map(() => undefined)
     );
+  }
+
+  downloadPropertyDetailsPdf(propertyCode: string, isSold: boolean): Observable<void> {
+    return this.DownloadPdfForPropertyDetails(propertyCode, isSold).pipe(
+      tap((blob) => this.savePdf(blob, `Property_Details_${propertyCode}.pdf`)),
+      map(() => undefined)
+    );
+  }
+
+  private savePdf(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
   }
 }
