@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -12,18 +12,6 @@ export class PdfDownloadReusedComponent {
 
   constructor(private http: HttpClient) {}
 
-  private DownloadPdf(mandiId: number, plotTypeId: number, plotNo: string, PlotSize: string, isSold: boolean): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/Report/GetPdfReport`, {
-      params: { mandiId, plotTypeId, plotNo, PlotSize, isSold },
-     responseType: 'blob',
-    });
-  }
-  private DownloadPdfForPropertyDetails(propertyCode: string, isSold: boolean): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/Report/GetPdfReportforpropertyDetail`, {
-      params: { propertyCode, isSold },
-      responseType: 'blob' });
-  }
-
   downloadPlotDetailsPdf(
     mandiId: number,
     plotTypeId: number,
@@ -31,36 +19,55 @@ export class PdfDownloadReusedComponent {
     plotSize: string,
     isSold: boolean
   ): Observable<void> {
-    return this.DownloadPdf(mandiId, plotTypeId, plotNo, plotSize, isSold).pipe(
-      tap((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Plot_Details_${plotNo}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      }),
+
+    const params = new HttpParams()
+      .set('mandiId', mandiId)
+      .set('plotTypeId', plotTypeId)
+      .set('plotNo', plotNo)
+      .set('PlotSize', plotSize)
+      .set('isSold', isSold);
+
+    return this.http.get(
+      `${this.baseUrl}/Report/GetPdfReport`,
+      {
+        params,
+        responseType: 'blob'
+      }
+    ).pipe(
+      tap((blob) => this.triggerDownload(blob)),
       map(() => undefined)
     );
   }
 
-  downloadPropertyDetailsPdf(propertyCode: string, isSold: boolean): Observable<void> {
-    return this.DownloadPdfForPropertyDetails(propertyCode, isSold).pipe(
-      tap((blob) => this.savePdf(blob, `Property_Details_${propertyCode}.pdf`)),
+  downloadPropertyDetailsPdf(
+    propertyCode: string,
+    isSold: boolean
+  ): Observable<void> {
+
+    const params = new HttpParams()
+      .set('propertyCode', propertyCode)
+      .set('isSold', isSold);
+
+    return this.http.get(
+      `${this.baseUrl}/Report/GetPdfReportforpropertyDetail`,
+      {
+        params,
+        responseType: 'blob'
+      }
+    ).pipe(
+      tap((blob) => this.triggerDownload(blob)),
       map(() => undefined)
     );
   }
 
-  private savePdf(blob: Blob, fileName: string): void {
-    const url = window.URL.createObjectURL(blob);
+  private triggerDownload(blob: Blob): void {
+    const objectUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
+    link.target = '_blank';
+    link.href = objectUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    window.URL.revokeObjectURL(objectUrl);
   }
 }
