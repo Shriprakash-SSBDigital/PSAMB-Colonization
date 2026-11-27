@@ -493,7 +493,7 @@ namespace Backend.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<PropertyBidderRegistrationDto>> GetPropertyEAuctionDetailsByPropertyCodeAsync(string propertyCode, bool isSold = false)
+        public async Task<ApiResponse<PropertyBidderRegistrationDto>> GetPropertyEAuctionDetailsByPropertyCodeAsync(string propertyCode, bool isSold)
         {
             try
             {

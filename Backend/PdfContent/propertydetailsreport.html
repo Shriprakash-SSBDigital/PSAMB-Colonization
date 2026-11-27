@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Balance Details</title>
+    <style>
+
+        :root {
+            --theme-primary: #064e3b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            color: #212529;
+            background: #fff;
+            font: 12px/1.45 Arial, Helvetica, sans-serif;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: visible;
+            background: #fff;
+        }
+
+        .card-header {
+            background: var(--theme-primary);
+            color: #fff;
+            padding: 12px 16px;
+        }
+
+            .card-header h1 {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 700;
+            }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .bg-success {
+            background: var(--theme-primary) !important;
+            color: #fff !important;
+        }
+
+        /* Property Information */
+
+        .property-info {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 18px;
+        }
+
+        .property-info-column {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding-right: 14px;
+        }
+
+        .property-info p {
+            margin: 0 0 7px;
+        }
+
+            .property-info p:last-child {
+                margin-bottom: 0;
+            }
+
+        /* Typography */
+
+        .fw-semibold {
+            font-weight: 600;
+        }
+
+        .fw-bold {
+            font-weight: 700;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #6c757d;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        /* Table Sections */
+
+        .table-section {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: visible;
+            margin-bottom: 16px;
+            page-break-inside: auto;
+            break-inside: auto;
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        .table-section-header {
+            background: var(--theme-primary);
+            color: #fff;
+            font-weight: 600;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* General Tables */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            page-break-inside: auto;
+            break-inside: auto;
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        /* Important: Footer must appear only once */
+        tfoot {
+            display: table-row-group !important;
+        }
+
+        tbody {
+            display: table-row-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        th,
+        td {
+            border: 1px solid #dee2e6;
+            padding: 7px 8px;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f1f3f5;
+            font-size: 10.5px;
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            font-size: 11px;
+        }
+
+        tfoot tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        tfoot td {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* Summary */
+
+        .summary-block {
+            font-size: 12px;
+            margin-top: 6px;
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+            .summary-block p {
+                color: #212529;
+                margin: 0 0 8px;
+            }
+
+        .summary-value {
+            font-weight: 600;
+        }
+
+        /* Interest & Penalty Table */
+
+        .interest-penalty-table,
+        .penalty-table {
+            width: 100%;
+            max-width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+            .interest-penalty-table th,
+            .interest-penalty-table td {
+                border: 1px solid #000;
+                padding: 3px 1px;
+                font-size: 6px;
+                text-align: center;
+                vertical-align: middle;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .interest-penalty-table th {
+                font-weight: bold;
+            }
+
+            .interest-penalty-table .text-end {
+                text-align: right;
+            }
+
+            /* Penalty Table */
+
+            .penalty-table th,
+            .penalty-table td {
+                padding: 5px 3px;
+                font-size: 9px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.25;
+            }
+
+            .penalty-table th {
+                text-align: center;
+                font-weight: 600;
+                background: #f1f3f5;
+            }
+
+                /* Penalty Table Column Widths - Total 100% */
+
+                .penalty-table th:nth-child(1),
+                .penalty-table td:nth-child(1) {
+                    width: 7%;
+                }
+
+                .penalty-table th:nth-child(2),
+                .penalty-table td:nth-child(2) {
+                    width: 7%;
+                }
+
+                .penalty-table th:nth-child(3),
+                .penalty-table td:nth-child(3) {
+                    width: 8%;
+                }
+
+                .penalty-table th:nth-child(4),
+                .penalty-table td:nth-child(4) {
+                    width: 10%;
+                }
+
+                .penalty-table th:nth-child(5),
+                .penalty-table td:nth-child(5) {
+                    width: 8%;
+                }
+
+                .penalty-table th:nth-child(6),
+                .penalty-table td:nth-child(6) {
+                    width: 10%;
+                }
+
+                .penalty-table th:nth-child(7),
+                .penalty-table td:nth-child(7) {
+                    width: 6%;
+                }
+
+                .penalty-table th:nth-child(8),
+                .penalty-table td:nth-child(8) {
+                    width: 10%;
+                }
+
+                .penalty-table th:nth-child(9),
+                .penalty-table td:nth-child(9) {
+                    width: 9%;
+                }
+
+                .penalty-table th:nth-child(10),
+                .penalty-table td:nth-child(10) {
+                    width: 10%;
+                }
+
+                .penalty-table th:nth-child(11),
+                .penalty-table td:nth-child(11) {
+                    width: 15%;
+                }
+
+        /* A4 Portrait PDF */
+
+        @page {
+            size: A4 portrait;
+            margin: 8mm 5mm;
+        }
+
+        /* Print Settings */
+
+        @media print {
+
+            body {
+                padding: 0;
+            }
+
+            .card {
+                border: 0;
+                border-radius: 0;
+                overflow: visible;
+            }
+
+            .card-header,
+            .table-section-header,
+            th,
+            tfoot td,
+            .property-info {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Footer appears once, at the end of each table */
+            tfoot {
+                display: table-row-group !important;
+            }
+
+                tfoot tr {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+
+            /* Allow tables and sections to continue on next page */
+            .table-section,
+            table,
+            .property-info,
+            .summary-block {
+                page-break-after: auto !important;
+                break-after: auto !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            .interest-penalty-table th,
+            .interest-penalty-table td,
+            .penalty-table th,
+            .penalty-table td {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        table.property-info {
+            border: none !important;
+            background: transparent !important;
+            border-collapse: collapse;
+        }
+
+            table.property-info td {
+                border: none !important;
+                background: transparent !important;
+            }
+
+    </style>
+</head>
+<body>
+    <main class="report">
+        <section class="card">
+            <header class="card-header"><h1>Property Balance Details</h1></header>
+            <div class="card-body">
+
+                <!--<section class="property-info">
+        <div class="property-info-column">
+            <p><span class="fw-semibold">Allottee Code :</span> {{propertyInfo.allotteeCode}}</p>
+            <p><span class="fw-semibold">Name of Allottee :</span> {{propertyInfo.nameOfAllottee}}</p>
+            <p><span class="fw-semibold">Allottee's Father/Husband Name :</span> {{propertyInfo.fatherOrHusbandName}}</p>
+            <p><span class="fw-semibold">Auction Date :</span> {{propertyInfo.auctionDate}}</p>
+            <p><span class="fw-semibold">Allotment Date :</span> {{propertyInfo.allotmentDate}}</p>
+            <p><span class="fw-semibold">Allotment Amount (Rs.) :</span> ₹{{propertyInfo.finalBidPrice}}</p>
+        </div>
+        <div class="property-info-column">
+            <p><span class="fw-semibold">Mandi Name :</span> {{propertyInfo.mandiName}}</p>
+            <p><span class="fw-semibold">Plot Type :</span> {{propertyInfo.plotType}}</p>
+            <p><span class="fw-semibold">Plot Number :</span> {{propertyInfo.plotNo}}</p>
+            <p><span class="fw-semibold">Size of Plot :</span> {{propertyInfo.sizeOfPlot}}</p>
+            <p><span class="fw-semibold">Address :</span> {{propertyInfo.address}}</p>
+        </div>
+    </section>-->
+                <table class="property-info">
+                    <tr>
+                        <td class="property-info-column">
+                            <p><span class="fw-semibold">Allottee Code :</span> {{propertyInfo.allotteeCode}}</p>
+                            <p><span class="fw-semibold">Name of Allottee :</span> {{propertyInfo.nameOfAllottee}}</p>
+                            <p><span class="fw-semibold">Allottee's Father/Husband Name :</span> {{propertyInfo.fatherOrHusbandName}}</p>
+                            <p><span class="fw-semibold">Auction Date :</span> {{propertyInfo.auctionDate}}</p>
+                            <p><span class="fw-semibold">Allotment Date :</span> {{propertyInfo.allotmentDate}}</p>
+                            <p><span class="fw-semibold">Allotment Amount (Rs.) :</span> ₹{{propertyInfo.finalBidPrice}}</p>
+                        </td>
+
+                        <td class="property-info-column">
+                            <p><span class="fw-semibold">Mandi Name :</span> {{propertyInfo.mandiName}}</p>
+                            <p><span class="fw-semibold">Plot Type :</span> {{propertyInfo.plotType}}</p>
+                            <p><span class="fw-semibold">Plot Number :</span> {{propertyInfo.plotNo}}</p>
+                            <p><span class="fw-semibold">Size of Plot :</span> {{propertyInfo.sizeOfPlot}}</p>
+                            <p><span class="fw-semibold">Address :</span> {{propertyInfo.address}}</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <section class="table-section">
+                    <div class="table-section-header">Detail of Initial 25% deposited :</div>
+                    <table>
+                        <thead><tr><th>Diary No.</th><th>Diary Date</th><th>Draft/Cheque/RTGS No</th><th>Draft/Cheque/RTGS Date</th><th>Payment Mode</th><th>Bank</th><th class="text-end">Amount (Rs.)</th></tr></thead>
+                        <tbody>
+                            {{initialDeposits}}
+                        </tbody>
+                        <tfoot><tr><td colspan="6" class="text-end">Total (Rs.):</td><td class="text-end">₹{{totals.initialDepositsAmount}}</td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="table-section">
+                    <div class="table-section-header">Details of Due Installments : (Rate of Interest ({{rateOfInterest}}%))</div>
+                    <table>
+                        <thead><tr><th>Installment No.</th><th>Due Date</th><th class="text-end">Due Amount (Rs.)</th><th class="text-end">Interest (Rs.)</th><th class="text-end">Total Due Amount (Rs.)</th></tr></thead>
+                        <tbody>
+                            {{dueInstallments}}
+                        </tbody>
+                        <tfoot><tr><td colspan="2" class="text-end">Total (Rs.):</td><td class="text-end">₹{{totals.dueAmount}}</td><td class="text-end">₹{{totals.dueInterest}}</td><td class="text-end">₹{{totals.dueTotalAmount}}</td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="table-section">
+                    <div class="table-section-header">Details of Installments Amount Received :</div>
+                    <table>
+                        <thead><tr><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th></tr></thead>
+                        <tbody>
+                            {{installmentReceipts}}
+                        </tbody>
+                        <tfoot><tr><td colspan="6" class="text-end">Total (Rs.):</td><td class="text-end">₹{{totals.installmentReceiptsAmount}}</td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="table-section">
+                    <div class="table-section-header">Details of Future Installments:</div>
+                    <table>
+                        <thead><tr><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th></tr></thead>
+                        <tbody>
+                            {{otherfutureInstallments}}
+                        </tbody>
+                        <tfoot><tr><td colspan="6" class="text-end">Total (Rs.):</td><td class="text-end">₹{{totals.futureInstallmentsAmount}}</td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="table-section">
+                    <div class="table-section-header">Details of Other Amount Received (If Any):</div>
+                    <table>
+                        <thead><tr><th>Diary No.</th><th>Diary Date</th><th>Draft No</th><th>Draft/RTGS Date</th><th>Payment Mode</th><th>Draft/RTGS Bank</th><th class="text-end">Draft Amount (Rs.)</th></tr></thead>
+                        <tbody>
+                            {{otherAmounts}}
+                        </tbody>
+                        <tfoot><tr><td colspan="6" class="text-end">Total (Rs.):</td><td class="text-end">₹{{totals.otherAmountsAmount}}</td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="table-section penalty-table">
+                    <div class="table-section-header">Details of Interest &amp; Penalty Calculation:</div>
+                    <table>
+                        <thead><tr><th>Installment ID</th><th>Installment No</th><th>Due Date</th><th>Installment Amount</th><th>Diary Date</th><th>Received Amount</th><th>Delay Days</th><th>Penal Interest</th><th>Penalty Rate (%)</th><th>Penalty Amount</th><th class="text-end">Extra Amount</th></tr></thead>
+                        <tbody>
+                            {{CalculationinterestAndPenaltyDetails}}
+                        </tbody>
+                        <tfoot><tr><td colspan="6" class="text-end">Total:</td><td></td><td class="text-end">₹{{totals.penalInterest}}</td><td></td><td class="text-end">₹{{totals.penaltyAmount}}</td><td></td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="summary-block">
+                    <p>Total 25% Amount Received (In ₹): <span class="summary-value">₹{{totals.initialDepositsAmount}}</span></p>
+                    <p>Total Installments Amount (In ₹): <span class="summary-value">₹{{totals.dueTotalAmount}}</span></p>
+                    <p>Received Amount Excluding 25% Amount (In ₹): <span class="summary-value">₹{{totals.installmentReceiptsAmount}}</span></p>
+                    <p>Total Amount of Penal Interest (In ₹): <span class="summary-value">₹{{totals.penalInterest}}</span></p>
+                    <p>Total Amount of Penalty (In ₹): <span class="summary-value">₹{{totals.penaltyAmount}}</span></p>
+                    <p>Total Pending Amount Including Installments &amp; Penalties (In ₹): <span class="summary-value">₹{{totals.pendingAmountIncludingPenalties}}</span></p>
+                    {{totals.totalDueAmount}}
+                </section>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
