@@ -118,7 +118,7 @@
                         <td class="fw-semibold">
                             <ng-container *ngIf="row.soldPlots; else noSold">
                                 <span *ngFor="let plotNo of row.soldPlots.split(',')">
-                                    <button type="button" class="btn btn-sm me-1 mb-1 py-0 px-1 lh-sm text-success"
+                                    <button type="button" matTooltip="View Plot Details" matTooltipPosition="above" class="btn btn-sm me-1 mb-1 py-0 px-1 lh-sm text-success"
                                         data-bs-toggle="modal" data-bs-target="#plotDetailModal"
                                         (click)="openPlotModal(plotNo.trim(), row)">{{ plotNo.trim() }}</button>
                                 </span>
@@ -157,5 +157,5 @@
 <!-- Reusable Plot Details Modal Component -->
 <app-plot-details-modal [balanceData]="balanceData" [plotDetailLoading]="plotDetailLoading"
     [plotDetailError]="plotDetailError" [selectedPlotNo]="selectedPlotNo" [header]="headerTitle"
-    (modalClosed)="closePreviewModal()">
+    (modalClosed)="closePreviewModal()" (downloadPdf)="downloadPlotDetailsPdf()">
 </app-plot-details-modal>

@@ -217,7 +217,7 @@
                         </div>
                     </div>
 
-                    <div class="table-section mb-3" *ngIf="balanceData.futureInstallments.length">
+                    <div class="table-section mb-3">
                         <div class="table-section-header bg-success text-white rounded-top-2">
                             Details of Future Installments:
                         </div>
@@ -225,50 +225,6 @@
                             <table class="table table-bordered mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Installment No.</th>
-                                        <th>Due Date</th>
-                                        <th class="text-end">Due Amount(Rs.)</th>
-                                        <th class="text-end">Interest(Rs.)</th>
-                                        <th class="text-end">Total Due Amount(Rs.)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr *ngFor="let installment of balanceData.futureInstallments">
-                                        <td>{{ installment.installmentNo }}</td>
-                                        <td>{{ installment.dueDate }}</td>
-                                        <td class="text-end">₹{{ installment.dueAmount | number }}</td>
-                                        <td class="text-end">₹{{ installment.interest | number }}</td>
-                                        <td class="text-end">₹{{ installment.totalDueAmount | number }}</td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="2" class="text-end fw-semibold">Total(Rs.) :</td>
-                                        <td class="text-end fw-semibold">
-                                            ₹{{ getTotal(balanceData.futureInstallments, 'dueAmount') | number }}
-                                        </td>
-                                        <td class="text-end fw-semibold">
-                                            ₹{{ getTotal(balanceData.futureInstallments, 'interest') | number }}
-                                        </td>
-                                        <td class="text-end fw-semibold">
-                                            ₹{{ getTotal(balanceData.futureInstallments, 'totalDueAmount') | number }}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Other Amounts (if any) -->
-                    <div class="table-section mb-3" *ngIf="balanceData.otherAmounts.length">
-                        <div class="table-section-header bg-success text-white rounded-top-2">
-                            Details of Other Amount Received (If Any):
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Payment Type</th>
                                         <th>Diary No.</th>
                                         <th>Diary Date</th>
                                         <th>Draft No</th>
@@ -279,8 +235,52 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr *ngFor="let other of balanceData.otherAmounts">
-                                        <td>{{ other.paymentType }}</td>
+                                    <tr *ngIf="!balanceData.otherfutureInstallments?.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let installment of (balanceData.otherfutureInstallments || [])">
+                                        <td>{{ installment.diaryNo }}</td>
+                                        <td>{{ installment.diaryDate }}</td>
+                                        <td>{{ installment.draftNo }}</td>
+                                        <td>{{ installment.draftDate }}</td>
+                                        <td>{{ installment.paymentMode }}</td>
+                                        <td>{{ installment.draftBank }}</td>
+                                        <td class="text-end">₹{{ installment.dueAmount | number:'1.2-2':'en-IN' }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.) :</td>
+                                        <td class="text-end fw-semibold">₹{{ getTotal(balanceData.otherfutureInstallments || [], 'dueAmount') | number:'1.2-2':'en-IN' }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Other Amounts (if any) -->
+                    <div class="table-section mb-3">
+                        <div class="table-section-header bg-success text-white rounded-top-2">
+                            Details of Other Amount Received (If Any):
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Diary No.</th>
+                                        <th>Diary Date</th>
+                                        <th>Draft No</th>
+                                        <th>Draft/RTGS Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Draft/RTGS Bank</th>
+                                        <th class="text-end">Draft Amount(Rs.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="!balanceData.otherAmounts.length">
+                                        <td colspan="7" class="text-center text-muted">No records found</td>
+                                    </tr>
+                                    <tr *ngFor="let other of (balanceData.otherAmounts || [])">
                                         <td>{{ other.receiptNo }}</td>
                                         <td>{{ other.receiptDate }}</td>
                                         <td>{{ other.draftNo || '-' }}</td>
@@ -292,9 +292,9 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="7" class="text-end fw-semibold">Total(Rs.):</td>
+                                        <td colspan="6" class="text-end fw-semibold">Total(Rs.):</td>
                                         <td class="text-end fw-semibold">
-                                            ₹{{ getTotal(balanceData.otherAmounts, 'draftAmount') | number:'1.2-2' }}
+                                            ₹{{ getTotal(balanceData.otherAmounts || [], 'draftAmount') | number:'1.2-2':'en-IN' }}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -309,7 +309,7 @@
             <div class="modal-footer py-2 px-3 border-top bg-light">
                 <button type="button"
                     class="btn btn-outline-secondary fw-semibold rounded-3 px-3 py-2 d-flex align-items-center gap-2 shadow-sm"
-                    matTooltip="Export to PDF" matTooltipPosition="above">
+                    matTooltip="Export to PDF" matTooltipPosition="above" (click)="onDownloadPdf()">
                     <i class="fa-regular fa-file-pdf fs-5 text-danger"></i>
                     <span class="d-none d-sm-inline">PDF</span>
                 </button>

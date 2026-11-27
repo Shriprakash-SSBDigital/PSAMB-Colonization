@@ -327,7 +327,7 @@
                             <td class="fw-semibold text-portal" *ngIf="isColumnVisible('alloteeCode')">
                                 <button type="button" class="allotee-link" data-bs-toggle="modal"
                                     data-bs-target="#plotDetailModal" (click)="openPlotModal(row)"
-                                    [title]="'View plot details for ' + row.alloteeCode">
+                                     matTooltip="Plot details for {{ row.alloteeCode }}" matTooltipPosition="above">
                                     {{ row.alloteeCode }}
                                 </button>
                             </td>
@@ -390,5 +390,6 @@
     [plotDetailError]="plotDetailError"
     [selectedPlotNo]="selectedPlotNo"
     [header] = "headerTitle"
-    (modalClosed)="closePreviewModal()">
+    (modalClosed)="closePreviewModal()"
+     (downloadPdf)="downloadPlotDetailsPdf()">
 </app-plot-details-modal>

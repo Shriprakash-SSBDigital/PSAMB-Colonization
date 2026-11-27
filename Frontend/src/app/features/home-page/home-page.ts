@@ -42,7 +42,7 @@ export class HomePage implements OnInit {
   totalProperties = 0;
   soldProperties = 0;
   unsoldProperties = 0;
-  totalMandis = 0 | 91;
+  totalMandis = 0 ;
 
   constructor(private propertySummary: PropertySummary, private cdr: ChangeDetectorRef) {}
 
